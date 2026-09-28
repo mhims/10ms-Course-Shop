@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /adminpanelofficial
+Disallow: /admin
+
+Sitemap: https://10mscourse.shop/sitemap.xml

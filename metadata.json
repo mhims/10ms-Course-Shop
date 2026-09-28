@@ -1,0 +1,6 @@
+{
+  "name": "10MS Course Shop - ১০ মিনিট স্কুল কোর্স ও অফার",
+  "description": "১০ মিনিট স্কুলের সকল একাডেমিক, এডমিশন ও স্কিল কোর্সের প্রোমো অফার, ডিসকাউন্ট ও ভর্তি লিংক এক প্ল্যাটফর্মে।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

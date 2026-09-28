@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-bengali: 'Hind Siliguri', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  
+  body {
+    font-family: var(--font-bengali);
+    background-color: #fdf6f6;
+    /* Clean subtle red-tinted micro-dot texture */
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(225, 29, 72, 0.05) 0%, transparent 70%),
+      radial-gradient(circle at 100% 100%, rgba(190, 18, 60, 0.04) 0%, transparent 60%),
+      radial-gradient(rgba(225, 29, 72, 0.12) 1.2px, transparent 1.2px);
+    background-size: 100% 100%, 100% 100%, 22px 22px;
+    background-attachment: fixed;
+    color: #0f172a;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom crisp scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #fdf2f2;
+}
+::-webkit-scrollbar-thumb {
+  background: #f43f5e;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #e11d48;
+}
+
+/* Red accents */
+.red-glow {
+  box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.2), 0 8px 10px -6px rgba(225, 29, 72, 0.15);
+}
+
+/* Mobile bottom nav safe area */
+@supports (padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
