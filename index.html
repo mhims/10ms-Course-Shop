@@ -96,7 +96,20 @@
   </head>
   <body class="bg-[#faf5f5] text-slate-900 font-sans antialiased selection:bg-rose-500 selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      const isDev = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' || 
+                    window.location.port === '3000' ||
+                    window.location.hostname.includes('run.app');
+      if (isDev) {
+        import('/src/main.tsx').catch(() => {
+          import('./assets/index-jRp3lIuJ.js');
+        });
+      } else {
+        import('./assets/index-jRp3lIuJ.js');
+      }
+    </script>
+    <link rel="stylesheet" href="./assets/index-CVSEXfRT.css">
   </body>
 </html>
 
