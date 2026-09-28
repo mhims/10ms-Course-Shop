@@ -22,11 +22,21 @@ import { CourseCategory } from './types';
 function AppContent() {
   const { courses } = useCourseContext();
   const [currentPath, setCurrentPath] = useState<string>(() => {
-    // Read from window.location.pathname or hash
-    const p = window.location.pathname;
-    if (p && p !== '/') return p;
+    // 1. Check for query redirect like /?/adminpanelofficial or /?p=/adminpanelofficial
+    const search = window.location.search;
+    if (search.startsWith('?/')) {
+      return '/' + search.slice(2).split('&')[0].replace(/^\/+/, '');
+    }
+    const params = new URLSearchParams(search);
+    const pParam = params.get('p');
+    if (pParam) return pParam.startsWith('/') ? pParam : '/' + pParam;
+
+    // 2. Read from window.location.pathname or hash
+    const p = window.location.pathname.replace(/\/+$/, '');
+    if (p && p !== '') return p;
     if (window.location.hash) {
-      return window.location.hash.replace('#', '') || '/';
+      const h = window.location.hash.replace(/^#\/?/, '/');
+      return h || '/';
     }
     return '/';
   });
@@ -36,10 +46,23 @@ function AppContent() {
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      const p = window.location.pathname;
+      const search = window.location.search;
+      if (search.startsWith('?/')) {
+        setCurrentPath('/' + search.slice(2).split('&')[0].replace(/^\/+/, ''));
+        return;
+      }
+      const params = new URLSearchParams(search);
+      const pParam = params.get('p');
+      if (pParam) {
+        setCurrentPath(pParam.startsWith('/') ? pParam : '/' + pParam);
+        return;
+      }
+
       if (window.location.hash) {
-        setCurrentPath(window.location.hash.replace('#', '') || '/');
+        const h = window.location.hash.replace(/^#\/?/, '/');
+        setCurrentPath(h || '/');
       } else {
+        const p = window.location.pathname.replace(/\/+$/, '');
         setCurrentPath(p || '/');
       }
     };

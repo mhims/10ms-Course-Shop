@@ -1100,18 +1100,33 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-xs space-y-4">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Download className="w-5 h-5 text-rose-600" />
-              <span>GitHub-এ ব্যাকআপ (Export)</span>
+              <span>GitHub-এ সিঙ্ক ও ব্যাকআপ (Sync & Export)</span>
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              আপনি অ্যাডমিন প্যানেল থেকে যেসব কোর্স যোগ বা পরিবর্তন করেছেন তা একটি JSON ফাইল হিসেবে ডাউনলোড করতে পারবেন। পরবর্তীতে গিটহাবে সাইট আপলোডের জন্য এই ব্যাকআপ ব্যবহার করা যাবে।
+              আপনি অ্যাডমিন প্যানেল থেকে যেসব কোর্স যোগ বা এডিট করবেন, তা সরাসরি JSON হিসেবে কপি বা ডাউনলোড করতে পারবেন। গিটহাবে পুশ করলে মূল ওয়েবসাইটে সবার জন্য তা সাথে সাথে লাইভ হয়ে যাবে।
             </p>
-            <button
-              onClick={handleDownloadJSON}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md"
-            >
-              <Download className="w-4 h-4" />
-              <span>courses.json ডাউনলোড করুন</span>
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={handleDownloadJSON}
+                className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>courses.json ডাউনলোড</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const jsonStr = exportCoursesJSON();
+                  navigator.clipboard.writeText(jsonStr);
+                  showToast('কোর্স ডেটা ক্লিপবোর্ডে কপি করা হয়েছে!');
+                }}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-colors"
+              >
+                <Check className="w-4 h-4" />
+                <span>কোর্স ডেটা কপি করুন</span>
+              </button>
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-xs space-y-4">
@@ -1135,7 +1150,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               <span>ডিফল্ট ডেটায় রিসেট করুন</span>
             </h4>
             <p className="text-xs text-rose-700">
-              আপনি চাইলে সাইটটিকে প্রাথমিক ১৫০+ সাজানো কোর্সের আসল অবস্থায় ফিরিয়ে নিতে পারেন।
+              সাইটের ভেরিফাইড কোর্সগুলোর প্রাথমিক সেটে ফিরে যেতে চাইলে নিচের বাটনে ক্লিক করুন।
             </p>
             <button
               onClick={() => {

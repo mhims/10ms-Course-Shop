@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Course, BlogPost, Review, SiteSettings, CustomCategory, SiteResource } from '../types';
-import { generateFull150Courses } from '../data/coursesData';
+import { initialCourses, generateFull150Courses } from '../data/coursesData';
 import { initialBlogPosts } from '../data/blogData';
 import { initialReviews } from '../data/reviewData';
 
@@ -78,12 +78,12 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const saved = localStorage.getItem(STORAGE_KEYS.COURSES);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {
       // fallback
     }
-    return [];
+    return initialCourses;
   });
 
   const [categories, setCategories] = useState<CustomCategory[]>(() => {

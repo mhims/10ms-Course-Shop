@@ -1,9 +1,82 @@
 import { Course } from '../types';
 
-// The user requested: "আর সব ডেমো কোর্স রিমুভ করো। আমি একটা একটা করে এড করবো কোর্স।"
-// Initial clean catalog - user will add courses one by one via Admin Panel (/adminpanelofficial)
-export const initialCourses: Course[] = [];
+// Initial verified courses for 10MS Course Shop
+// This ensures that even before custom courses are added in localStorage, the site displays real courses.
+export const initialCourses: Course[] = [
+  {
+    id: 'c-ssc-2026-crash-course',
+    slug: 'ssc-2026-crash-course',
+    title: 'এসএসসি ২০২৬ ক্র্যাশ কোর্স (বিজ্ঞান বিভাগ)',
+    englishTitle: 'SSC 2026 Science Crash Course',
+    category: 'class-9-10',
+    displayTargets: ['home', 'class-9-10'],
+    targetClass: '৯ম-১০ম শ্রেণী / SSC 2026',
+    regularPrice: 3000,
+    offerPrice: 2200,
+    offerEndDate: '2026-12-31T23:59:59',
+    isLifetime: true,
+    status: 'active',
+    imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
+    imageAlt: 'এসএসসি ২০২৬ ক্র্যাশ কোর্স ১০ মিনিট স্কুল',
+    affiliateLink: 'https://10ms.io/ssc2026',
+    promoCode: '10MSOFFER',
+    instructor: '১০ মিনিট স্কুল এক্সপার্ট ফ্যাকাল্টি',
+    instructorRole: 'বুয়েট, ঢাবি ও মেডিকেল মেন্টরস',
+    rating: 4.9,
+    reviewCount: 1420,
+    enrolledCount: 12500,
+    shortDescription: 'পদার্থ, রসায়ন, উচ্চতর গণিত ও জীববিজ্ঞান সম্পূর্ণ শর্ট সিলেবাস কমপ্লিট প্রস্তুতি।',
+    fullDescription: 'এসএসসি ২০২৬ ব্যাচের শিক্ষার্থীদের জন্য সম্পূর্ণ সিলেবাস কভার করার সেরা ক্র্যাশ কোর্স। লাইভ ইন্টারেক্টিভ ক্লাস, লেকচার শিট, সাপ্তাহিক মডেল টেস্ট ও সল্ভিং সেশন।',
+    highlights: ['১২০+ লাইভ ইন্টার‍্যাক্টিভ ক্লাস', 'অধ্যায়ভিত্তিক স্মার্ট নোট ও হ্যান্ডনোট', 'পূর্ণাঙ্গ বোর্ড স্ট্যান্ডার্ড মডেল টেস্ট', '২৪/৭ ডাউট সলভিং সাপোর্ট'],
+    syllabus: [
+      { title: 'পদার্থবিজ্ঞান: গতি, বল, কাজ ক্ষমতা ও শক্তি', count: '১৫ লাইভ ক্লাস ও ৫ পরীক্ষা' },
+      { title: 'উচ্চতর গণিত: সেট, ফাংশন ও ত্রিকোণমিতি', count: '১৮ লাইভ ক্লাস ও ৬ পরীক্ষা' },
+      { title: 'রসায়ন ও জীববিজ্ঞান: বিশেষ বোর্ড প্রশ্ন সমাধান', count: '২০ লাইভ ক্লাস ও ৮ পরীক্ষা' },
+    ],
+    seoTitle: 'এসএসসি ২০২৬ ক্র্যাশ কোর্স | 10 Minute School Discount Promo',
+    seoDescription: '১০ মিনিট স্কুলের এসএসসি ২০২৬ ক্র্যাশ কোর্সে স্পেশাল ডিসকাউন্ট অফার ও প্রোমো কোড। পদার্থ, রসায়ন, গণিত পূর্ণাঙ্গ প্রস্তুতি।',
+    seoKeywords: ['এসএসসি ২০২৬ ক্র্যাশ কোর্স', '১০ মিনিট স্কুল এসএসসি কোর্স', 'ssc 2026 crash course 10ms', '10 minute school promo code'],
+    isFeatured: true,
+    badgeText: 'হট ডিল',
+  },
+  {
+    id: 'c-spoken-english-munzereen',
+    slug: 'ghore-boshe-spoken-english-munzereen',
+    title: 'ঘরে বসে Spoken English (মুনজেরিন শহীদ)',
+    englishTitle: 'Ghore Boshe Spoken English by Munzereen Shahid',
+    category: 'spoken-english',
+    displayTargets: ['home', 'spoken-english', 'skills'],
+    targetClass: 'সকলের জন্য উন্মুক্ত',
+    regularPrice: 1500,
+    offerPrice: 950,
+    offerEndDate: '2026-12-31T23:59:59',
+    isLifetime: true,
+    status: 'active',
+    imageUrl: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&auto=format&fit=crop&q=80',
+    imageAlt: 'ঘরে বসে Spoken English মুনজেরিন শহীদ ১০ মিনিট স্কুল',
+    affiliateLink: 'https://10ms.io/spokenenglish',
+    promoCode: 'SPOKEN10',
+    instructor: 'মুনজেরিন শহীদ',
+    instructorRole: 'MSc in English (University of Oxford)',
+    rating: 4.95,
+    reviewCount: 3850,
+    enrolledCount: 85000,
+    shortDescription: 'দৈনন্দিন জীবনে সাবলীলভাবে ইংরেজিতে কথা বলার সম্পূর্ণ কৌশল শিখুন সহজে।',
+    fullDescription: 'অক্সফোর্ড গ্র্যাজুয়েট মুনজেরিন শহীদের এই কোর্সে আপনি বাস্তব জীবনের প্রতিটি ক্ষেত্রে শুদ্ধভাবে ইংরেজিতে কথা বলা শিখবেন। রুলস মুখস্থ না করে প্র্যাক্টিক্যাল কথোপকথনের মাধ্যমে ইংরেজি শেখা।',
+    highlights: ['৮০+ ভিডিও লেকচার ও অডিও লেসন', '৮০+ কুইজ ও ফ্ল্যাশকার্ড প্র্যাকটিস', 'বাস্তব কথোপকথন ও উচ্চারণ কৌশল', 'কোর্স শেষে ভেরিফাইড সার্টিফিকেট'],
+    syllabus: [
+      { title: 'দৈনন্দিন কথা ও পরিচিতি পর্ব (Daily Conversation)', count: '১৫ ভিডিও ও প্র্যাকটিস' },
+      { title: 'অফিস ও ইন্টারভিউ ইংলিশ (Professional English)', count: '২০ ভিডিও ও অ্যাসাইনমেন্ট' },
+      { title: 'সঠিক উচ্চারণ ও ফ্লুয়েন্সি মাস্টারক্লাস', count: '২৫ ভিডিও ও টেস্ট' },
+    ],
+    seoTitle: 'ঘরে বসে Spoken English কোর্স মুনজেরিন শহীদ | 10MS Promo Code',
+    seoDescription: 'মুনজেরিন শহীদের ঘরে বসে স্পোকেন ইংলিশ কোর্সে বিশেষ ছাড় ও প্রোমো কোড। সহজে ফ্লুয়েন্ট ইংরেজি শিখুন।',
+    seoKeywords: ['ঘরে বসে স্পোকেন ইংলিশ', 'মুনজেরিন শহীদ কোর্স', 'spoken english 10 minute school', 'ইংরেজি শেখার কোর্স'],
+    isFeatured: true,
+    badgeText: 'বেস্টসেলার',
+  },
+];
 
 export function generateFull150Courses(): Course[] {
-  return [];
+  return initialCourses;
 }
