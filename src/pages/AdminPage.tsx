@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2 } from 'lucide-react';
+import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel } from '../utils/courseHelper';
@@ -94,6 +94,12 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
   // Site settings state
   const [settingsForm, setSettingsForm] = useState(siteSettings);
+
+  // GitHub Access Token Sync State
+  const [githubToken, setGithubToken] = useState(() => localStorage.getItem('10ms_gh_pat') || '');
+  const [githubRepo, setGithubRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/mhims.github.io');
+  const [isPushingToGithub, setIsPushingToGithub] = useState(false);
+  const [githubPushStatus, setGithubPushStatus] = useState<string | null>(null);
 
   // Authentication handler
   // Required credentials: accepts both mdadilah and mdadilahnaffahim
@@ -331,6 +337,78 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       ? editingCourse.displayTargets.filter((t) => t !== target)
       : [...editingCourse.displayTargets, target];
     setEditingCourse({ ...editingCourse, displayTargets: updated });
+  };
+
+  // Direct GitHub API Sync using Personal Access Token
+  const handleDirectGithubSync = async () => {
+    if (!githubToken.trim()) {
+      alert('দয়া করে আপনার GitHub Personal Access Token দিন!');
+      return;
+    }
+    const cleanRepo = githubRepo.trim();
+    if (!cleanRepo || !cleanRepo.includes('/')) {
+      alert('দয়া করে সঠিক রিপোজিটরি দিন (যেমন: username/repo-name)');
+      return;
+    }
+
+    setIsPushingToGithub(true);
+    setGithubPushStatus('গিটহাবে সরাসরি ডেটা পাঠানো হচ্ছে...');
+    localStorage.setItem('10ms_gh_pat', githubToken.trim());
+    localStorage.setItem('10ms_gh_repo', cleanRepo);
+
+    try {
+      const jsonContent = exportCoursesJSON();
+      const path = 'src/data/courses.json';
+      const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${path}`;
+
+      // 1. Get current file sha (if exists)
+      let sha: string | undefined = undefined;
+      const getRes = await fetch(apiUrl, {
+        headers: {
+          Authorization: `token ${githubToken.trim()}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (getRes.ok) {
+        const fileData = await getRes.json();
+        sha = fileData.sha;
+      }
+
+      // 2. Put file with commit
+      const utf8Bytes = new TextEncoder().encode(jsonContent);
+      let binaryStr = '';
+      utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
+      const base64Content = btoa(binaryStr);
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          Authorization: `token ${githubToken.trim()}`,
+          Accept: 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Update courses catalog from 10MS Admin Panel [skip ci]`,
+          content: base64Content,
+          sha: sha,
+        }),
+      });
+
+      if (!putRes.ok) {
+        const errJson = await putRes.json();
+        throw new Error(errJson.message || 'GitHub API error');
+      }
+
+      setGithubPushStatus('অভিনন্দন! সরাসরি গিটহাবে আপডেট হয়ে গেছে!');
+      showToast('গিটহাবে সরাসরি আপডেট সম্পন্ন হয়েছে!');
+      setTimeout(() => setGithubPushStatus(null), 5000);
+    } catch (err: any) {
+      console.error('GitHub Push error:', err);
+      setGithubPushStatus(`ব্যর্থ হয়েছে: ${err.message || 'টোকেনের পারমিশন চেক করুন'}`);
+    } finally {
+      setIsPushingToGithub(false);
+    }
   };
 
   // Export JSON
@@ -1142,6 +1220,87 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               <span>JSON ফাইল আপলোড করুন</span>
               <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
             </label>
+          </div>
+
+          {/* Direct GitHub Token Sync Card */}
+          <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-md space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
+                  <Github className="w-5 h-5 text-rose-400" />
+                  <span>সরাসরি GitHub-এ লাইভ আপডেট (Personal Access Token দিয়ে)</span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-1">
+                  এখানে একবার আপনার গিটহাবের টোকেন দিলে অ্যাডমিন প্যানেল থেকেই সরাসরি গিটহাবে পুশ হয়ে মূল ওয়েবসাইটে সব কোর্স লাইভ হয়ে যাবে!
+                </p>
+              </div>
+              <a
+                href="https://github.com/settings/tokens/new"
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded-xl font-bold flex items-center gap-1 shrink-0"
+              >
+                <span>টোকেন তৈরি করুন</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">GitHub Personal Access Token (PAT)</label>
+                <input
+                  type="password"
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                  className="w-full p-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  GitHub ➔ Settings ➔ Developer Settings ➔ Personal access tokens (classic) থেকে <code className="text-rose-400 font-mono">repo</code> পারমিশনসহ টোকেন দিন।
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">GitHub Repository (ইউজারনেম/রিপো-নাম)</label>
+                <input
+                  type="text"
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                  placeholder="যেমন: mhims/mhims.github.io"
+                  className="w-full p-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-rose-500"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  আপনার গিটহাব রিপোজিটরির নাম।
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isPushingToGithub}
+                onClick={handleDirectGithubSync}
+                className="w-full sm:w-auto px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50 transition-all"
+              >
+                {isPushingToGithub ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>গিটহাবে পাঠানো হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <GitBranch className="w-4 h-4" />
+                    <span>এক ক্লিকে মূল ওয়েবসাইটে পাঠান (Push to GitHub)</span>
+                  </>
+                )}
+              </button>
+
+              {githubPushStatus && (
+                <div className={`text-xs font-bold px-3 py-1.5 rounded-lg ${githubPushStatus.includes('ব্যর্থ') ? 'bg-red-900/50 text-red-200' : 'bg-emerald-900/50 text-emerald-200'}`}>
+                  {githubPushStatus}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="col-span-1 md:col-span-2 bg-rose-50/50 rounded-2xl p-6 border border-rose-200 space-y-3">
