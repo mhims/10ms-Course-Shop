@@ -86,6 +86,23 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return initialCourses;
   });
 
+  // Fetch live courses.json from repository if available (allows true live sync with GitHub Pages!)
+  useEffect(() => {
+    fetch('./courses.json')
+      .then((res) => {
+        if (res.ok) return res.json();
+        return null;
+      })
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCourses(data);
+        }
+      })
+      .catch(() => {
+        // silently ignore if not present
+      });
+  }, []);
+
   const [categories, setCategories] = useState<CustomCategory[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.CATEGORIES);

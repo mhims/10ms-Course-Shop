@@ -358,46 +358,45 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
     try {
       const jsonContent = exportCoursesJSON();
-      const path = 'src/data/courses.json';
-      const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${path}`;
-
-      // 1. Get current file sha (if exists)
-      let sha: string | undefined = undefined;
-      const getRes = await fetch(apiUrl, {
-        headers: {
-          Authorization: `token ${githubToken.trim()}`,
-          Accept: 'application/vnd.github.v3+json',
-        },
-      });
-
-      if (getRes.ok) {
-        const fileData = await getRes.json();
-        sha = fileData.sha;
-      }
-
-      // 2. Put file with commit
+      // Put file in docs/courses.json (which GitHub Pages serves!) and public/courses.json
+      const paths = ['docs/courses.json', 'public/courses.json', 'courses.json'];
+      
       const utf8Bytes = new TextEncoder().encode(jsonContent);
       let binaryStr = '';
       utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
       const base64Content = btoa(binaryStr);
 
-      const putRes = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: {
-          Authorization: `token ${githubToken.trim()}`,
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: `Update courses catalog from 10MS Admin Panel [skip ci]`,
-          content: base64Content,
-          sha: sha,
-        }),
-      });
+      for (const p of paths) {
+        const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${p}`;
+        let sha: string | undefined = undefined;
+        try {
+          const getRes = await fetch(apiUrl, {
+            headers: {
+              Authorization: `token ${githubToken.trim()}`,
+              Accept: 'application/vnd.github.v3+json',
+            },
+          });
+          if (getRes.ok) {
+            const fileData = await getRes.json();
+            sha = fileData.sha;
+          }
+        } catch {
+          // ignore
+        }
 
-      if (!putRes.ok) {
-        const errJson = await putRes.json();
-        throw new Error(errJson.message || 'GitHub API error');
+        await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            Authorization: `token ${githubToken.trim()}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: `Update courses catalog from 10MS Admin Panel [skip ci]`,
+            content: base64Content,
+            sha: sha,
+          }),
+        });
       }
 
       setGithubPushStatus('অভিনন্দন! সরাসরি গিটহাবে আপডেট হয়ে গেছে!');
