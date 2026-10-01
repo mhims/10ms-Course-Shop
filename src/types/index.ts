@@ -57,8 +57,13 @@ export interface BlogPost {
   date: string;
   readTime: string;
   coverImage: string;
+  coverImageAlt?: string;
   tags: string[];
   category: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
+  suggestedCourseIds?: string[];
 }
 
 export interface SiteResource {

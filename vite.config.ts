@@ -52,7 +52,13 @@ function coursesBackendPlugin(): Plugin {
                 if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
                 fs.writeFileSync(path.resolve(docsDir, 'courses.json'), JSON.stringify(courses, null, 2), 'utf-8');
 
-                // 4. src/data/coursesData.ts
+                // 4. dist/courses.json
+                const distDir = path.resolve(process.cwd(), 'dist');
+                if (fs.existsSync(distDir)) {
+                  fs.writeFileSync(path.resolve(distDir, 'courses.json'), JSON.stringify(courses, null, 2), 'utf-8');
+                }
+
+                // 5. src/data/coursesData.ts
                 const tsContent = `import { Course } from '../types';\n\nexport const initialCourses: Course[] = ${JSON.stringify(courses, null, 2)};\n\nexport function generateFull150Courses(): Course[] {\n  return initialCourses;\n}\n`;
                 fs.writeFileSync(path.resolve(process.cwd(), 'src/data/coursesData.ts'), tsContent, 'utf-8');
               }
@@ -60,6 +66,56 @@ function coursesBackendPlugin(): Plugin {
               res.setHeader('Content-Type', 'application/json');
               res.statusCode = 200;
               res.end(JSON.stringify({ success: true, count: courses?.length || 0 }));
+            } catch (err: any) {
+              res.setHeader('Content-Type', 'application/json');
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+        } else {
+          next();
+        }
+      });
+
+      // POST /api/save-blogs: write blogs directly to workspace disk files
+      server.middlewares.use('/api/save-blogs', (req, res, next) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => {
+            body += chunk;
+          });
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body);
+              const blogs = parsed.blogs;
+              if (Array.isArray(blogs)) {
+                // 1. Root blogs.json
+                fs.writeFileSync(path.resolve(process.cwd(), 'blogs.json'), JSON.stringify(blogs, null, 2), 'utf-8');
+
+                // 2. public/blogs.json
+                const publicDir = path.resolve(process.cwd(), 'public');
+                if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
+                fs.writeFileSync(path.resolve(publicDir, 'blogs.json'), JSON.stringify(blogs, null, 2), 'utf-8');
+
+                // 3. docs/blogs.json
+                const docsDir = path.resolve(process.cwd(), 'docs');
+                if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+                fs.writeFileSync(path.resolve(docsDir, 'blogs.json'), JSON.stringify(blogs, null, 2), 'utf-8');
+
+                // 4. dist/blogs.json
+                const distDir = path.resolve(process.cwd(), 'dist');
+                if (fs.existsSync(distDir)) {
+                  fs.writeFileSync(path.resolve(distDir, 'blogs.json'), JSON.stringify(blogs, null, 2), 'utf-8');
+                }
+
+                // 5. src/data/blogData.ts
+                const tsContent = `import { BlogPost } from '../types';\n\nexport const initialBlogPosts: BlogPost[] = ${JSON.stringify(blogs, null, 2)};\n`;
+                fs.writeFileSync(path.resolve(process.cwd(), 'src/data/blogData.ts'), tsContent, 'utf-8');
+              }
+
+              res.setHeader('Content-Type', 'application/json');
+              res.statusCode = 200;
+              res.end(JSON.stringify({ success: true, count: blogs?.length || 0 }));
             } catch (err: any) {
               res.setHeader('Content-Type', 'application/json');
               res.statusCode = 500;

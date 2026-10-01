@@ -101,7 +101,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Fetch live courses from API or static courses.json WITHOUT wiping locally added courses
+  // Fetch live courses from API or static courses.json WITHOUT wiping user edits or local storage
   useEffect(() => {
     const fetchLive = async () => {
       try {
@@ -113,14 +113,26 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
             setCourses(prev => {
-              // Never discard user additions: merge local additions with remote data
-              const diskIds = new Set(data.map((c: Course) => c.id || c.slug));
-              const localAdditions = prev.filter(c => !diskIds.has(c.id) && !diskIds.has(c.slug));
-              if (localAdditions.length > 0) {
-                const merged = [...localAdditions, ...data];
-                syncCoursesToDisk(merged);
-                return merged;
+              // If user already has courses in state/localStorage, ALWAYS RESPECT the user's edits!
+              // NEVER overwrite user's custom images, affiliate links, prices, or titles!
+              if (prev && prev.length > 0) {
+                const existingMap = new Map(prev.map(c => [c.id, c]));
+                const existingSlugs = new Set(prev.map(c => c.slug));
+
+                // Only append any brand-new courses from disk that user hasn't added yet
+                const newlyFoundFromDisk = data.filter(
+                  (remoteCourse: Course) => !existingMap.has(remoteCourse.id) && !existingSlugs.has(remoteCourse.slug)
+                );
+
+                if (newlyFoundFromDisk.length > 0) {
+                  const merged = [...prev, ...newlyFoundFromDisk];
+                  syncCoursesToDisk(merged);
+                  return merged;
+                }
+                // Return prev unmodified to keep all user edits intact!
+                return prev;
               }
+              // If prev was empty, use data from disk
               return data;
             });
           }
@@ -158,10 +170,30 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return initialDefaultResources;
   });
 
+  const syncBlogsToDisk = (updatedBlogs: BlogPost[]) => {
+    try {
+      fetch('/api/save-blogs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blogs: updatedBlogs })
+      }).catch(() => {
+        // silent in static hosting
+      });
+    } catch {
+      // ignore
+    }
+  };
+
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.BLOGS);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Remove old demo blog posts so user starts completely clean
+          return parsed.filter(b => b.id !== 'blog-1' && b.id !== 'blog-2' && b.id !== 'blog-3');
+        }
+      }
     } catch {
       // fallback
     }
@@ -338,15 +370,27 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const addBlogPost = (post: BlogPost) => {
-    setBlogPosts(prev => [post, ...prev]);
+    setBlogPosts(prev => {
+      const updated = [post, ...prev];
+      syncBlogsToDisk(updated);
+      return updated;
+    });
   };
 
   const updateBlogPost = (post: BlogPost) => {
-    setBlogPosts(prev => prev.map(b => (b.id === post.id ? post : b)));
+    setBlogPosts(prev => {
+      const updated = prev.map(b => (b.id === post.id ? post : b));
+      syncBlogsToDisk(updated);
+      return updated;
+    });
   };
 
   const deleteBlogPost = (id: string) => {
-    setBlogPosts(prev => prev.filter(b => b.id !== id));
+    setBlogPosts(prev => {
+      const updated = prev.filter(b => b.id !== id);
+      syncBlogsToDisk(updated);
+      return updated;
+    });
   };
 
   const addReview = (review: Review) => {

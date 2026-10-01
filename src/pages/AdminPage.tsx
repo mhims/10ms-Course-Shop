@@ -3,6 +3,7 @@ import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Sav
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel } from '../utils/courseHelper';
+import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -195,11 +196,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     showToast(`"${catName}" ক্যাটাগরি সফলভাবে তৈরি হয়েছে!`);
   };
 
-  // Blog handlers
+  // Blog handlers with WordPress-style editor support
   const handleStartAddBlog = () => {
     const freshBlog: BlogPost = {
       id: `blog-${Date.now()}`,
-      slug: `guideline-${Date.now().toString().slice(-4)}`,
+      slug: ``,
       title: '',
       excerpt: '',
       content: '',
@@ -209,6 +210,10 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       coverImage: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
       tags: ['১০ মিনিট স্কুল', 'পড়াশোনার গাইডলাইন'],
       category: 'পড়াশোনার টিপস',
+      seoKeywords: ['১০ মিনিট স্কুল', 'অনলাইন কোর্স'],
+      seoTitle: '',
+      seoDescription: '',
+      suggestedCourseIds: [],
     };
     setEditingBlog(freshBlog);
     setIsNewBlog(true);
@@ -219,17 +224,13 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     setIsNewBlog(false);
   };
 
-  const handleSaveBlog = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingBlog || !editingBlog.title.trim()) return;
-    const cleanSlug = editingBlog.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
-    const blogToSave = { ...editingBlog, slug: cleanSlug };
+  const handleSaveBlogFromEditor = (blogToSave: BlogPost) => {
     if (isNewBlog) {
       addBlogPost(blogToSave);
-      showToast('নতুন ব্লগ সফলভাবে যুক্ত হয়েছে এবং ফুটার ও ব্লগে দেখানো হচ্ছে!');
+      showToast('নতুন আর্টিকেল সফলভাবে প্রকাশিত হয়েছে এবং ওয়েবসাইট ও ব্লগে লাইভ দেখাচ্ছে!');
     } else {
       updateBlogPost(blogToSave);
-      showToast('ব্লগ সফলভাবে আপডেট করা হয়েছে!');
+      showToast('আর্টিকেল সফলভাবে আপডেট করা হয়েছে!');
     }
     setEditingBlog(null);
   };
@@ -1892,135 +1893,15 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         </div>
       )}
 
-      {/* Blog Post Add/Edit Modal */}
+      {/* WordPress-Like Rich Blog Editor Modal */}
       {editingBlog && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full my-8 border border-rose-100 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Newspaper className="w-5 h-5 text-rose-600" />
-                <span>{isNewBlog ? 'নতুন ব্লগ পোস্ট তৈরি করুন' : 'ব্লগ পোস্ট সম্পাদনা করুন'}</span>
-              </h3>
-              <button
-                onClick={() => setEditingBlog(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveBlog} className="space-y-4 text-xs sm:text-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">ব্লগের শিরোনাম *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingBlog.title}
-                    onChange={(e) => setEditingBlog({ ...editingBlog, title: e.target.value })}
-                    placeholder="যেমন: এসএসসি ২০২৬ প্রস্তুতি গাইডলাইন..."
-                    className="w-full p-2.5 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">ইউআরএল স্লাগ (Slug) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingBlog.slug}
-                    onChange={(e) => setEditingBlog({ ...editingBlog, slug: e.target.value })}
-                    placeholder="যেমন: ssc-2026-guideline"
-                    className="w-full p-2.5 border border-slate-300 rounded-xl font-mono text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">লেখক</label>
-                  <input
-                    type="text"
-                    value={editingBlog.author}
-                    onChange={(e) => setEditingBlog({ ...editingBlog, author: e.target.value })}
-                    className="w-full p-2.5 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">ক্যাটাগরি</label>
-                  <input
-                    type="text"
-                    value={editingBlog.category}
-                    onChange={(e) => setEditingBlog({ ...editingBlog, category: e.target.value })}
-                    placeholder="যেমন: এসএসসি, এডমিশন..."
-                    className="w-full p-2.5 border border-slate-300 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">পড়ার সময়</label>
-                  <input
-                    type="text"
-                    value={editingBlog.readTime}
-                    onChange={(e) => setEditingBlog({ ...editingBlog, readTime: e.target.value })}
-                    placeholder="যেমন: ৫ মিনিট"
-                    className="w-full p-2.5 border border-slate-300 rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">কভার ইমেজের লিঙ্ক (Cover Image URL)</label>
-                <input
-                  type="text"
-                  value={editingBlog.coverImage}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, coverImage: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-mono text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">সংক্ষিপ্ত বিবরণ (Excerpt) *</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={editingBlog.excerpt}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, excerpt: e.target.value })}
-                  placeholder="কার্ডে প্রদর্শনের জন্য ২-৩ লাইনের সংক্ষিপ্ত বর্ণনা..."
-                  className="w-full p-2.5 border border-slate-300 rounded-xl"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">সম্পূর্ণ মূল কন্টেন্ট (HTML বা টেক্সট) *</label>
-                <textarea
-                  required
-                  rows={6}
-                  value={editingBlog.content}
-                  onChange={(e) => setEditingBlog({ ...editingBlog, content: e.target.value })}
-                  placeholder="ব্লগের বিস্তারিত বিষয়বস্তু লিখুন..."
-                  className="w-full p-2.5 border border-slate-300 rounded-xl font-sans"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setEditingBlog(null)}
-                  className="px-4 py-2 border border-slate-300 rounded-xl font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-                >
-                  বাতিল
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-md cursor-pointer flex items-center gap-1.5"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>সংরক্ষণ করুন</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <WordPressBlogEditor
+          initialBlog={editingBlog}
+          isNew={isNewBlog}
+          courses={courses}
+          onSave={handleSaveBlogFromEditor}
+          onClose={() => setEditingBlog(null)}
+        />
       )}
     </div>
   );
