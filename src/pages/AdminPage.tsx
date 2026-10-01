@@ -142,6 +142,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       offerPrice: 1500,
       offerEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       isLifetime: true,
+      status: 'active',
       imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80',
       imageAlt: '',
       affiliateLink: 'https://10minuteschool.com/?aff=10mscourse_shop',
@@ -310,6 +311,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       ...editingCourse,
       category: catTrimmed,
       slug: cleanSlug,
+      status: editingCourse.status || 'active',
+      isLifetime: editingCourse.isLifetime !== undefined ? editingCourse.isLifetime : true,
+      displayTargets: editingCourse.displayTargets && editingCourse.displayTargets.length > 0
+        ? editingCourse.displayTargets
+        : ['home'],
       seoKeywords: parsedKeywords.length > 0 ? parsedKeywords : ['১০ মিনিট স্কুল কোর্স', 'অনলাইন কোর্স'],
       seoTitle: editingCourse.seoTitle?.trim() || `${editingCourse.title} | 10mscourse.shop`,
       seoDescription: editingCourse.seoDescription?.trim() || editingCourse.shortDescription,
@@ -320,7 +326,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
     if (isNewCourse) {
       addCourse(courseToSave);
-      showToast('নতুন কোর্স সফলভাবে যুক্ত হয়েছে!');
+      showToast('নতুন কোর্স সফলভাবে যুক্ত হয়েছে এবং ওয়েবসাইটে লাইভ দেখাচ্ছে!');
     } else {
       updateCourse(courseToSave);
       showToast('কোর্স সফলভাবে আপডেট করা হয়েছে!');
@@ -565,9 +571,10 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         <div className="flex items-center gap-2">
           <button
             onClick={() => onNavigate('/')}
-            className="px-3.5 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            সাইট ভিউ
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>মূল ওয়েবসাইট দেখুন</span>
           </button>
           <button
             onClick={handleLogout}
@@ -667,6 +674,31 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               </div>
 
               <div className="flex items-center gap-2 w-full md:w-auto">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('/api/save-courses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ courses }),
+                      });
+                      if (res.ok) {
+                        showToast('সকল কোর্স প্রোজেক্ট ফাইলে সফলভাবে সংরক্ষিত হয়েছে!');
+                      } else {
+                        showToast('ব্রাউজারে সংরক্ষিত হয়েছে (লোকাল স্টোরেজ)');
+                      }
+                    } catch {
+                      showToast('ব্রাউজারে সংরক্ষিত হয়েছে (লোকাল স্টোরেজ)');
+                    }
+                  }}
+                  className="w-full md:w-auto px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  title="প্রোজেক্ট ফাইলে সকল কোর্স সেভ ও সিঙ্ক করুন"
+                >
+                  <Save className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>ফাইল সিঙ্ক</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {

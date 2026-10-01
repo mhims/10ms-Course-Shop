@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Filter, Search, PlusCircle, BookOpen, Sparkles, ChevronRight, ChevronLeft, Flame, GraduationCap, Award, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { Filter, Search, PlusCircle, BookOpen, Sparkles, ChevronRight, ChevronLeft, Flame, GraduationCap, Award, HelpCircle, CheckCircle2, LayoutGrid, List } from 'lucide-react';
 import { Course, CourseCategory } from '../types';
 import { useCourseContext } from '../context/CourseContext';
 import { CourseCard } from '../components/CourseCard';
@@ -123,9 +123,8 @@ const CategoryScrollRow: React.FC<CategoryScrollRowProps> = ({
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) => {
   const { courses, categories: customCategories, isOfferActive, isCourseExpired } = useCourseContext();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showIntentModal, setShowIntentModal] = useState<boolean>(() => {
-    return !sessionStorage.getItem('10ms_intent_selected');
-  });
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'rows'>('grid');
+  const [showIntentModal, setShowIntentModal] = useState<boolean>(false);
 
   // Active non-expired courses (Expired courses are automatically excluded from homepage!)
   const activeCourses = useMemo(() => {
@@ -410,11 +409,11 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
           )}
         </section>
       ) : (
-        /* VIEW MODE 2: FULL HOMEPAGE ORGANIZED BY CATEGORIES IN HORIZONTAL SCROLLABLE ROWS */
+        /* VIEW MODE 2: FULL HOMEPAGE WITH GRID OF ALL COURSES & CATEGORY TOGGLE */
         <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
           
           {/* Empty Catalog Notice: If no active courses exist yet */}
-          {activeCourses.length === 0 && (
+          {activeCourses.length === 0 ? (
             <div className="bg-white rounded-3xl border border-rose-100 p-8 sm:p-12 text-center shadow-xs max-w-lg mx-auto space-y-3">
               <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto">
                 <Sparkles className="w-6 h-6" />
@@ -426,31 +425,74 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
                 ১০ মিনিট স্কুলের সকল একাডেমিক, এডমিশন ও স্কিল কোর্স এবং এক্সক্লুসিভ অফারসমূহ শীঘ্রই যুক্ত হচ্ছে।
               </p>
             </div>
-          )}
+          ) : (
+            <div className="space-y-6">
+              {/* All Courses Header with View Switcher */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-rose-600" />
+                  <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 tracking-tight">
+                    {layoutMode === 'grid' ? `সকল লাইভ কোর্স (${activeCourses.length}টি)` : 'ক্যাটাগরি অনুযায়ী কোর্স ভিউ'}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                  <button
+                    onClick={() => setLayoutMode('grid')}
+                    className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                      layoutMode === 'grid' ? 'bg-white text-rose-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">গ্রিড ভিউ</span>
+                  </button>
+                  <button
+                    onClick={() => setLayoutMode('rows')}
+                    className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                      layoutMode === 'rows' ? 'bg-white text-rose-600 shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <List className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">ক্যাটাগরি রো</span>
+                  </button>
+                </div>
+              </div>
 
-          {/* 1. Hot Special Offers Row */}
-          {offerCourses.length > 0 && (
-            <CategoryScrollRow
-              title="চলতি স্পেশাল অফার ও হট ডিসকাউন্ট"
-              badge="হট ডিল"
-              icon={<Flame className="w-5 h-5 text-rose-600" />}
-              courses={offerCourses}
-              onNavigate={onNavigate}
-            />
-          )}
+              {/* 1. Hot Special Offers Row if available */}
+              {offerCourses.length > 0 && (
+                <CategoryScrollRow
+                  title="চলতি স্পেশাল অফার ও হট ডিসকাউন্ট"
+                  badge="হট ডিল"
+                  icon={<Flame className="w-5 h-5 text-rose-600" />}
+                  courses={offerCourses}
+                  onNavigate={onNavigate}
+                />
+              )}
 
-          {/* Dynamically Render Rows for EACH Category that has active courses */}
-          {activeCategoryGroups.map((group) => (
-            <CategoryScrollRow
-              key={group.id}
-              title={group.name}
-              badge="কোর্স তালিকা"
-              icon={<GraduationCap className="w-5 h-5 text-rose-600" />}
-              onSelectCategory={() => setSelectedCategory(group.id)}
-              courses={group.courses}
-              onNavigate={onNavigate}
-            />
-          ))}
+              {layoutMode === 'grid' ? (
+                /* Responsive Grid of All Courses */
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
+                  {activeCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} onNavigate={onNavigate} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-6 sm:space-y-8">
+                  {/* Dynamically Render Rows for EACH Category that has active courses */}
+                  {activeCategoryGroups.map((group) => (
+                    <CategoryScrollRow
+                      key={group.id}
+                      title={group.name}
+                      badge="কোর্স তালিকা"
+                      icon={<GraduationCap className="w-5 h-5 text-rose-600" />}
+                      onSelectCategory={() => setSelectedCategory(group.id)}
+                      courses={group.courses}
+                      onNavigate={onNavigate}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

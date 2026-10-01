@@ -86,21 +86,50 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return initialCourses;
   });
 
-  // Fetch live courses.json from repository if available (allows true live sync with GitHub Pages!)
-  useEffect(() => {
-    fetch('./courses.json')
-      .then((res) => {
-        if (res.ok) return res.json();
-        return null;
-      })
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setCourses(data);
-        }
-      })
-      .catch(() => {
-        // silently ignore if not present
+  // Helper to persist courses to backend API (in AI Studio / Vite dev server)
+  const syncCoursesToDisk = (updatedCourses: Course[]) => {
+    try {
+      fetch('/api/save-courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courses: updatedCourses })
+      }).catch(() => {
+        // silent in static hosting
       });
+    } catch {
+      // ignore
+    }
+  };
+
+  // Fetch live courses from API or static courses.json WITHOUT wiping locally added courses
+  useEffect(() => {
+    const fetchLive = async () => {
+      try {
+        let res = await fetch('/api/courses');
+        if (!res.ok) {
+          res = await fetch('./courses.json');
+        }
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setCourses(prev => {
+              // Never discard user additions: merge local additions with remote data
+              const diskIds = new Set(data.map((c: Course) => c.id || c.slug));
+              const localAdditions = prev.filter(c => !diskIds.has(c.id) && !diskIds.has(c.slug));
+              if (localAdditions.length > 0) {
+                const merged = [...localAdditions, ...data];
+                syncCoursesToDisk(merged);
+                return merged;
+              }
+              return data;
+            });
+          }
+        }
+      } catch {
+        // silently ignore
+      }
+    };
+    fetchLive();
   }, []);
 
   const [categories, setCategories] = useState<CustomCategory[]>(() => {
@@ -271,7 +300,12 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const addCourse = (newCourse: Course) => {
-    setCourses(prev => [newCourse, ...prev]);
+    setCourses(prev => {
+      const exists = prev.some(c => c.id === newCourse.id);
+      const updated = exists ? prev.map(c => (c.id === newCourse.id ? newCourse : c)) : [newCourse, ...prev];
+      syncCoursesToDisk(updated);
+      return updated;
+    });
     if (newCourse.category && newCourse.category.trim()) {
       const catTrimmed = newCourse.category.trim();
       setCategories(prev => {
@@ -284,11 +318,19 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateCourse = (updatedCourse: Course) => {
-    setCourses(prev => prev.map(c => (c.id === updatedCourse.id ? updatedCourse : c)));
+    setCourses(prev => {
+      const updated = prev.map(c => (c.id === updatedCourse.id ? updatedCourse : c));
+      syncCoursesToDisk(updated);
+      return updated;
+    });
   };
 
   const deleteCourse = (id: string) => {
-    setCourses(prev => prev.filter(c => c.id !== id));
+    setCourses(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      syncCoursesToDisk(updated);
+      return updated;
+    });
   };
 
   const updateSiteSettings = (settings: Partial<SiteSettings>) => {
@@ -320,6 +362,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const parsed = JSON.parse(jsonString);
       if (Array.isArray(parsed) && parsed.length > 0) {
         setCourses(parsed);
+        syncCoursesToDisk(parsed);
         return true;
       }
     } catch {
@@ -330,6 +373,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const clearAllCourses = () => {
     setCourses([]);
+    syncCoursesToDisk([]);
     try {
       localStorage.setItem(STORAGE_KEYS.COURSES, JSON.stringify([]));
     } catch (e) {
