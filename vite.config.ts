@@ -74,10 +74,28 @@ function coursesBackendPlugin(): Plugin {
   };
 }
 
+function htmlEntryPointPlugin(): Plugin {
+  return {
+    name: 'html-entry-point-plugin',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        let clean = html
+          .replace(/<script\s+type="module"\s+crossorigin\s+src="\.?\/?assets\/index-[^"]+\.js"><\/script>/gi, '')
+          .replace(/<link\s+rel="stylesheet"\s+crossorigin\s+href="\.?\/?assets\/index-[^"]+\.css">/gi, '');
+        if (!clean.includes('/src/main.tsx')) {
+          clean = clean.replace('</body>', '    <script type="module" src="/src/main.tsx"></script>\n  </body>');
+        }
+        return clean;
+      },
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss(), coursesBackendPlugin()],
+    plugins: [react(), tailwindcss(), htmlEntryPointPlugin(), coursesBackendPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),
