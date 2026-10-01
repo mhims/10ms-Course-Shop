@@ -1,0 +1,27 @@
+[
+  {
+    "id": "res-blog",
+    "title": "পড়াশোনার গাইডলাইন ও ব্লগ",
+    "url": "/blog"
+  },
+  {
+    "id": "res-review",
+    "title": "শিক্ষার্থীদের রিভিউ ও মতামত",
+    "url": "/review"
+  },
+  {
+    "id": "res-courses",
+    "title": "সকল কোর্স ডিরেক্টরি",
+    "url": "/courses"
+  },
+  {
+    "id": "res-job-prep",
+    "title": "বিসিএস ও সরকারি চাকরি প্রস্তুতি",
+    "url": "/job-prep"
+  },
+  {
+    "id": "res-class68",
+    "title": "ক্লাস ৬-৮ নতুন শিক্ষাক্রম",
+    "url": "/class-6-8"
+  }
+]
