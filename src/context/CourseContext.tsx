@@ -59,7 +59,7 @@ const STORAGE_KEYS = {
   COURSES: '10ms_shop_courses_v5_live',
   CATEGORIES: '10ms_shop_custom_categories_v4',
   RESOURCES: '10ms_shop_custom_resources_v1',
-  BLOGS: '10ms_shop_blogs_v2',
+  BLOGS: '10ms_shop_blogs_v3_clean',
   REVIEWS: '10ms_shop_reviews_v2',
   SETTINGS: '10ms_shop_settings_v3',
 };
@@ -186,11 +186,14 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
     try {
+      // Clean out any legacy demo blog keys from visitor browsers
+      localStorage.removeItem('10ms_shop_blogs_v2');
+      localStorage.removeItem('10ms_shop_blogs_v1');
+
       const saved = localStorage.getItem(STORAGE_KEYS.BLOGS);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Remove old demo blog posts so user starts completely clean
           return parsed.filter(b => b.id !== 'blog-1' && b.id !== 'blog-2' && b.id !== 'blog-3');
         }
       }

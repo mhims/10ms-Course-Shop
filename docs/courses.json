@@ -5,7 +5,10 @@
     "title": "HSC 28 অনলাইন ব্যাচ (বাংলা, ইংরেজি, তথ্য ও যোগাযোগ প্রযুক্তি)",
     "englishTitle": "HSC 2028 EBI- English, Bangla, ICT Course",
     "category": "hsc",
-    "displayTargets": ["home", "hsc"],
+    "displayTargets": [
+      "home",
+      "hsc"
+    ],
     "targetClass": "HSC 2028",
     "regularPrice": 9000,
     "offerPrice": 5200,
@@ -18,20 +21,39 @@
     "promoCode": "28beihsc",
     "instructor": "১০ মিনিট স্কুল",
     "instructorRole": "অভিজ্ঞ শিক্ষকমণ্ডলী",
-    "rating": 5.0,
+    "rating": 5,
     "reviewCount": 1500,
     "enrolledCount": 1500,
     "shortDescription": "HSC 2028 EBI- English, Bangla, ICT Course",
     "fullDescription": "এইচএসসি ২০২৮ ব্যাচের শিক্ষার্থীদের জন্য বাংলা, ইংরেজি ও আইসিটির পূর্ণাঙ্গ লাইভ প্রস্তুতি কোর্স।",
-    "highlights": ["লাইভ ক্লাস", "লেকচার শিট ও নোট", "মডেল টেস্ট", "ডাউট সলভিং"],
+    "highlights": [
+      "লাইভ ক্লাস",
+      "লেকচার শিট ও নোট",
+      "মডেল টেস্ট",
+      "ডাউট সলভিং"
+    ],
     "syllabus": [
-      { "title": "বাংলা ১ম ও ২য় পত্র পূর্ণাঙ্গ প্রস্তুতি", "count": "লাইভ ক্লাস ও পরীক্ষা" },
-      { "title": "ইংরেজি ১ম ও ২য় পত্র ফ্লুয়েন্সি ও গ্রামার", "count": "লাইভ ক্লাস ও পরীক্ষা" },
-      { "title": "তথ্য ও যোগাযোগ প্রযুক্তি (ICT) সম্পূর্ণ সিলেবাস", "count": "লাইভ ক্লাস ও টেস্ট" }
+      {
+        "title": "বাংলা ১ম ও ২য় পত্র পূর্ণাঙ্গ প্রস্তুতি",
+        "count": "লাইভ ক্লাস ও পরীক্ষা"
+      },
+      {
+        "title": "ইংরেজি ১ম ও ২য় পত্র ফ্লুয়েন্সি ও গ্রামার",
+        "count": "লাইভ ক্লাস ও পরীক্ষা"
+      },
+      {
+        "title": "তথ্য ও যোগাযোগ প্রযুক্তি (ICT) সম্পূর্ণ সিলেবাস",
+        "count": "লাইভ ক্লাস ও টেস্ট"
+      }
     ],
     "seoTitle": "HSC 28 অনলাইন ব্যাচ বাংলা ইংরেজি আইসিটি | 10MS Promo Code",
     "seoDescription": "১০ মিনিট স্কুলের HSC 28 অনলাইন ব্যাচে বিশেষ ডিসকাউন্ট। প্রোমো কোড: 28beihsc",
-    "seoKeywords": ["HSC 28 অনলাইন ব্যাচ", "hsc 2028 10 minute school", "28beihsc", "hsc bangla english ict"],
+    "seoKeywords": [
+      "HSC 28 অনলাইন ব্যাচ",
+      "hsc 2028 10 minute school",
+      "28beihsc",
+      "hsc bangla english ict"
+    ],
     "isFeatured": true,
     "badgeText": "৳৩৮০০ ছাড়"
   },
@@ -41,7 +63,10 @@
     "title": "SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ]",
     "englishTitle": "SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ Bundle]",
     "category": "class-9-10",
-    "displayTargets": ["home", "class-9-10"],
+    "displayTargets": [
+      "home",
+      "class-9-10"
+    ],
     "targetClass": "৯ম-১০ম (SSC)",
     "regularPrice": 3000,
     "offerPrice": 2250,
@@ -54,20 +79,39 @@
     "promoCode": "ssc27smp",
     "instructor": "১০ মিনিট স্কুল",
     "instructorRole": "অভিজ্ঞ শিক্ষকমণ্ডলী",
-    "rating": 5.0,
+    "rating": 5,
     "reviewCount": 1500,
     "enrolledCount": 1500,
     "shortDescription": "SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ Bundle]",
     "fullDescription": "এসএসসি ২০২৭ ব্যাচের বিজ্ঞান বিভাগের শিক্ষার্থীদের শেষ মুহূর্তের চূড়ান্ত পূর্ণাঙ্গ রিভিশন ও মডেল টেস্ট কোর্স।",
-    "highlights": ["লাইভ ক্লাস", "লেকচার শিট ও নোট", "বোর্ড প্রশ্ন সমাধান", "স্পেশাল রিভিশন টেস্ট"],
+    "highlights": [
+      "লাইভ ক্লাস",
+      "লেকচার শিট ও নোট",
+      "বোর্ড প্রশ্ন সমাধান",
+      "স্পেশাল রিভিশন টেস্ট"
+    ],
     "syllabus": [
-      { "title": "পদার্থবিজ্ঞান ও রসায়ন পূর্ণাঙ্গ রিভিশন", "count": "লাইভ ক্লাস ও টেস্ট" },
-      { "title": "উচ্চতর গণিত ও সাধারণ গণিত স্পেশাল ক্লাস", "count": "লাইভ ক্লাস ও টেস্ট" },
-      { "title": "জীববিজ্ঞান বোর্ড স্ট্যান্ডার্ড পরীক্ষা", "count": "মডেল টেস্ট ও সল্ভ" }
+      {
+        "title": "পদার্থবিজ্ঞান ও রসায়ন পূর্ণাঙ্গ রিভিশন",
+        "count": "লাইভ ক্লাস ও টেস্ট"
+      },
+      {
+        "title": "উচ্চতর গণিত ও সাধারণ গণিত স্পেশাল ক্লাস",
+        "count": "লাইভ ক্লাস ও টেস্ট"
+      },
+      {
+        "title": "জীববিজ্ঞান বোর্ড স্ট্যান্ডার্ড পরীক্ষা",
+        "count": "মডেল টেস্ট ও সল্ভ"
+      }
     ],
     "seoTitle": "SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ] | 10MS Offer",
     "seoDescription": "১০ মিনিট স্কুলের SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্সে ৭৫০ টাকা ছাড়। প্রোমো কোড: ssc27smp",
-    "seoKeywords": ["SSC 27 শেষ মুহূর্তের প্রস্তুতি", "ssc27smp", "ssc 2027 10 minute school", "ssc science bundle"],
+    "seoKeywords": [
+      "SSC 27 শেষ মুহূর্তের প্রস্তুতি",
+      "ssc27smp",
+      "ssc 2027 10 minute school",
+      "ssc science bundle"
+    ],
     "isFeatured": true,
     "badgeText": "৳৭৫০ ছাড়"
   }
