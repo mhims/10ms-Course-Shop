@@ -137,6 +137,42 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             });
           }
         }
+
+        // Also fetch live blogs for GitHub Pages visitors
+        try {
+          const bRes = await fetch('./blogs.json');
+          if (bRes.ok) {
+            const bData = await bRes.json();
+            if (Array.isArray(bData) && bData.length > 0) {
+              setBlogPosts(prev => {
+                if (prev && prev.length > 0) {
+                  const existingIds = new Set(prev.map(p => p.id));
+                  const newFromDisk = bData.filter((b: BlogPost) => !existingIds.has(b.id));
+                  if (newFromDisk.length > 0) {
+                    return [...prev, ...newFromDisk];
+                  }
+                  return prev;
+                }
+                return bData;
+              });
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        // Also fetch live settings for GitHub Pages visitors
+        try {
+          const sRes = await fetch('./settings.json');
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (sData && typeof sData === 'object' && sData.siteName) {
+              setSiteSettings(prev => ({ ...prev, ...sData }));
+            }
+          }
+        } catch {
+          // ignore
+        }
       } catch {
         // silently ignore
       }

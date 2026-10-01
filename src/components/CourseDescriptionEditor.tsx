@@ -19,8 +19,11 @@ import {
   FileText,
   AlertCircle,
   Layers,
+  Clipboard,
+  Check,
 } from 'lucide-react';
 import { Course } from '../types';
+import { convertHtmlToFormattedMarkdown } from '../utils/formatConverter';
 
 interface CourseDescriptionEditorProps {
   value: string;
@@ -47,8 +50,38 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
   const [showCoursePicker, setShowCoursePicker] = useState(false);
   const [showSnippetPreview, setShowSnippetPreview] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'mobile' | 'desktop'>('mobile');
+  const [pasteNotice, setPasteNotice] = useState<string | null>(null);
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [modalPasteHtml, setModalPasteHtml] = useState('');
+  const [modalDetectedFeatures, setModalDetectedFeatures] = useState<string[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Intercept paste events in textarea to automatically preserve copied HTML Headings (H1, H2, H3), Bold, Lists, and Links
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const htmlData = e.clipboardData.getData('text/html');
+    const plainData = e.clipboardData.getData('text/plain');
+
+    // If HTML clipboard has semantic tags or styled elements
+    if (
+      htmlData &&
+      (/<h[1-6]/i.test(htmlData) ||
+        /<strong|<b\b/i.test(htmlData) ||
+        /<ul|<ol|<li/i.test(htmlData) ||
+        /<blockquote/i.test(htmlData) ||
+        /msoheading|heading/i.test(htmlData) ||
+        /<a\s+href/i.test(htmlData) ||
+        /font-size:\s*(1[6-9]|2\d|3\d)p[xt]/i.test(htmlData))
+    ) {
+      e.preventDefault();
+      const formatted = convertHtmlToFormattedMarkdown(htmlData, plainData);
+      insertAtCursor(formatted);
+
+      setPasteNotice('✨ কপি করা হেডার (H1, H2), বোল্ড ও লিস্ট ফরমেটসহ স্বয়ংক্রিয়ভাবে পেস্ট হয়েছে!');
+      setTimeout(() => setPasteNotice(null), 4000);
+      return;
+    }
+  };
 
   // Helper to insert markdown/HTML at current cursor selection
   const insertAtCursor = (before: string, after: string = '', defaultInside: string = '') => {
@@ -372,6 +405,17 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
                 <span>কোর্স কার্ড</span>
               </button>
             )}
+
+            {/* Smart Paste with Formatting Button */}
+            <button
+              type="button"
+              onClick={() => setShowPasteModal(true)}
+              className="px-2.5 py-1 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded flex items-center gap-1 cursor-pointer transition-colors shadow-2xs ml-auto"
+              title="গুগল ডক, ওয়ার্ড বা ওয়েবসাইট থেকে হেডার ১,২ ফরম্যাটসহ পেস্ট করুন"
+            >
+              <Clipboard className="w-3.5 h-3.5 text-amber-700" />
+              <span>📋 ফরমেটসহ পেস্ট</span>
+            </button>
           </div>
 
           {/* Quick Pre-made SEO Templates Row */}
@@ -414,13 +458,20 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
 
       {/* Editor Main Content: Textarea or Live Preview */}
       {activeTab === 'editor' ? (
-        <div className="relative">
+        <div className="relative space-y-2">
+          {pasteNotice && (
+            <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{pasteNotice}</span>
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             rows={10}
             value={value}
+            onPaste={handlePaste}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={`এখানে কোর্সের বিস্তারিত তথ্য লিখুন...\n\n# প্রধান শিরোনাম (H1)\nএই কোর্সটির উদ্দেশ্য ও লক্ষ্য...\n\n## কোর্সটির বিশেষত্ব (H2)\n- ১ম সুবিধা\n- ২য় সুবিধা\n\n[কোর্স লিংক বা এফিলিয়েট লিংক দিন]`}
+            placeholder={`এখানে কোর্সের বিস্তারিত তথ্য লিখুন বা কপি করে পেস্ট করুন...\n\n💡 Google Docs, Word বা ওয়েবসাইট থেকে কপি করা হেডার (H1, H2, H3), বোল্ড ও লিস্ট এখানে সরাসরি পেস্ট করলে সেই ফরমেটেই বসে যাবে!\n\n# প্রধান শিরোনাম (H1)\n## সাব-হেডিং (H2)`}
             className="w-full p-3.5 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm font-sans leading-relaxed focus:outline-none focus:ring-2 focus:ring-rose-500"
           />
         </div>
@@ -676,6 +727,114 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Smart Paste with Formatting Modal */}
+      {showPasteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl border border-amber-300 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-100 text-amber-800 rounded-xl">
+                  <Clipboard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-slate-900 text-sm sm:text-base">
+                    হেডার ১, ২ ও লেখার ফরম্যাটসহ স্মার্ট পেস্ট
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    Google Docs, Word, ওয়েবসাইট বা চ্যাটজিপিটি থেকে কপি করা লেখা এখানে পেস্ট করুন
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasteModal(false);
+                  setModalPasteHtml('');
+                  setModalDetectedFeatures([]);
+                }}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs text-amber-900 leading-relaxed">
+                💡 <strong>টিপস:</strong> আপনি এডিটর বক্সে সরাসরি <kbd className="bg-white px-1.5 py-0.5 border border-amber-300 rounded font-mono font-bold">Ctrl + V</kbd> দিয়ে পেস্ট করলেও হেডার ১, ২ ও বোল্ড স্বয়ংক্রিয়ভাবে বজায় থাকবে। অথবা নিশ্চিত হতে নিচের বক্সে পেস্ট করতে পারেন:
+              </div>
+
+              {/* Rich capture textarea / box */}
+              <div className="relative">
+                <div
+                  contentEditable
+                  suppressContentEditableWarning={true}
+                  onPaste={(e) => {
+                    const html = e.clipboardData.getData('text/html');
+                    const text = e.clipboardData.getData('text/plain');
+                    const detected: string[] = [];
+                    if (/<h1|heading\s*1/i.test(html || text)) detected.push('প্রধান শিরোনাম (H1)');
+                    if (/<h2|heading\s*2/i.test(html || text)) detected.push('সাব-হেডিং (H2)');
+                    if (/<h3|heading\s*3/i.test(html || text)) detected.push('মাইনর হেডিং (H3)');
+                    if (/<b|<strong/i.test(html || text)) detected.push('বোল্ড টেক্সট');
+                    if (/<ul|<ol|<li/i.test(html || text)) detected.push('তালিকা / লিস্ট');
+                    if (/<a\s+href/i.test(html || text)) detected.push('হাইপারলিংক');
+
+                    setModalDetectedFeatures(detected);
+                    setModalPasteHtml(html || text);
+                  }}
+                  className="w-full min-h-[140px] max-h-[220px] overflow-y-auto p-4 bg-slate-50 border-2 border-dashed border-amber-300 hover:border-amber-400 rounded-2xl text-xs sm:text-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-amber-500"
+                />
+                {!modalPasteHtml && (
+                  <div className="pointer-events-none absolute left-4 top-4 text-slate-400 select-none text-xs sm:text-sm">
+                    এখানে কার্সর রেখে কীবোর্ডের Ctrl + V চেপে পেস্ট করুন...
+                  </div>
+                )}
+              </div>
+
+              {modalDetectedFeatures.length > 0 && (
+                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-900 flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">সফলভাবে শনাক্তকৃত ফরম্যাট:</span>{' '}
+                    {modalDetectedFeatures.join(', ')}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPasteModal(false);
+                  setModalPasteHtml('');
+                  setModalDetectedFeatures([]);
+                }}
+                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl text-xs font-bold cursor-pointer"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                disabled={!modalPasteHtml.trim()}
+                onClick={() => {
+                  const formatted = convertHtmlToFormattedMarkdown(modalPasteHtml, modalPasteHtml);
+                  insertAtCursor(formatted);
+                  setShowPasteModal(false);
+                  setModalPasteHtml('');
+                  setModalDetectedFeatures([]);
+                  setPasteNotice('✨ কপি করা হেডার (H1, H2), বোল্ড ও লিস্ট ফরম্যাটসহ সফলভাবে যুক্ত হয়েছে!');
+                  setTimeout(() => setPasteNotice(null), 4000);
+                }}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-700 hover:to-rose-700 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50 transition-all flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4" />
+                <span>ফরমেটসহ এডিটরে যুক্ত করুন</span>
+              </button>
             </div>
           </div>
         </div>

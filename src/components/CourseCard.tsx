@@ -60,6 +60,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onNavigate }) =>
           src={course.imageUrl}
           alt={course.imageAlt || course.title}
           referrerPolicy="no-referrer"
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
             e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';

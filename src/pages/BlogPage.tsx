@@ -156,7 +156,13 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
               <img
                 src={courseMatch.imageUrl}
                 alt={courseMatch.title}
+                loading="lazy"
+                decoding="async"
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-rose-100 shadow-xs shrink-0"
+                onError={(e) => {
+                  e.currentTarget.src =
+                    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                }}
               />
               <div className="min-w-0">
                 <h4 className="font-black text-sm sm:text-base md:text-lg text-slate-900 line-clamp-1">

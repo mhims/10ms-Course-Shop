@@ -200,7 +200,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
               <img
                 src={courseMatch.imageUrl}
                 alt={courseMatch.title}
+                loading="lazy"
+                decoding="async"
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-rose-100 shadow-xs shrink-0"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                }}
               />
               <div className="min-w-0">
                 <h4 className="font-bold text-sm sm:text-base text-slate-900 truncate">
@@ -346,7 +351,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
                 src={course.imageUrl}
                 alt={course.imageAlt || course.title}
                 referrerPolicy="no-referrer"
+                loading="eager"
+                decoding="async"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                }}
               />
               {hasOffer && (
                 <div className="absolute top-3 left-3 bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-lg">

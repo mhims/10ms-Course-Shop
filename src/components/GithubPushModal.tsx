@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   CheckCircle2,
 } from 'lucide-react';
+import { useCourseContext } from '../context/CourseContext';
 
 interface GithubPushModalProps {
   isOpen: boolean;
@@ -28,8 +29,9 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
   exportCoursesJSON,
   onSuccess,
 }) => {
+  const { courses, blogPosts, siteSettings, categories, resources } = useCourseContext();
   const [token, setToken] = useState(() => localStorage.getItem('10ms_gh_pat') || '');
-  const [repo, setRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/mhims.github.io');
+  const [repo, setRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/10ms-Course-Shop');
   const [showToken, setShowToken] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
   const [status, setStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({
@@ -62,65 +64,75 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
     setIsPushing(true);
     setStatus({
       type: 'loading',
-      message: 'গিটহাবে সরাসরি ডেটা পাঠানো হচ্ছে ও লাইভ করা হচ্ছে...',
+      message: 'গিটহাবে সকল ডেটা (কোর্স, ব্লগ, সেটিংস) পাঠানো হচ্ছে...',
     });
 
     localStorage.setItem('10ms_gh_pat', token.trim());
     localStorage.setItem('10ms_gh_repo', cleanRepo);
 
     try {
-      const jsonContent = exportCoursesJSON();
-      // Target paths for GitHub Pages root and docs/
-      const targetPaths = ['docs/courses.json', 'public/courses.json', 'courses.json'];
+      // Complete website dataset to sync
+      const filesToSync = [
+        { name: 'courses.json', content: JSON.stringify(courses, null, 2) },
+        { name: 'blogs.json', content: JSON.stringify(blogPosts, null, 2) },
+        { name: 'settings.json', content: JSON.stringify(siteSettings, null, 2) },
+        { name: 'categories.json', content: JSON.stringify(categories, null, 2) },
+        { name: 'resources.json', content: JSON.stringify(resources, null, 2) },
+      ];
 
-      // Encode UTF-8 content to base64 safely
-      const utf8Bytes = new TextEncoder().encode(jsonContent);
-      let binaryStr = '';
-      utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
-      const base64Content = btoa(binaryStr);
+      for (const file of filesToSync) {
+        // Target paths for GitHub Pages root and docs/
+        const targetPaths = [`docs/${file.name}`, `public/${file.name}`, file.name];
 
-      for (const filePath of targetPaths) {
-        const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${filePath}`;
-        let sha: string | undefined = undefined;
+        // Encode UTF-8 content to base64 safely
+        const utf8Bytes = new TextEncoder().encode(file.content);
+        let binaryStr = '';
+        utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
+        const base64Content = btoa(binaryStr);
 
-        try {
-          const getRes = await fetch(apiUrl, {
+        for (const filePath of targetPaths) {
+          const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${filePath}`;
+          let sha: string | undefined = undefined;
+
+          try {
+            const getRes = await fetch(apiUrl, {
+              headers: {
+                Authorization: `token ${token.trim()}`,
+                Accept: 'application/vnd.github.v3+json',
+              },
+            });
+            if (getRes.ok) {
+              const fileData = await getRes.json();
+              sha = fileData.sha;
+            }
+          } catch {
+            // File might not exist yet, continue
+          }
+
+          const putRes = await fetch(apiUrl, {
+            method: 'PUT',
             headers: {
               Authorization: `token ${token.trim()}`,
               Accept: 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              message: `Update ${file.name} from 10MS Admin Panel [skip ci] - ${new Date().toLocaleTimeString()}`,
+              content: base64Content,
+              sha: sha,
+            }),
           });
-          if (getRes.ok) {
-            const fileData = await getRes.json();
-            sha = fileData.sha;
+
+          if (!putRes.ok) {
+            const errData = await putRes.json().catch(() => ({}));
+            throw new Error(errData.message || `গিটহাবে ${filePath} ফাইল আপলোডে সমস্যা হয়েছে (${putRes.status})`);
           }
-        } catch {
-          // File might not exist yet, continue
-        }
-
-        const putRes = await fetch(apiUrl, {
-          method: 'PUT',
-          headers: {
-            Authorization: `token ${token.trim()}`,
-            Accept: 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: `Update courses from 10MS Admin Panel [skip ci] - ${new Date().toLocaleTimeString()}`,
-            content: base64Content,
-            sha: sha,
-          }),
-        });
-
-        if (!putRes.ok) {
-          const errData = await putRes.json().catch(() => ({}));
-          throw new Error(errData.message || `গিটহাবে ${filePath} ফাইল আপলোডে সমস্যা হয়েছে (${putRes.status})`);
         }
       }
 
       setStatus({
         type: 'success',
-        message: 'আলহামদুলিল্লাহ! সরাসরি গিটহাবে সফলভাবে পুশ সম্পন্ন হয়েছে। আগামী ১-২ মিনিটের মধ্যে 10mscourse.shop সাইটে সব আপডেট লাইভ দেখতে পাবেন!',
+        message: 'আলহামদুলিল্লাহ! সম্পূর্ণ ওয়েবসাইটের ডেটা (কোর্স, ব্লগ আর্টিকেল, WhatsApp ও সাইট সেটিংস) সরাসরি গিটহাবে সফলভাবে পুশ সম্পন্ন হয়েছে। আগামী ১-২ মিনিটের মধ্যে 10mscourse.shop সাইটে সব আপডেট লাইভ দেখতে পাবেন!',
       });
 
       if (onSuccess) {
@@ -201,6 +213,31 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
             <div className="flex-1 leading-relaxed">{status.message}</div>
           </div>
         )}
+
+        {/* Everything Synced Notification */}
+        <div className="p-3.5 bg-gradient-to-r from-rose-50 to-red-50 rounded-2xl border border-rose-200 space-y-2 text-xs">
+          <div className="font-extrabold text-slate-900 flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>১ ক্লিকে ওয়েবসাইটের যা যা একসাথে লাইভ হবে:</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5 text-[11px] font-bold text-slate-700">
+            <span className="bg-white px-2.5 py-1 rounded-lg border border-rose-100 shadow-2xs">
+              📚 কোর্স ও অফার ({courses.length}টি)
+            </span>
+            <span className="bg-white px-2.5 py-1 rounded-lg border border-rose-100 shadow-2xs">
+              ✍️ সকল ব্লগ আর্টিকেল ({blogPosts.length}টি)
+            </span>
+            <span className="bg-white px-2.5 py-1 rounded-lg border border-rose-100 shadow-2xs">
+              💬 WhatsApp ও যোগাযোগ নম্বর
+            </span>
+            <span className="bg-white px-2.5 py-1 rounded-lg border border-rose-100 shadow-2xs">
+              📢 ব্যানার ও অফার নোটিশ
+            </span>
+            <span className="bg-white px-2.5 py-1 rounded-lg border border-rose-100 shadow-2xs">
+              🏷️ ক্যাটাগরি ও ফুটার লিংক
+            </span>
+          </div>
+        </div>
 
         {/* Form Inputs */}
         <div className="space-y-4">

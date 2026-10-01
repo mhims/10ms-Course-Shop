@@ -23,9 +23,11 @@ import {
   Search,
   CheckCircle2,
   HelpCircle,
-  FolderPlus
+  FolderPlus,
+  Clipboard,
 } from 'lucide-react';
 import { BlogPost, Course } from '../types';
+import { convertHtmlToFormattedMarkdown } from '../utils/formatConverter';
 
 interface WordPressBlogEditorProps {
   initialBlog: BlogPost;
@@ -82,6 +84,33 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
     setBlog((prev) => ({ ...prev, slug: clean }));
+  };
+
+  const [pasteNotice, setPasteNotice] = useState<string | null>(null);
+
+  // Auto-preserve headings (H1, H2, H3), bold, lists, and links on paste
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const htmlData = e.clipboardData.getData('text/html');
+    const plainData = e.clipboardData.getData('text/plain');
+
+    if (
+      htmlData &&
+      (/<h[1-6]/i.test(htmlData) ||
+        /<strong|<b\b/i.test(htmlData) ||
+        /<ul|<ol|<li/i.test(htmlData) ||
+        /<blockquote/i.test(htmlData) ||
+        /msoheading|heading/i.test(htmlData) ||
+        /<a\s+href/i.test(htmlData) ||
+        /font-size:\s*(1[6-9]|2\d|3\d)p[xt]/i.test(htmlData))
+    ) {
+      e.preventDefault();
+      const formatted = convertHtmlToFormattedMarkdown(htmlData, plainData);
+      insertAtCursor(formatted);
+
+      setPasteNotice('✨ কপি করা হেডার (H1, H2), বোল্ড ও লিস্ট ফরম্যাটসহ স্বয়ংক্রিয়ভাবে পেস্ট হয়েছে!');
+      setTimeout(() => setPasteNotice(null), 4000);
+      return;
+    }
   };
 
   // Helper to insert text at current cursor position in textarea
@@ -537,14 +566,21 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                 </div>
 
                 {/* Content Textarea */}
-                <div>
+                <div className="space-y-2">
+                  {pasteNotice && (
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{pasteNotice}</span>
+                    </div>
+                  )}
                   <textarea
                     ref={textareaRef}
                     required
                     rows={16}
                     value={blog.content}
+                    onPaste={handlePaste}
                     onChange={(e) => setBlog({ ...blog, content: e.target.value })}
-                    placeholder="এখানে আপনার ব্লগের সম্পূর্ণ বিষয়বস্তু লিখুন... আপনি প্যারাগ্রাফ, হেডিং, বুলেট পয়েন্ট এবং কোর্স লিঙ্ক স্বাধীনভাবে ব্যবহার করতে পারেন।"
+                    placeholder="এখানে আপনার ব্লগের সম্পূর্ণ বিষয়বস্তু লিখুন বা কপি করে পেস্ট করুন...\n\n💡 Google Docs, Word বা অন্য ওয়েবসাইট থেকে কপি করা হেডার ১, ২ ও বোল্ড লেখা এখানে পেস্ট করলেই স্বয়ংক্রিয়ভাবে ফরম্যাট বজায় থাকবে।"
                     className="w-full p-4 border border-slate-200 rounded-2xl font-sans text-sm sm:text-base leading-relaxed text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400"
                   />
                   <div className="flex items-center justify-between text-[11px] text-slate-400 mt-1 px-1">

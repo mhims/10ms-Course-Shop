@@ -100,7 +100,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
   // GitHub Access Token Sync State
   const [githubToken, setGithubToken] = useState(() => localStorage.getItem('10ms_gh_pat') || '');
-  const [githubRepo, setGithubRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/mhims.github.io');
+  const [githubRepo, setGithubRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/10ms-Course-Shop');
   const [isPushingToGithub, setIsPushingToGithub] = useState(false);
   const [githubPushStatus, setGithubPushStatus] = useState<string | null>(null);
   const [showGithubPushModal, setShowGithubPushModal] = useState(false);
@@ -378,50 +378,57 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     localStorage.setItem('10ms_gh_repo', cleanRepo);
 
     try {
-      const jsonContent = exportCoursesJSON();
-      // Put file in docs/courses.json (which GitHub Pages serves!) and public/courses.json
-      const paths = ['docs/courses.json', 'public/courses.json', 'courses.json'];
-      
-      const utf8Bytes = new TextEncoder().encode(jsonContent);
-      let binaryStr = '';
-      utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
-      const base64Content = btoa(binaryStr);
+      const filesToSync = [
+        { name: 'courses.json', content: JSON.stringify(courses, null, 2) },
+        { name: 'blogs.json', content: JSON.stringify(blogPosts, null, 2) },
+        { name: 'settings.json', content: JSON.stringify(siteSettings, null, 2) },
+        { name: 'categories.json', content: JSON.stringify(categories, null, 2) },
+        { name: 'resources.json', content: JSON.stringify(resources, null, 2) },
+      ];
 
-      for (const p of paths) {
-        const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${p}`;
-        let sha: string | undefined = undefined;
-        try {
-          const getRes = await fetch(apiUrl, {
+      for (const file of filesToSync) {
+        const paths = [`docs/${file.name}`, `public/${file.name}`, file.name];
+        const utf8Bytes = new TextEncoder().encode(file.content);
+        let binaryStr = '';
+        utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
+        const base64Content = btoa(binaryStr);
+
+        for (const p of paths) {
+          const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${p}`;
+          let sha: string | undefined = undefined;
+          try {
+            const getRes = await fetch(apiUrl, {
+              headers: {
+                Authorization: `token ${githubToken.trim()}`,
+                Accept: 'application/vnd.github.v3+json',
+              },
+            });
+            if (getRes.ok) {
+              const fileData = await getRes.json();
+              sha = fileData.sha;
+            }
+          } catch {
+            // ignore
+          }
+
+          await fetch(apiUrl, {
+            method: 'PUT',
             headers: {
               Authorization: `token ${githubToken.trim()}`,
               Accept: 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              message: `Update ${file.name} from 10MS Admin Panel [skip ci]`,
+              content: base64Content,
+              sha: sha,
+            }),
           });
-          if (getRes.ok) {
-            const fileData = await getRes.json();
-            sha = fileData.sha;
-          }
-        } catch {
-          // ignore
         }
-
-        await fetch(apiUrl, {
-          method: 'PUT',
-          headers: {
-            Authorization: `token ${githubToken.trim()}`,
-            Accept: 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: `Update courses catalog from 10MS Admin Panel [skip ci]`,
-            content: base64Content,
-            sha: sha,
-          }),
-        });
       }
 
-      setGithubPushStatus('অভিনন্দন! সরাসরি গিটহাবে আপডেট হয়ে গেছে!');
-      showToast('গিটহাবে সরাসরি আপডেট সম্পন্ন হয়েছে!');
+      setGithubPushStatus('অভিনন্দন! ওয়েবসাইটের সকল ডেটা (কোর্স, ব্লগ, সেটিংস) সরাসরি গিটহাবে আপডেট হয়ে গেছে!');
+      showToast('গিটহাবে সরাসরি সব ডেটা আপডেট সম্পন্ন হয়েছে!');
       setTimeout(() => setGithubPushStatus(null), 5000);
     } catch (err: any) {
       console.error('GitHub Push error:', err);
@@ -865,7 +872,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                             <img
                               src={c.imageUrl}
                               alt=""
+                              loading="lazy"
                               className="w-10 h-8 rounded object-cover bg-slate-100 shrink-0"
+                              onError={(e) => {
+                                e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                              }}
                             />
                             <div className="min-w-0">
                               <div className="font-bold text-slate-900 truncate max-w-xs">{c.title}</div>
@@ -1094,7 +1105,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                       <img
                         src={post.coverImage}
                         alt=""
+                        loading="lazy"
                         className="w-20 h-16 object-cover rounded-xl shrink-0 bg-slate-200"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                        }}
                       />
                       <div className="min-w-0">
                         <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">
