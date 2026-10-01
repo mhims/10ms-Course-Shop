@@ -4,6 +4,8 @@ import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel } from '../utils/courseHelper';
 import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
+import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
+import { GithubPushModal } from '../components/GithubPushModal';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -101,6 +103,8 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [githubRepo, setGithubRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/mhims.github.io');
   const [isPushingToGithub, setIsPushingToGithub] = useState(false);
   const [githubPushStatus, setGithubPushStatus] = useState<string | null>(null);
+  const [showGithubPushModal, setShowGithubPushModal] = useState(false);
+  const [lastModifiedAction, setLastModifiedAction] = useState<string | null>(null);
 
   // Authentication handler
   // Required credentials: accepts both mdadilah and mdadilahnaffahim
@@ -279,8 +283,8 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   };
 
   // Save course (Add or Edit)
-  const handleSaveCourse = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveCourse = (e: React.FormEvent, pushDirectly: boolean = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!editingCourse) return;
 
     if (!editingCourse.title.trim() || !editingCourse.slug.trim()) {
@@ -327,13 +331,23 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
     if (isNewCourse) {
       addCourse(courseToSave);
-      showToast('নতুন কোর্স সফলভাবে যুক্ত হয়েছে এবং ওয়েবসাইটে লাইভ দেখাচ্ছে!');
+      showToast('নতুন কোর্স সফলভাবে যুক্ত হয়েছে!');
     } else {
       updateCourse(courseToSave);
       showToast('কোর্স সফলভাবে আপডেট করা হয়েছে!');
     }
 
     setEditingCourse(null);
+
+    if (pushDirectly) {
+      if (githubToken.trim()) {
+        handleDirectGithubSync();
+      } else {
+        setShowGithubPushModal(true);
+      }
+    } else {
+      setLastModifiedAction(`"${courseToSave.title}" কোর্সটি সফলভাবে সংরক্ষিত হয়েছে!`);
+    }
   };
 
   // Toggle display target pages
@@ -569,7 +583,16 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowGithubPushModal(true)}
+            className="px-4 py-2 text-xs font-black bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl shadow-lg shadow-rose-950/40 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border border-rose-400/30"
+            title="গিটহাবে সরাসরি আপডেট পাঠিয়ে মূল সাইট লাইভ করুন"
+          >
+            <GitBranch className="w-3.5 h-3.5" />
+            <span>🚀 গিটহাবে পুশ করুন</span>
+          </button>
           <button
             onClick={() => onNavigate('/')}
             className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
@@ -645,6 +668,43 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       {/* TAB 1: Course Management */}
       {activeTab === 'courses' && (
         <div className="space-y-4">
+          {/* Quick Push Banner after editing / adding */}
+          {lastModifiedAction && (
+            <div className="bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-red-500/10 border-2 border-rose-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-slate-900 shadow-xs animate-in slide-in-from-top-2">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-rose-600 text-white shrink-0">
+                  <GitBranch className="w-4 h-4" />
+                </span>
+                <div>
+                  <div className="font-extrabold text-xs sm:text-sm text-slate-900">
+                    {lastModifiedAction}
+                  </div>
+                  <div className="text-[11px] text-slate-600">
+                    মূল ওয়েবসাইট (10mscourse.shop)-এ পরিবর্তন লাইভ করতে এখনই গিটহাবে পুশ করুন।
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowGithubPushModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <GitBranch className="w-3.5 h-3.5" />
+                  <span>🚀 এখনই গিটহাবে পুশ করুন</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLastModifiedAction(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Controls Bar */}
           <div className="bg-white p-4 rounded-2xl border border-rose-100 shadow-xs space-y-3">
             <div className="flex flex-col md:flex-row items-center justify-between gap-3">
@@ -674,7 +734,17 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setShowGithubPushModal(true)}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                  title="কোর্সের পরিবর্তন সরাসরি GitHub-এ পাঠিয়ে লাইভ করুন"
+                >
+                  <GitBranch className="w-3.5 h-3.5" />
+                  <span>🚀 গিটহাবে পুশ করুন (Push to Live)</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={async () => {
@@ -693,7 +763,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                       showToast('ব্রাউজারে সংরক্ষিত হয়েছে (লোকাল স্টোরেজ)');
                     }
                   }}
-                  className="w-full md:w-auto px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  className="w-full sm:w-auto px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                   title="প্রোজেক্ট ফাইলে সকল কোর্স সেভ ও সিঙ্ক করুন"
                 >
                   <Save className="w-3.5 h-3.5 text-emerald-600" />
@@ -708,7 +778,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                       showToast('সকল কোর্স সফলভাবে মুছে ফেলা হয়েছে! এখন আপনি নতুন কোর্স এড করতে পারেন।');
                     }
                   }}
-                  className="w-full md:w-auto px-3.5 py-2.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-bold text-xs rounded-xl border border-slate-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                  className="w-full sm:w-auto px-3 py-2.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-bold text-xs rounded-xl border border-slate-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                   title="সকল ডেমো কোর্স মুছে শূন্য তালিকা করুন"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-rose-600" />
@@ -717,10 +787,10 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
                 <button
                   onClick={handleStartAddCourse}
-                  className="w-full md:w-auto px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>নতুন কোর্স যুক্ত করুন</span>
+                  <span>+ নতুন কোর্স যুক্ত করুন</span>
                 </button>
               </div>
             </div>
@@ -1738,15 +1808,15 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">পূর্ণ বিবরণ (Full Details)</label>
-                <textarea
-                  rows={3}
-                  value={editingCourse.fullDescription}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, fullDescription: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl"
-                />
-              </div>
+              {/* Full Description with SEO Rich Text & Markdown Support */}
+              <CourseDescriptionEditor
+                value={editingCourse.fullDescription || ''}
+                onChange={(val) => setEditingCourse({ ...editingCourse, fullDescription: val })}
+                courseTitle={editingCourse.title}
+                courseSlug={editingCourse.slug}
+                seoKeywords={editingCourse.seoKeywords || []}
+                allCourses={courses}
+              />
 
               {/* Syllabus & Lecture Breakdown (সিলেবাস ও লেকচার বিন্যাস) */}
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
@@ -1872,20 +1942,30 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                 </div>
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              {/* Submit Buttons: Save Locally and Save & Push Live */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setEditingCourse(null)}
-                  className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                  className="px-4 py-2.5 text-slate-600 hover:bg-slate-100 font-bold rounded-xl cursor-pointer transition-colors text-xs sm:text-sm text-center"
                 >
                   বাতিল
                 </button>
                 <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold rounded-xl shadow-md cursor-pointer"
+                  type="button"
+                  onClick={(e) => handleSaveCourse(e, false)}
+                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl cursor-pointer transition-colors text-xs sm:text-sm flex items-center justify-center gap-1.5"
                 >
-                  {isNewCourse ? 'কোর্স প্রকাশ করুন' : 'আপডেট সম্পন্ন করুন'}
+                  <Save className="w-4 h-4 text-slate-600" />
+                  <span>{isNewCourse ? 'কোর্স ড্রাফট সংরক্ষণ' : 'শুধু সেভ করুন'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleSaveCourse(e, true)}
+                  className="px-6 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold rounded-xl shadow-lg shadow-rose-200 cursor-pointer transition-all flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-98"
+                >
+                  <GitBranch className="w-4 h-4" />
+                  <span>{isNewCourse ? 'সংরক্ষণ ও গিটহাবে পুশ করুন 🚀' : 'আপডেট ও সরাসরি লাইভ করুন 🚀'}</span>
                 </button>
               </div>
             </form>
@@ -1903,6 +1983,17 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           onClose={() => setEditingBlog(null)}
         />
       )}
+
+      {/* Direct GitHub Push Modal */}
+      <GithubPushModal
+        isOpen={showGithubPushModal}
+        onClose={() => setShowGithubPushModal(false)}
+        exportCoursesJSON={exportCoursesJSON}
+        onSuccess={() => {
+          showToast('অভিনন্দন! গিটহাবে সরাসরি পুশ সফল হয়েছে।');
+          setLastModifiedAction(null);
+        }}
+      />
     </div>
   );
 };

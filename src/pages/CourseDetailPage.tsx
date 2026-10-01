@@ -64,6 +64,185 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
     }
   }, [course, getEffectivePrice]);
 
+  // Helper to render SEO-rich course description with H1, H2, H3, lists, links, and cross-course cards
+  const renderRichCourseDescription = (fullDesc: string) => {
+    if (!fullDesc) return null;
+
+    // Split by course-card: [course-card:identifier]
+    const parts = fullDesc.split(/\[course-card:([^\]]+)\]/g);
+
+    return parts.map((part, index) => {
+      // Even indexes are text / markdown / HTML
+      if (index % 2 === 0) {
+        if (!part.trim()) return null;
+
+        const paragraphs = part.split('\n\n');
+        return (
+          <div key={index} className="space-y-4">
+            {paragraphs.map((p, pIdx) => {
+              const trimmed = p.trim();
+              if (!trimmed) return null;
+
+              // H1 Heading
+              if (trimmed.startsWith('# ')) {
+                const headingText = trimmed.replace(/^#\s+/, '');
+                return (
+                  <h1 key={pIdx} className="text-xl sm:text-2xl font-black text-slate-900 border-b border-rose-100 pb-2.5 pt-3">
+                    {headingText}
+                  </h1>
+                );
+              }
+
+              // H2 Heading
+              if (trimmed.startsWith('## ')) {
+                const headingText = trimmed.replace(/^##\s+/, '');
+                return (
+                  <h2 key={pIdx} className="text-lg sm:text-xl font-extrabold text-slate-900 pt-3 text-rose-900 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0"></span>
+                    <span>{headingText}</span>
+                  </h2>
+                );
+              }
+
+              // H3 Heading
+              if (trimmed.startsWith('### ')) {
+                const headingText = trimmed.replace(/^###\s+/, '');
+                return (
+                  <h3 key={pIdx} className="text-base font-bold text-slate-900 pt-2 text-slate-800">
+                    {headingText}
+                  </h3>
+                );
+              }
+
+              // Quote / Callout
+              if (trimmed.startsWith('> ')) {
+                const quoteText = trimmed.replace(/^>\s+/, '');
+                return (
+                  <blockquote key={pIdx} className="p-4 bg-rose-50/70 border-l-4 border-rose-500 rounded-r-2xl text-slate-800 text-xs sm:text-sm font-medium italic my-2">
+                    {quoteText}
+                  </blockquote>
+                );
+              }
+
+              // Bullet List
+              if (trimmed.includes('\n- ') || trimmed.startsWith('- ') || trimmed.includes('\n* ') || trimmed.startsWith('* ')) {
+                const items = trimmed
+                  .split(/\n(?=[-*\s])/)
+                  .map((item) => item.replace(/^[-*]\s+/, '').trim())
+                  .filter(Boolean);
+
+                return (
+                  <ul key={pIdx} className="space-y-2 text-xs sm:text-sm text-slate-700 pl-1 my-2">
+                    {items.map((item, iIdx) => (
+                      <li key={iIdx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                        <span dangerouslySetInnerHTML={{ __html: item }} />
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+
+              // Numbered List
+              if (/^\d+\.\s+/m.test(trimmed)) {
+                const items = trimmed
+                  .split(/\n(?=\d+\.\s+)/)
+                  .map((item) => item.replace(/^\d+\.\s+/, '').trim())
+                  .filter(Boolean);
+
+                return (
+                  <ol key={pIdx} className="list-decimal list-inside space-y-1.5 text-xs sm:text-sm text-slate-700 pl-1 my-2">
+                    {items.map((item, iIdx) => (
+                      <li key={iIdx} dangerouslySetInnerHTML={{ __html: item }} />
+                    ))}
+                  </ol>
+                );
+              }
+
+              // Normal text or HTML
+              return (
+                <div
+                  key={pIdx}
+                  className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line"
+                  dangerouslySetInnerHTML={{ __html: trimmed }}
+                />
+              );
+            })}
+          </div>
+        );
+      }
+
+      // Odd indexes are course identifiers
+      const courseMatch = courses.find((c) => c.slug === part || c.id === part);
+      if (!courseMatch) return null;
+
+      const hasOffer = courseMatch.offerPrice > 0 && courseMatch.offerPrice < courseMatch.regularPrice;
+
+      return (
+        <div
+          key={index}
+          className="my-5 p-4 sm:p-5 bg-gradient-to-r from-rose-50 to-red-50/50 rounded-2xl border-2 border-rose-200/90 shadow-xs space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-600 bg-white px-3 py-1 rounded-full border border-rose-200 flex items-center gap-1.5 shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5 text-rose-500" />
+              <span>প্রস্তাবিত বিকল্প কোর্স</span>
+            </span>
+            {courseMatch.promoCode && (
+              <span className="text-xs font-bold text-slate-700 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
+                কুপন: <strong className="font-mono text-rose-600">{courseMatch.promoCode}</strong>
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <img
+                src={courseMatch.imageUrl}
+                alt={courseMatch.title}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-rose-100 shadow-xs shrink-0"
+              />
+              <div className="min-w-0">
+                <h4 className="font-bold text-sm sm:text-base text-slate-900 truncate">
+                  {courseMatch.title}
+                </h4>
+                <p className="text-xs text-slate-500 truncate mt-0.5">
+                  {courseMatch.shortDescription}
+                </p>
+                <div className="flex items-center gap-2 text-xs font-extrabold text-rose-600 mt-1">
+                  <span>৳{courseMatch.offerPrice || courseMatch.regularPrice}</span>
+                  {hasOffer && (
+                    <span className="line-through text-slate-400 font-normal">
+                      ৳{courseMatch.regularPrice}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => onNavigate(`/${courseMatch.slug}`)}
+                className="px-3.5 py-2 bg-white hover:bg-rose-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              >
+                বিস্তারিত দেখুন
+              </button>
+              <a
+                href={courseMatch.affiliateLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+              >
+                <span>ভর্তি হন</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    });
+  };
+
   if (!course) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-20 text-center">
@@ -367,12 +546,17 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
             </div>
           )}
 
-          {/* Description */}
-          <div className="p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-            <h3 className="font-bold text-lg text-slate-900">কোর্সের পূর্ণাঙ্গ বিবরণ</h3>
-            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-              {course.fullDescription}
-            </p>
+          {/* Description with SEO Rich Headings & Markdown Support */}
+          <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
+            <h3 className="font-extrabold text-xl text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <span className="p-1 rounded-md bg-rose-100 text-rose-600">
+                <BookOpen className="w-5 h-5" />
+              </span>
+              <span>কোর্সের পূর্ণাঙ্গ বিবরণ ও সিলেবাস গাইড</span>
+            </h3>
+            <div className="pt-1">
+              {renderRichCourseDescription(course.fullDescription || course.shortDescription)}
+            </div>
           </div>
 
           {/* Syllabus */}
