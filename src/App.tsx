@@ -181,7 +181,12 @@ function AppContent() {
       <CourseChatAssistant onNavigate={handleNavigate} />
 
       {/* Mobile App-like Bottom Navigation */}
-      <MobileBottomNav currentPath={currentPath} onNavigate={handleNavigate} />
+      <MobileBottomNav
+        currentPath={currentPath}
+        onNavigate={handleNavigate}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
     </div>
   );
 }
