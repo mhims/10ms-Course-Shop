@@ -130,28 +130,28 @@ function coursesBackendPlugin(): Plugin {
   };
 }
 
-function htmlEntryPointPlugin(): Plugin {
+function htmlEntryPointPlugin(isDev: boolean): Plugin {
   return {
     name: 'html-entry-point-plugin',
     transformIndexHtml: {
       order: 'pre',
       handler(html) {
+        if (!isDev) return html;
         let clean = html
           .replace(/\n?\s*<script\s+type="module"\s+crossorigin\s+src="\.?\/?assets\/index-[^"]+\.js"><\/script>/gi, '')
-          .replace(/\n?\s*<link\s+rel="stylesheet"\s+crossorigin\s+href="\.?\/?assets\/index-[^"]+\.css">/gi, '');
-        if (!clean.includes('/src/main.tsx')) {
-          clean = clean.replace('</body>', '    <script type="module" src="/src/main.tsx"></script>\n  </body>');
-        }
-        return clean;
+          .replace(/\n?\s*<link\s+rel="stylesheet"\s+crossorigin\s+href="\.?\/?assets\/index-[^"]+\.css">/gi, '')
+          .replace(/\n?\s*<script\s+type="module"\s+src="\/src\/main\.tsx"><\/script>/gi, '');
+        return clean.replace('</body>', '    <script type="module" src="/src/main.tsx"></script>\n  </body>');
       },
     },
   };
 }
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve';
   return {
     base: './',
-    plugins: [react(), tailwindcss(), htmlEntryPointPlugin(), coursesBackendPlugin()],
+    plugins: [react(), tailwindcss(), htmlEntryPointPlugin(isDev), coursesBackendPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),
