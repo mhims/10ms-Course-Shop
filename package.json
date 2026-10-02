@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build && rm -rf dist && cp -r docs dist && cp docs/index.html ./index.html && rm -rf ./assets && cp -r docs/assets ./assets && touch .nojekyll docs/.nojekyll",
+    "build": "vite build && rm -rf dist && cp -r docs dist && cp docs/index.html docs/404.html && touch .nojekyll docs/.nojekyll",
     "preview": "vite preview",
     "clean": "rm -rf dist docs server.js",
     "lint": "tsc --noEmit"

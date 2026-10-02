@@ -4,7 +4,7 @@ import { useCourseContext } from '../context/CourseContext';
 import { CourseCard } from '../components/CourseCard';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { getWhatsAppUrl } from '../utils/whatsapp';
-import { getCourseClassLabel } from '../utils/courseHelper';
+import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
 
 interface CourseDetailPageProps {
   slug: string;
@@ -198,13 +198,16 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <img
-                src={courseMatch.imageUrl}
+                src={normalizeImageUrl(courseMatch.imageUrl)}
                 alt={courseMatch.title}
                 loading="lazy"
                 decoding="async"
                 className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-rose-100 shadow-xs shrink-0"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                  const fallback = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
                 }}
               />
               <div className="min-w-0">
@@ -348,14 +351,16 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
             {/* Banner Image with SEO Alt */}
             <div className="relative aspect-16/9 rounded-xl overflow-hidden bg-slate-100">
               <img
-                src={course.imageUrl}
+                src={normalizeImageUrl(course.imageUrl)}
                 alt={course.imageAlt || course.title}
-                referrerPolicy="no-referrer"
                 loading="eager"
                 decoding="async"
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                  const fallback = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
                 }}
               />
               {hasOffer && (

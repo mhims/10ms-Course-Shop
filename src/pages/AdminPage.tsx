@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github } from 'lucide-react';
+import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
-import { getCourseClassLabel } from '../utils/courseHelper';
+import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
 import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
 import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
 import { GithubPushModal } from '../components/GithubPushModal';
@@ -105,6 +105,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [githubPushStatus, setGithubPushStatus] = useState<string | null>(null);
   const [showGithubPushModal, setShowGithubPushModal] = useState(false);
   const [lastModifiedAction, setLastModifiedAction] = useState<string | null>(null);
+  const [imagePreviewError, setImagePreviewError] = useState(false);
 
   // Authentication handler
   // Required credentials: accepts both mdadilah and mdadilahnaffahim
@@ -314,6 +315,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
     const courseToSave: Course = {
       ...editingCourse,
+      imageUrl: normalizeImageUrl(editingCourse.imageUrl),
       category: catTrimmed,
       slug: cleanSlug,
       status: editingCourse.status || 'active',
@@ -329,19 +331,23 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       highlights: editingCourse.highlights || [],
     };
 
+    let updatedCoursesList: Course[];
     if (isNewCourse) {
       addCourse(courseToSave);
+      updatedCoursesList = [courseToSave, ...courses.filter(c => c.id !== courseToSave.id)];
       showToast('নতুন কোর্স সফলভাবে যুক্ত হয়েছে!');
     } else {
       updateCourse(courseToSave);
+      updatedCoursesList = courses.map(c => c.id === courseToSave.id ? courseToSave : c);
       showToast('কোর্স সফলভাবে আপডেট করা হয়েছে!');
     }
 
     setEditingCourse(null);
+    setImagePreviewError(false);
 
     if (pushDirectly) {
       if (githubToken.trim()) {
-        handleDirectGithubSync();
+        handleDirectGithubSync(updatedCoursesList);
       } else {
         setShowGithubPushModal(true);
       }
@@ -361,7 +367,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   };
 
   // Direct GitHub API Sync using Personal Access Token
-  const handleDirectGithubSync = async () => {
+  const handleDirectGithubSync = async (coursesOverride?: Course[]) => {
     if (!githubToken.trim()) {
       alert('দয়া করে আপনার GitHub Personal Access Token দিন!');
       return;
@@ -372,6 +378,19 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       return;
     }
 
+    const activeCourses = coursesOverride && Array.isArray(coursesOverride) ? coursesOverride : courses;
+
+    // Immediately persist to local workspace disk in AI Studio
+    try {
+      fetch('/api/save-courses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courses: activeCourses }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+
     setIsPushingToGithub(true);
     setGithubPushStatus('গিটহাবে সরাসরি ডেটা পাঠানো হচ্ছে...');
     localStorage.setItem('10ms_gh_pat', githubToken.trim());
@@ -379,7 +398,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
     try {
       const filesToSync = [
-        { name: 'courses.json', content: JSON.stringify(courses, null, 2) },
+        { name: 'courses.json', content: JSON.stringify(activeCourses, null, 2) },
         { name: 'blogs.json', content: JSON.stringify(blogPosts, null, 2) },
         { name: 'settings.json', content: JSON.stringify(siteSettings, null, 2) },
         { name: 'categories.json', content: JSON.stringify(categories, null, 2) },
@@ -411,7 +430,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
             // ignore
           }
 
-          await fetch(apiUrl, {
+          const putRes = await fetch(apiUrl, {
             method: 'PUT',
             headers: {
               Authorization: `token ${githubToken.trim()}`,
@@ -419,11 +438,16 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              message: `Update ${file.name} from 10MS Admin Panel [skip ci]`,
+              message: `Update ${file.name} from 10MS Admin Panel [skip ci] - ${new Date().toLocaleTimeString()}`,
               content: base64Content,
               sha: sha,
             }),
           });
+
+          if (!putRes.ok) {
+            const errData = await putRes.json().catch(() => ({}));
+            throw new Error(errData.message || `গিটহাবে ${p} আপলোড ব্যর্থ হয়েছে (${putRes.status})`);
+          }
         }
       }
 
@@ -870,12 +894,15 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                         <td className="p-3">
                           <div className="flex items-center gap-2">
                             <img
-                              src={c.imageUrl}
+                              src={normalizeImageUrl(c.imageUrl)}
                               alt=""
                               loading="lazy"
                               className="w-10 h-8 rounded object-cover bg-slate-100 shrink-0"
                               onError={(e) => {
-                                e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                                const fallback = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                                if (e.currentTarget.src !== fallback) {
+                                  e.currentTarget.src = fallback;
+                                }
                               }}
                             />
                             <div className="min-w-0">
@@ -1396,7 +1423,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               <button
                 type="button"
                 disabled={isPushingToGithub}
-                onClick={handleDirectGithubSync}
+                onClick={() => handleDirectGithubSync()}
                 className="w-full sm:w-auto px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-50 transition-all"
               >
                 {isPushingToGithub ? (
@@ -1796,7 +1823,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                   <input
                     type="url"
                     value={editingCourse.imageUrl}
-                    onChange={(e) => setEditingCourse({ ...editingCourse, imageUrl: e.target.value })}
+                    onChange={(e) => {
+                      setEditingCourse({ ...editingCourse, imageUrl: e.target.value });
+                      setImagePreviewError(false);
+                    }}
+                    placeholder="https://... বা যেকোনো ইমেজ লিংক"
                     className="w-full p-2.5 border border-slate-300 rounded-xl font-mono text-xs"
                   />
                 </div>
@@ -1810,6 +1841,53 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                     className="w-full p-2.5 border border-slate-300 rounded-xl"
                   />
                 </div>
+              </div>
+
+              {/* Instant Live Image Preview Box */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-rose-600" />
+                    <span>ইমেজ লাইভ প্রিভিউ (Live Preview)</span>
+                  </span>
+                  {editingCourse.imageUrl?.trim() && (
+                    <a
+                      href={editingCourse.imageUrl.trim()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 hover:underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>লিংক ওপেন করুন</span>
+                    </a>
+                  )}
+                </div>
+
+                {editingCourse.imageUrl?.trim() ? (
+                  <div className="relative aspect-16/9 max-w-sm rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shadow-inner group">
+                    <img
+                      src={normalizeImageUrl(editingCourse.imageUrl)}
+                      alt={editingCourse.imageAlt || editingCourse.title}
+                      className="w-full h-full object-cover"
+                      onLoad={() => setImagePreviewError(false)}
+                      onError={() => setImagePreviewError(true)}
+                    />
+                    {imagePreviewError && (
+                      <div className="absolute inset-0 bg-slate-900/85 text-white p-3 flex flex-col items-center justify-center text-center">
+                        <AlertCircle className="w-6 h-6 text-amber-400 mb-1.5" />
+                        <span className="text-xs font-bold text-amber-200">ছবিটি লোড হতে পারছে না</span>
+                        <span className="text-[11px] text-slate-300 mt-1 max-w-xs">
+                          লিংকটি সঠিক কি না এবং সরাসরি ইমেজ ফাইলের লিংক কি না যাচাই করুন। প্রয়োজনে ওপরের "লিংক ওপেন করুন" বাটনে ক্লিক করে চেক করুন।
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="aspect-16/9 max-w-sm rounded-xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 text-xs p-4 text-center">
+                    <ImageIcon className="w-8 h-8 mb-1.5 text-slate-300" />
+                    <span>উপরে ইমেজের লিংক দিলে এখানে তাৎক্ষণিক প্রিভিউ দেখতে পাবেন</span>
+                  </div>
+                )}
               </div>
 
               {/* Short & Full Description */}

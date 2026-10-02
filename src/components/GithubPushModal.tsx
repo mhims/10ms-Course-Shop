@@ -71,6 +71,17 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
     localStorage.setItem('10ms_gh_repo', cleanRepo);
 
     try {
+      // Also persist to local workspace disk in AI Studio
+      try {
+        fetch('/api/save-courses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courses }),
+        }).catch(() => {});
+      } catch {
+        // ignore
+      }
+
       // Complete website dataset to sync
       const filesToSync = [
         { name: 'courses.json', content: JSON.stringify(courses, null, 2) },

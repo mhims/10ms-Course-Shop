@@ -4,7 +4,7 @@ import { Course } from '../types';
 import { useCourseContext } from '../context/CourseContext';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { getWhatsAppUrl } from '../utils/whatsapp';
-import { getCourseClassLabel } from '../utils/courseHelper';
+import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
 
 interface CourseCardProps {
   course: Course;
@@ -57,14 +57,16 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onNavigate }) =>
       {/* Course Banner */}
       <div className="relative aspect-16/10 sm:aspect-16/9 w-full bg-slate-100 overflow-hidden">
         <img
-          src={course.imageUrl}
+          src={normalizeImageUrl(course.imageUrl)}
           alt={course.imageAlt || course.title}
-          referrerPolicy="no-referrer"
           loading="lazy"
           decoding="async"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
-            e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+            const fallback = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+            if (e.currentTarget.src !== fallback) {
+              e.currentTarget.src = fallback;
+            }
           }}
         />
 

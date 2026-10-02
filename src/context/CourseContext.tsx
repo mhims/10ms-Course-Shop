@@ -101,73 +101,68 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Fetch live courses from API or static courses.json WITHOUT wiping user edits or local storage
+  // Fetch live courses from API or static courses.json with cache-busting
   useEffect(() => {
     const fetchLive = async () => {
       try {
-        let res = await fetch('/api/courses');
+        const cacheBust = `?t=${Date.now()}`;
+        let res = await fetch(`/api/courses${cacheBust}`);
         if (!res.ok) {
-          res = await fetch('./courses.json');
+          res = await fetch(`./courses.json${cacheBust}`, { cache: 'no-store' });
         }
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setCourses(prev => {
-              // If user already has courses in state/localStorage, ALWAYS RESPECT the user's edits!
-              // NEVER overwrite user's custom images, affiliate links, prices, or titles!
-              if (prev && prev.length > 0) {
-                const existingMap = new Map(prev.map(c => [c.id, c]));
-                const existingSlugs = new Set(prev.map(c => c.slug));
-
-                // Only append any brand-new courses from disk that user hasn't added yet
-                const newlyFoundFromDisk = data.filter(
-                  (remoteCourse: Course) => !existingMap.has(remoteCourse.id) && !existingSlugs.has(remoteCourse.slug)
-                );
-
-                if (newlyFoundFromDisk.length > 0) {
-                  const merged = [...prev, ...newlyFoundFromDisk];
-                  syncCoursesToDisk(merged);
-                  return merged;
-                }
-                // Return prev unmodified to keep all user edits intact!
-                return prev;
-              }
-              // If prev was empty, use data from disk
-              return data;
-            });
+            setCourses(data);
           }
         }
 
-        // Also fetch live blogs for GitHub Pages visitors
+        // Also fetch live blogs
         try {
-          const bRes = await fetch('./blogs.json');
+          const bRes = await fetch(`./blogs.json${cacheBust}`, { cache: 'no-store' });
           if (bRes.ok) {
             const bData = await bRes.json();
             if (Array.isArray(bData) && bData.length > 0) {
-              setBlogPosts(prev => {
-                if (prev && prev.length > 0) {
-                  const existingIds = new Set(prev.map(p => p.id));
-                  const newFromDisk = bData.filter((b: BlogPost) => !existingIds.has(b.id));
-                  if (newFromDisk.length > 0) {
-                    return [...prev, ...newFromDisk];
-                  }
-                  return prev;
-                }
-                return bData;
-              });
+              setBlogPosts(bData);
             }
           }
         } catch {
           // ignore
         }
 
-        // Also fetch live settings for GitHub Pages visitors
+        // Also fetch live settings
         try {
-          const sRes = await fetch('./settings.json');
+          const sRes = await fetch(`./settings.json${cacheBust}`, { cache: 'no-store' });
           if (sRes.ok) {
             const sData = await sRes.json();
             if (sData && typeof sData === 'object' && sData.siteName) {
               setSiteSettings(prev => ({ ...prev, ...sData }));
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        // Also fetch live categories
+        try {
+          const cRes = await fetch(`./categories.json${cacheBust}`, { cache: 'no-store' });
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            if (Array.isArray(cData) && cData.length > 0) {
+              setCategories(cData);
+            }
+          }
+        } catch {
+          // ignore
+        }
+
+        // Also fetch live resources
+        try {
+          const rRes = await fetch(`./resources.json${cacheBust}`, { cache: 'no-store' });
+          if (rRes.ok) {
+            const rData = await rRes.json();
+            if (Array.isArray(rData) && rData.length > 0) {
+              setResources(rData);
             }
           }
         } catch {

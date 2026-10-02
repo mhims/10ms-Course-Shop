@@ -49,3 +49,23 @@ export const CLASS_CATEGORY_OPTIONS = [
   { id: 'skills' as CourseCategory, label: 'স্কিল ও ফ্রিল্যান্সিং', shortLabel: 'স্কিলস' },
   { id: 'job-prep' as CourseCategory, label: 'বিসিএস ও চাকরি', shortLabel: 'চাকরি' },
 ];
+
+export const normalizeImageUrl = (rawUrl?: string): string => {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return '';
+
+  // Google Drive sharing link conversion:
+  const gDriveMatch = trimmed.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
+  if (gDriveMatch && gDriveMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${gDriveMatch[1]}`;
+  }
+
+  // Dropbox direct link
+  if (trimmed.includes('dropbox.com') && trimmed.includes('dl=0')) {
+    return trimmed.replace('dl=0', 'raw=1');
+  }
+
+  return trimmed;
+};
+
