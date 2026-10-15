@@ -81,20 +81,23 @@
     }
     </script>
     <script type="text/javascript">
-      // GitHub Pages SPA redirect decoder
-      (function(l) {
-        if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
-          }).join('?');
-          window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + decoded + l.hash
-          );
-        }
-      }(window.location))
+      // GitHub Pages SPA redirect decoder (safe wrapper for sandboxed iframes)
+      try {
+        (function(l) {
+          if (l.search && l.search[1] === '/') {
+            var decoded = l.search.slice(1).split('&').map(function(s) { 
+              return s.replace(/~and~/g, '&')
+            }).join('?');
+            var base = l.pathname.endsWith('/') ? l.pathname.slice(0, -1) : l.pathname;
+            window.history.replaceState(null, null, base + decoded + (l.hash || ''));
+          }
+        }(window.location));
+      } catch (e) {
+        // Silently ignore in sandboxed environments
+      }
     </script>
-    <script type="module" crossorigin src="./assets/index-DM4nlSJx.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-C1JVfnov.css">
+    <script type="module" crossorigin src="./assets/index-HZu1gKA1.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BrRsd7dt.css">
   </head>
   <body class="bg-[#faf5f5] text-slate-900 font-sans antialiased selection:bg-rose-500 selection:text-white">
     <div id="root"></div>

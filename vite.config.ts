@@ -130,10 +130,29 @@ function coursesBackendPlugin(): Plugin {
   };
 }
 
+function devHtmlPlugin(): Plugin {
+  return {
+    name: 'dev-html-plugin',
+    transformIndexHtml(html, ctx) {
+      if (ctx?.server) {
+        // In Vite dev mode, strip compiled production bundle and ensure /src/main.tsx is loaded
+        let clean = html
+          .replace(/\n?\s*<script\s+type="module"\s+crossorigin\s+src="\.?\/?assets\/index-[^"]+\.js"><\/script>/gi, '')
+          .replace(/\n?\s*<link\s+rel="stylesheet"\s+crossorigin\s+href="\.?\/?assets\/index-[^"]+\.css">/gi, '');
+        if (!clean.includes('/src/main.tsx')) {
+          clean = clean.replace('</body>', '    <script type="module" src="/src/main.tsx"></script>\n  </body>');
+        }
+        return clean;
+      }
+      return html;
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss(), coursesBackendPlugin()],
+    plugins: [react(), tailwindcss(), devHtmlPlugin(), coursesBackendPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),
