@@ -1,5 +1,59 @@
 [
   {
+    "id": "c-custom-1792920862523",
+    "slug": "varsity-a-unit-and-gst-admission-course-2026",
+    "title": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+    "englishTitle": "",
+    "category": "admission",
+    "displayTargets": [
+      "home"
+    ],
+    "targetClass": "এডমিশন টেস্ট",
+    "regularPrice": 5000,
+    "offerPrice": 3500,
+    "offerEndDate": "2027-07-31",
+    "isLifetime": true,
+    "status": "active",
+    "imageUrl": "https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-a-unit-and-gst-admission-course-2026-thumbnail.png",
+    "imageAlt": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+    "affiliateLink": "https://10ms.io/sL0M6N",
+    "promoCode": "adm2026",
+    "instructor": "Md Kamrul Hasan Shovon ও দেশের শীর্ষ শিক্ষকমণ্ডলী",
+    "instructorRole": "কোর্স ইন্সট্রাক্টর",
+    "rating": 5,
+    "reviewCount": 150,
+    "enrolledCount": 1500,
+    "shortDescription": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "fullDescription": "",
+    "highlights": [
+      "৪টি বিষয়: পদার্থবিজ্ঞান, রসায়ন, উচ্চতর গণিত ও জীববিজ্ঞান",
+      "লাইভ ক্লাসে Basic থেকে Admission স্ট্যান্ডার্ডে পড়ানো হবে",
+      "বিগত ৫ বছরের DU A Unit Question Bank Solve (প্রিন্টেড বই)",
+      "বিগত ৫ বছরের ভার্সিটি প্রশ্নব্যাংক সলভ রেকর্ডেড ক্লাস",
+      "২৪/৭ AI ডাউট সল্ভের মাধ্যমে যেকোনো প্রশ্নের সমাধান"
+    ],
+    "syllabus": [
+      {
+        "title": "অধ্যায় ১: সূচনা ও মূল ভিত্তি",
+        "count": "১০ লাইভ ক্লাস ও নোট"
+      },
+      {
+        "title": "অধ্যায় ২: পূর্ণাঙ্গ সিলেবাস অনুশীলন",
+        "count": "১২ লাইভ ক্লাস ও ৫ পরীক্ষা"
+      }
+    ],
+    "seoTitle": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ | 10mscourse.shop",
+    "seoDescription": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "seoKeywords": [
+      "১০ মিনিট স্কুল",
+      "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+      "অনলাইন কোর্স",
+      "admission"
+    ],
+    "badgeText": "",
+    "expiryDate": ""
+  },
+  {
     "id": "c-hsc-28-online-batch",
     "slug": "hsc-2028-online-batch-bangla-english-ict",
     "title": "HSC 28 অনলাইন ব্যাচ (বাংলা, ইংরেজি, তথ্য ও যোগাযোগ প্রযুক্তি)",
@@ -70,13 +124,13 @@
     ],
     "targetClass": "৯ম-১০ম (SSC)",
     "regularPrice": 3000,
-    "offerPrice": 2000,
-    "offerEndDate": "2027-06-28",
+    "offerPrice": 2250,
+    "offerEndDate": "2026-12-31T23:59:59",
     "isLifetime": false,
     "status": "active",
-    "imageUrl": "https://cdn.10minuteschool.com/thumbnails/ssc-27/ssc-2027-science-final-preparation-course-thuimbnail.jpg",
+    "imageUrl": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=80",
     "imageAlt": "SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স বিজ্ঞান বিভাগ ১০ মিনিট স্কুল",
-    "affiliateLink": "https://10ms.io/XL0IZc",
+    "affiliateLink": "https://10ms.io/2Lu8fc",
     "promoCode": "ssc27smp",
     "instructor": "১০ মিনিট স্কুল",
     "instructorRole": "অভিজ্ঞ শিক্ষকমণ্ডলী",
