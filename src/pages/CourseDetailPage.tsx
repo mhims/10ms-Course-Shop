@@ -4,7 +4,7 @@ import { useCourseContext } from '../context/CourseContext';
 import { CourseCard } from '../components/CourseCard';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { getWhatsAppUrl } from '../utils/whatsapp';
-import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
+import { getCourseClassLabel, normalizeImageUrl, getCourseReviewCount } from '../utils/courseHelper';
 
 interface CourseDetailPageProps {
   slug: string;
@@ -526,19 +526,12 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
 
               <div className="h-4 w-px bg-slate-200"></div>
 
-              <div className="flex items-center gap-1 text-amber-500 font-bold">
+              <div className="flex items-center gap-1.5 text-amber-500 font-bold">
                 <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span>{course.rating.toFixed(1)}</span>
+                <span>{course.rating ? course.rating.toFixed(1) : '5.0'}</span>
                 <span className="text-slate-400 font-normal">
-                  ({course.reviewCount.toLocaleString('bn-BD')} রিভিউ)
+                  ({getCourseReviewCount(course).toLocaleString('bn-BD')} রিভিউ)
                 </span>
-              </div>
-
-              <div className="h-4 w-px bg-slate-200"></div>
-
-              <div className="flex items-center gap-1 text-slate-600 font-semibold">
-                <Users className="w-4 h-4 text-slate-400" />
-                <span>{course.enrolledCount.toLocaleString('bn-BD')}+ এনরোল্ড</span>
               </div>
             </div>
           </div>

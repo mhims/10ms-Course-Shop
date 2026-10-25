@@ -27,6 +27,27 @@ function coursesBackendPlugin(): Plugin {
         next();
       });
 
+      // GET /api/unshorten: Follow 301 redirects to get destination URL
+      server.middlewares.use('/api/unshorten', async (req, res, next) => {
+        if (req.method === 'GET') {
+          try {
+            const parsedUrl = new URL(req.url || '', 'http://localhost:3000');
+            const target = parsedUrl.searchParams.get('url');
+            if (target) {
+              const redirectRes = await fetch(target, { redirect: 'manual' });
+              const loc = redirectRes.headers.get('location');
+              res.setHeader('Content-Type', 'application/json');
+              res.statusCode = 200;
+              res.end(JSON.stringify({ ok: true, resolvedUrl: loc || target }));
+              return;
+            }
+          } catch (e: any) {
+            console.warn('Unshorten error:', e.message);
+          }
+        }
+        next();
+      });
+
       // POST /api/save-courses: write courses directly to workspace disk files
       server.middlewares.use('/api/save-courses', (req, res, next) => {
         if (req.method === 'POST') {

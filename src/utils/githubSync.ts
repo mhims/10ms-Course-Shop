@@ -225,6 +225,50 @@ export async function pushDataToGithub({
       });
     }
 
+    // Always maintain custom domain CNAME and .nojekyll
+    treeEntries.push({ path: 'CNAME', mode: '100644', type: 'blob', content: '10mscourse.shop\n' });
+    treeEntries.push({ path: 'docs/CNAME', mode: '100644', type: 'blob', content: '10mscourse.shop\n' });
+    treeEntries.push({ path: '.nojekyll', mode: '100644', type: 'blob', content: '' });
+    treeEntries.push({ path: 'docs/.nojekyll', mode: '100644', type: 'blob', content: '' });
+
+    // Sync compiled UI assets (app.js, app.css, index.html) when available
+    if (typeof window !== 'undefined' && window.location.origin) {
+      const origin = window.location.origin;
+      try {
+        const [jsRes, cssRes, htmlRes] = await Promise.all([
+          fetch(`${origin}/assets/app.js?t=${nowTimestamp}`).catch(() => null),
+          fetch(`${origin}/assets/app.css?t=${nowTimestamp}`).catch(() => null),
+          fetch(`${origin}/index.html?t=${nowTimestamp}`).catch(() => null),
+        ]);
+
+        if (jsRes && jsRes.ok) {
+          const jsContent = await jsRes.text();
+          if (jsContent && jsContent.length > 5000) {
+            treeEntries.push({ path: 'docs/assets/app.js', mode: '100644', type: 'blob', content: jsContent });
+            treeEntries.push({ path: 'assets/app.js', mode: '100644', type: 'blob', content: jsContent });
+          }
+        }
+
+        if (cssRes && cssRes.ok) {
+          const cssContent = await cssRes.text();
+          if (cssContent && cssContent.length > 500) {
+            treeEntries.push({ path: 'docs/assets/app.css', mode: '100644', type: 'blob', content: cssContent });
+            treeEntries.push({ path: 'assets/app.css', mode: '100644', type: 'blob', content: cssContent });
+          }
+        }
+
+        if (htmlRes && htmlRes.ok) {
+          const htmlContent = await htmlRes.text();
+          if (htmlContent && htmlContent.includes('app.js')) {
+            treeEntries.push({ path: 'docs/index.html', mode: '100644', type: 'blob', content: htmlContent });
+            treeEntries.push({ path: 'index.html', mode: '100644', type: 'blob', content: htmlContent });
+          }
+        }
+      } catch (assetErr) {
+        console.warn('UI assets sync check:', assetErr);
+      }
+    }
+
     const treeRes = await fetch(`https://api.github.com/repos/${cleanRepo}/git/trees`, {
       method: 'POST',
       headers,

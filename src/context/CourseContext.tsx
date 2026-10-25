@@ -59,7 +59,7 @@ interface CourseContextType {
 const CourseContext = createContext<CourseContextType | null>(null);
 
 const STORAGE_KEYS = {
-  COURSES: '10ms_shop_courses_v5_live',
+  COURSES: '10ms_shop_courses_v6_live',
   CATEGORIES: '10ms_shop_custom_categories_v4',
   RESOURCES: '10ms_shop_custom_resources_v1',
   BLOGS: '10ms_shop_blogs_v3_clean',

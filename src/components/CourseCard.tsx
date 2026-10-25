@@ -4,7 +4,7 @@ import { Course } from '../types';
 import { useCourseContext } from '../context/CourseContext';
 import { WhatsAppIcon } from './WhatsAppIcon';
 import { getWhatsAppUrl } from '../utils/whatsapp';
-import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
+import { getCourseClassLabel, normalizeImageUrl, getCourseReviewCount } from '../utils/courseHelper';
 
 interface CourseCardProps {
   course: Course;
@@ -112,9 +112,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onNavigate }) =>
             <span className="font-semibold text-rose-700 truncate max-w-[65%]">
               {course.instructor ? course.instructor : '১০ মিনিট স্কুল'}
             </span>
-            <div className="flex items-center gap-0.5 sm:gap-1 text-amber-500 font-bold shrink-0">
+            <div className="flex items-center gap-1 text-amber-500 font-bold shrink-0">
               <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-amber-400 text-amber-400" />
               <span>{course.rating ? course.rating.toFixed(1) : '5.0'}</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 font-normal">
+                ({getCourseReviewCount(course).toLocaleString('bn-BD')})
+              </span>
             </div>
           </div>
 
@@ -180,11 +183,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onNavigate }) =>
                   ৳{course.regularPrice.toLocaleString('bn-BD')}
                 </span>
               )}
-            </div>
-
-            <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-400">
-              <Users className="w-3 h-3" />
-              <span>{course.enrolledCount ? course.enrolledCount.toLocaleString('bn-BD') : '1000'}+</span>
             </div>
           </div>
 

@@ -14,6 +14,8 @@ import {
   Image as ImageIcon,
   GraduationCap,
   Sparkles,
+  Zap,
+  Rocket,
   FileText,
   Tag,
   Calendar,
@@ -33,7 +35,7 @@ interface WordPressBlogEditorProps {
   initialBlog: BlogPost;
   isNew: boolean;
   courses: Course[];
-  onSave: (blog: BlogPost) => void;
+  onSave: (blog: BlogPost, pushDirectly?: boolean) => void;
   onClose: () => void;
 }
 
@@ -165,26 +167,81 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
     setLinkText('');
   };
 
-  // Prepare and submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  // 1-Click Auto SEO and Metadata Optimizer for Blogs
+  const handleAutoOptimizeBlog = () => {
+    const textOnly = blog.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
+    // 1. Title detection / polish
+    let newTitle = blog.title.trim();
+    if (!newTitle && textOnly) {
+      const firstLine = textOnly.split(/[।\.\n]/)[0]?.trim();
+      newTitle = firstLine ? firstLine.slice(0, 80) : 'নতুন ব্লগ আর্টিকেল';
+    } else if (!newTitle) {
+      newTitle = '১০ মিনিট স্কুল স্টাডি গাইডলাইন ও কোর্স অফার';
+    }
+
+    // 2. Clean URL slug
+    const cleanSlug = newTitle
+      .toLowerCase()
+      .replace(/[^\w\s\u0980-\u09FF-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+    // 3. Excerpt and Meta Description (150-160 chars Google optimal)
+    let autoDesc = '';
+    if (textOnly && textOnly.length > 25) {
+      autoDesc = textOnly.slice(0, 155).trim();
+      if (textOnly.length > 155) autoDesc += '...';
+    } else {
+      autoDesc = `${newTitle} সম্পর্কে গুরুত্বপূর্ণ দিকনির্দেশনা ও পড়াশোনার সহায়ক টিপস। এখনই সম্পূর্ণ লেখাটি পড়ুন ১০ মিনিট স্কুল ব্লগে।`;
+    }
+
+    // 4. Image Alt text
+    const autoImageAlt = `${newTitle} - ১০ মিনিট স্কুল ব্লগ`;
+
+    // 5. SEO Title
+    const autoSeoTitle = `${newTitle} | 10 Minute School Blog - 10mscourse.shop`;
+
+    // 6. Relevant Tags and Keywords
+    const defaultTags = ['১০ মিনিট স্কুল', 'পড়াশোনা', 'পরীক্ষার প্রস্তুতি', 'স্টাডি টিপস', newTitle];
+    const defaultKeywords = ['১০ মিনিট স্কুল', newTitle, 'অনলাইন শিক্ষা', 'গাইডলাইন', 'পড়াশোনার কৌশল'];
+
+    // 7. Calculate Read Time
+    const words = textOnly ? textOnly.split(' ').length : 0;
+    const minutes = Math.max(1, Math.ceil(words / 180));
+    const autoReadTime = `${minutes} মিনিট`;
+
+    setBlog((prev) => ({
+      ...prev,
+      title: newTitle,
+      slug: prev.slug || cleanSlug,
+      excerpt: autoDesc,
+      seoDescription: autoDesc,
+      seoTitle: autoSeoTitle,
+      coverImageAlt: autoImageAlt,
+      tags: defaultTags,
+      seoKeywords: defaultKeywords,
+      readTime: autoReadTime,
+      category: prev.category || 'পড়াশোনার গাইডলাইন',
+    }));
+
+    setTagsRaw(defaultTags.join(', '));
+    setSeoKeywordsRaw(defaultKeywords.join(', '));
+
+    setPasteNotice('⚡ আলহামদুলিল্লাহ! ব্লগের মেটা ডেসক্রিপশন, ইমেজ অল্টার টেক্সট, এসইও টাইটেল ও ট্যাগ স্বয়ংক্রিয়ভাবে তৈরি হয়ে গেছে। নিচে সব ঘর চেক করে নিন।');
+    setTimeout(() => setPasteNotice(null), 6000);
+  };
+
+  const handleSubmit = (pushDirectly: boolean = false) => {
     if (!blog.title.trim()) {
-      alert('দয়া করে ব্লগের শিরোনাম লিখুন!');
-      return;
-    }
-    if (!blog.slug.trim()) {
-      alert('দয়া করে ব্লগের কাস্টম ইউআরএল স্লাগ (slug) লিখুন!');
-      return;
-    }
-    if (!blog.content.trim()) {
-      alert('দয়া করে ব্লগের মূল কন্টেন্ট লিখুন!');
+      alert('দয়া করে ব্লগের একটি শিরোনাম (Title) দিন!');
       return;
     }
 
     const parsedTags = tagsRaw
       .split(',')
-      .map((t) => t.trim().replace(/^#/, ''))
+      .map((t) => t.trim())
       .filter(Boolean);
 
     const parsedKeywords = seoKeywordsRaw
@@ -193,10 +250,8 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
       .filter(Boolean);
 
     const cleanSlug = blog.slug
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\u0980-\u09FF-]/g, '-')
-      .replace(/-+/g, '-');
+      ? blog.slug.toLowerCase().trim().replace(/[^a-z0-9\u0980-\u09FF-]/g, '-').replace(/-+/g, '-')
+      : blog.title.toLowerCase().trim().replace(/[^a-z0-9\u0980-\u09FF-]/g, '-').replace(/-+/g, '-');
 
     const blogToSave: BlogPost = {
       ...blog,
@@ -208,12 +263,13 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
       coverImage:
         blog.coverImage?.trim() ||
         'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&auto=format&fit=crop&q=80',
+      coverImageAlt: blog.coverImageAlt?.trim() || `${blog.title} - ১০ মিনিট স্কুল ব্লগ`,
       date: blog.date || new Date().toISOString().split('T')[0],
       author: blog.author?.trim() || '১০ মিনিট স্কুল টিম',
       category: blog.category?.trim() || 'পড়াশোনার গাইডলাইন',
     };
 
-    onSave(blogToSave);
+    onSave(blogToSave, pushDirectly);
   };
 
   // Render course preview embed card inside editor preview
@@ -350,11 +406,21 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
 
             <button
               type="button"
-              onClick={handleSubmit}
-              className="px-5 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              onClick={() => handleSubmit(false)}
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
-              <Save className="w-4 h-4" />
-              <span>{isNew ? 'প্রকাশ করুন' : 'আপডেট করুন'}</span>
+              <Save className="w-4 h-4 text-slate-500" />
+              <span>{isNew ? 'ড্রাফট সেভ' : 'সেভ করুন'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSubmit(true)}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+              title="পোস্ট করুন ও সরাসরি গিটহাবে পুশ করে মেইন সাইটে লাইভ করুন"
+            >
+              <Rocket className="w-4 h-4 fill-white text-white" />
+              <span>পোস্ট ও সরাসরি লাইভ করুন 🚀</span>
             </button>
 
             <button
@@ -374,6 +440,36 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
           <div className="lg:col-span-8 space-y-4">
             {activeTab === 'editor' ? (
               <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
+                {/* 1-Click Auto SEO & Metadata Optimizer Banner */}
+                <div className="p-4 bg-gradient-to-r from-rose-50 via-amber-50 to-emerald-50 rounded-2xl border-2 border-rose-200/90 shadow-2xs space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                        <Zap className="w-4 h-4 fill-white text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                          <span>১-ক্লিকে অটো এসইও ও মেটা অপটিমাইজেশন</span>
+                          <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Auto SEO
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-slate-600">
+                          লেখা ও ছবির লিংক দিয়ে এই বাটনে চাপলেই টাইটেল, মেটা ডেসক্রিপশন, ইমেজ অল্টার টেক্সট ও ট্যাগ একা একাই বসে যাবে!
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAutoOptimizeBlog}
+                      className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs rounded-xl shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 active:scale-95"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>অটো এসইও করুন ⚡</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Title Input */}
                 <div>
                   <input
@@ -719,11 +815,22 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">ইমেজ অল্টার টেক্সট (Image Alt Text)</label>
+                <input
+                  type="text"
+                  value={blog.coverImageAlt || ''}
+                  onChange={(e) => setBlog({ ...blog, coverImageAlt: e.target.value })}
+                  placeholder="যেমন: আর্টিকেল কভার ছবি ১০ মিনিট স্কুল"
+                  className="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl"
+                />
+              </div>
+
               {blog.coverImage && (
                 <div className="aspect-16/9 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
                   <img
                     src={blog.coverImage}
-                    alt=""
+                    alt={blog.coverImageAlt || blog.title || ''}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src =

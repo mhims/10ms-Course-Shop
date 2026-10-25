@@ -1,0 +1,418 @@
+export interface ScrapedCourseData {
+  title: string;
+  englishTitle?: string;
+  slug: string;
+  imageUrl: string;
+  imageAlt: string;
+  shortDescription: string;
+  fullDescription: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string[];
+  category: string;
+  targetClass?: string;
+  affiliateLink: string;
+  promoCode?: string;
+  instructor?: string;
+  instructorRole?: string;
+  highlights?: string[];
+  syllabus?: Array<{ title: string; count: string }>;
+  regularPrice?: number;
+  offerPrice?: number;
+}
+
+/**
+ * Intelligent category detection based on slug or course title
+ */
+export function detectCategoryAndClass(text: string): { category: string; targetClass?: string } {
+  const lower = text.toLowerCase();
+
+  // SSC / Class 9-10
+  if (
+    lower.includes('ssc') ||
+    lower.includes('৯ম') ||
+    lower.includes('১০ম') ||
+    lower.includes('class-9') ||
+    lower.includes('class-10') ||
+    lower.includes('দাখিল')
+  ) {
+    let targetClass = '৯ম-১০ম (SSC)';
+    if (lower.includes('27') || lower.includes('২০২৭')) targetClass = 'SSC 27';
+    if (lower.includes('26') || lower.includes('২০২৬')) targetClass = 'SSC 26';
+    if (lower.includes('25') || lower.includes('২০২৫')) targetClass = 'SSC 25';
+    return { category: 'class-9-10', targetClass };
+  }
+
+  // HSC
+  if (lower.includes('hsc') || lower.includes('এইচএসসি') || lower.includes('আলিম')) {
+    let targetClass = 'এইচএসসি (HSC)';
+    if (lower.includes('28') || lower.includes('২০২৮')) targetClass = 'HSC 2028';
+    if (lower.includes('27') || lower.includes('২০২৭')) targetClass = 'HSC 2027';
+    if (lower.includes('26') || lower.includes('২০২৬')) targetClass = 'HSC 2026';
+    return { category: 'hsc', targetClass };
+  }
+
+  // Admission
+  if (
+    lower.includes('admission') ||
+    lower.includes('ভর্তি') ||
+    lower.includes('buet') ||
+    lower.includes('medical') ||
+    lower.includes('varsity') ||
+    lower.includes('engineering') ||
+    lower.includes('বিশ্ববিদ্যালয়')
+  ) {
+    return { category: 'admission', targetClass: 'এডমিশন টেস্ট' };
+  }
+
+  // Class 6-8
+  if (
+    lower.includes('class-6') ||
+    lower.includes('class-7') ||
+    lower.includes('class-8') ||
+    lower.includes('৬ষ্ঠ') ||
+    lower.includes('৭ম') ||
+    lower.includes('৮ম')
+  ) {
+    let targetClass = 'ক্লাস ৬-৮';
+    if (lower.includes('৬ষ্ঠ') || lower.includes('class-6')) targetClass = '৬ষ্ঠ শ্রেণী';
+    if (lower.includes('৭ম') || lower.includes('class-7')) targetClass = '৭ম শ্রেণী';
+    if (lower.includes('৮ম') || lower.includes('class-8')) targetClass = '৮ম শ্রেণী';
+    return { category: 'class-6-8', targetClass };
+  }
+
+  // Spoken English / IELTS
+  if (
+    lower.includes('spoken') ||
+    lower.includes('english') ||
+    lower.includes('ielts') ||
+    lower.includes('ইংরেজি') ||
+    lower.includes('স্পোকেন')
+  ) {
+    return { category: 'spoken-english' };
+  }
+
+  // Job Prep / BCS
+  if (
+    lower.includes('bcs') ||
+    lower.includes('বিসিএস') ||
+    lower.includes('bank') ||
+    lower.includes('চাকরি') ||
+    lower.includes('job') ||
+    lower.includes('primary')
+  ) {
+    return { category: 'job-prep', targetClass: 'সরকারি ও ব্যাংক চাকরি' };
+  }
+
+  // Skills / Freelancing
+  if (
+    lower.includes('skill') ||
+    lower.includes('freelance') ||
+    lower.includes('graphic') ||
+    lower.includes('programming') ||
+    lower.includes('excel') ||
+    lower.includes('video') ||
+    lower.includes('marketing')
+  ) {
+    return { category: 'skills' };
+  }
+
+  return { category: 'class-9-10' };
+}
+
+/**
+ * Resolves short links (e.g. 10ms.io/xyz) to the final destination product URL
+ */
+async function resolveShortUrl(rawLink: string): Promise<string> {
+  const cleanLink = rawLink.trim();
+
+  // If already a full 10minuteschool.com product link, no unshortening needed!
+  if (cleanLink.includes('10minuteschool.com/product/')) {
+    return cleanLink;
+  }
+
+  // 1. Try local dev proxy endpoint if available
+  try {
+    const localRes = await fetch(`/api/unshorten?url=${encodeURIComponent(cleanLink)}`);
+    if (localRes.ok) {
+      const json = await localRes.json();
+      if (json.resolvedUrl && json.resolvedUrl.includes('/product/')) {
+        return json.resolvedUrl;
+      }
+    }
+  } catch {
+    // Ignore in static hosting
+  }
+
+  // 2. Try unshorten.me public CORS API
+  try {
+    const unshortenRes = await fetch(`https://unshorten.me/json/${cleanLink}`);
+    if (unshortenRes.ok) {
+      const data = await unshortenRes.json();
+      if (data.resolved_url && data.success) {
+        return data.resolved_url;
+      }
+    }
+  } catch {
+    // Fallback below
+  }
+
+  // 3. Try allorigins HTML fetch to extract redirect path
+  try {
+    const allOriginsRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(cleanLink)}`);
+    if (allOriginsRes.ok) {
+      const html = await allOriginsRes.text();
+      // Look for /product/xyz in Cloudflare challenge or redirect tags
+      const match = html.match(/\/product\/([a-zA-Z0-9_-]+)(?:\?[^"'\s<>]*)?/);
+      if (match) {
+        return `https://10minuteschool.com${match[0]}`;
+      }
+    }
+  } catch {
+    // Ignore
+  }
+
+  return cleanLink;
+}
+
+// Helper to generate rich SEO Markdown full description template
+function generateCourseFullDescription(title: string, targetClass?: string, promoCode?: string, highlights: string[] = []): string {
+  const hlList = highlights.length > 0
+    ? highlights.map(h => `- ${h}`).join('\n')
+    : `- দেশের শীর্ষ শিক্ষকদের লাইভ ক্লাস\n- সম্পূর্ণ লেকচার শিট ও অ্যানোটেটেড নোট\n- বোর্ড স্ট্যান্ডার্ড মডেল টেস্ট ও ডাউট সলভিং`;
+
+  return `# ${title}
+
+১০ মিনিট স্কুলের **${title}** কোর্সের মাধ্যমে শিক্ষার্থীরা ঘরে বসেই যেকোনো সময় যেকোনো ডিভাইস থেকে পূর্ণাঙ্গ ও সুশৃঙ্খল প্রস্তুতি সম্পন্ন করতে পারবে।
+
+## এই কোর্সের মূল বৈশিষ্ট্যসমূহ:
+${hlList}
+
+## কোর্সটিতে যা যা অন্তর্ভুক্ত থাকছে:
+- **লাইভ ইন্টারঅ্যাক্টিভ ক্লাস:** প্রতিটি বিষয়ের বেসিক থেকে শুরু করে এডভান্স টপিক ধরে ধরে বোঝানো।
+- **লেকচার শিট ও রিভিশন নোট:** প্রতিটি ক্লাসের পরপরই গুরুত্বপূর্ণ প্রশ্নের সমাধানসহ পিডিএফ নোট।
+- **মডেল টেস্ট ও প্র্যাকটিস:** নিয়মিত কুইজ ও বোর্ড প্রশ্ন সমাধানের মাধ্যমে পরীক্ষার ভয় দূর করা।
+- **সার্বক্ষণিক সাপোর্ট:** পড়াশোনার যেকোনো ডাউট দূর করতে স্পেশাল সাপোর্ট প্ল্যাটফর্ম সুবিধা।
+
+## কাদের জন্য এই কোর্স?
+${targetClass ? `এই কোর্সটি মূলত **${targetClass}**-এর শিক্ষার্থীদের জন্য অত্যন্ত কার্যকর ও সময়োপযোগীভাবে তৈরি করা হয়েছে।` : 'অনলাইনে সেরা শিক্ষকদের গাইডলাইনে পরীক্ষায় চমৎকার ফলাফল নিশ্চিত করতে আগ্রহী যেকোনো শিক্ষার্থীর জন্য।'}
+
+## কীভাবে ভর্তি হবেন ও ডিসকাউন্ট পাবেন?
+উপরে দেওয়া **"কিনুন"** বাটনে ক্লিক করে সরাসরি অফিসিয়াল পেজে গিয়ে ভর্তি হতে পারবেন। ${promoCode ? `অতিরিক্ত ছাড়ের জন্য চেকআউটের সময় প্রোমো কোড বক্সে **${promoCode}** ব্যবহার করুন।` : ''}`;
+}
+
+/**
+ * Main scraper function: takes an affiliate link and extracts all metadata without AI
+ */
+export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseData> {
+  const cleanUrl = url.trim();
+  if (!cleanUrl) {
+    throw new Error('অনুগ্রহ করে সঠিক এফিলিয়েট বা কোর্স লিংক দিন।');
+  }
+
+  // 1. Resolve redirect to find final product URL
+  const resolvedUrl = await resolveShortUrl(cleanUrl);
+
+  // 2. Extract promo code if embedded in url parameters (e.g. ?promo=ssc27smp)
+  let promoCode: string | undefined = undefined;
+  const promoMatch = resolvedUrl.match(/[?&]promo=([a-zA-Z0-9_-]+)/i);
+  if (promoMatch && promoMatch[1]) {
+    promoCode = promoMatch[1];
+  }
+
+  // 3. Extract product slug from URL (e.g. /product/ssc-27-science-final-preparation-course)
+  let slug = '';
+  const slugMatch = resolvedUrl.match(/\/product\/([a-zA-Z0-9_-]+)/);
+  if (slugMatch && slugMatch[1]) {
+    slug = slugMatch[1];
+  } else {
+    // If user provided another format, clean up whatever path segment exists
+    try {
+      const parsed = new URL(resolvedUrl);
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      slug = parts[parts.length - 1] || 'new-course';
+    } catch {
+      slug = 'new-course';
+    }
+  }
+
+  // 4. Try official 10 Minute School Discovery API (Public CORS open)
+  if (slug && (resolvedUrl.includes('10minuteschool.com') || cleanUrl.includes('10ms.io'))) {
+    try {
+      const apiUrl = `https://api.10minuteschool.com/discovery-service/api/v1/products/${slug}`;
+      const apiRes = await fetch(apiUrl);
+      if (apiRes.ok) {
+        const json = await apiRes.json();
+        const p = json.data;
+
+        if (p && p.title) {
+          const rawTitle = (p.title || '').trim();
+          // Find primary cover image
+          let imageUrl = '';
+          if (Array.isArray(p.media)) {
+            const imgObj = p.media.find((m: any) => m.resource_type === 'image' || m.type === 'image');
+            imageUrl = imgObj?.resource_value || imgObj?.url || '';
+          }
+
+          // Category and Target Class
+          const { category, targetClass } = detectCategoryAndClass(rawTitle + ' ' + slug);
+
+          // Extract highlights from pointers / features
+          let highlights: string[] = [];
+          if (Array.isArray(p.sections)) {
+            const pointersSec = p.sections.find((s: any) => s.type === 'pointers' || s.type === 'features');
+            if (pointersSec && Array.isArray(pointersSec.values)) {
+              highlights = pointersSec.values
+                .map((v: any) => v.text || v.title || '')
+                .filter(Boolean)
+                .slice(0, 5);
+            }
+          }
+
+          // Extract instructors
+          let instructor = '১০ মিনিট স্কুল';
+          let instructorRole = 'অভিজ্ঞ শিক্ষকমণ্ডলী';
+          if (Array.isArray(p.sections)) {
+            const instSec = p.sections.find((s: any) => s.type === 'instructors');
+            if (instSec && Array.isArray(instSec.values) && instSec.values.length > 0) {
+              const names = instSec.values.map((v: any) => v.name).filter(Boolean);
+              if (names.length <= 2) {
+                instructor = names.join(', ');
+              } else {
+                instructor = `${names[0]} ও দেশের শীর্ষ শিক্ষকমণ্ডলী`;
+              }
+              instructorRole = instSec.values[0]?.designation || 'কোর্স ইন্সট্রাক্টর';
+            }
+          }
+
+          // Extract short description
+          let shortDescription = `${rawTitle} - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।`;
+          if (Array.isArray(p.sections)) {
+            const aboutSec = p.sections.find((s: any) => s.type === 'about');
+            if (aboutSec?.description) {
+              // Strip html tags
+              const cleanAbout = aboutSec.description.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+              if (cleanAbout.length > 20) {
+                shortDescription = cleanAbout.slice(0, 220) + (cleanAbout.length > 220 ? '...' : '');
+              }
+            }
+          }
+
+          const resolvedHighlights = highlights.length > 0 ? highlights : ['লাইভ ক্লাস', 'লেকচার শিট ও নোট', 'মডেল টেস্ট'];
+          const imageAlt = `${rawTitle} কভার ছবি ১০ মিনিট স্কুল`;
+          const seoTitle = `${rawTitle} | 10 Minute School Discount & Admission - 10mscourse.shop`;
+          const seoDescription = `১০ মিনিট স্কুলের ${rawTitle} কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।`;
+          const seoKeywords = [
+            '১০ মিনিট স্কুল',
+            rawTitle,
+            `${rawTitle} কোর্স`,
+            'অনলাইন কোর্স',
+            category,
+            targetClass,
+            '10 Minute School',
+            'কোর্স ফি ও ভর্তি',
+          ].filter(Boolean) as string[];
+
+          const fullDescription = generateCourseFullDescription(rawTitle, targetClass, promoCode, resolvedHighlights);
+
+          return {
+            title: rawTitle,
+            englishTitle: p.slug ? p.slug.replace(/-/g, ' ').toUpperCase() : undefined,
+            slug: slug,
+            imageUrl: imageUrl,
+            imageAlt,
+            shortDescription,
+            fullDescription,
+            seoTitle,
+            seoDescription,
+            seoKeywords,
+            category: category,
+            targetClass: targetClass,
+            affiliateLink: cleanUrl,
+            promoCode: promoCode,
+            instructor: instructor,
+            instructorRole: instructorRole,
+            highlights: resolvedHighlights,
+          };
+        }
+      }
+    } catch (apiErr) {
+      console.warn('10MS public API fetch failed, trying HTML fallback:', apiErr);
+    }
+  }
+
+  // 5. Fallback Strategy: Scrape OpenGraph HTML meta tags via public proxy
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(resolvedUrl)}`;
+    const res = await fetch(proxyUrl);
+    if (res.ok) {
+      const data = await res.json();
+      const html = data.contents || '';
+
+      const getMeta = (prop: string): string => {
+        const regex = new RegExp(`<meta[^>]*(?:property|name)=["'](?:og:)?${prop}["'][^>]*content=["']([^"']+)["']`, 'i');
+        const match = html.match(regex);
+        return match ? match[1].trim() : '';
+      };
+
+      const title = getMeta('title') || html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || '';
+      const cleanTitle = title.replace(/\s*\|\s*10 Minute School.*$/i, '').trim() || 'নতুন কোর্স';
+      const imageUrl = getMeta('image');
+      const description = getMeta('description');
+
+      const { category, targetClass } = detectCategoryAndClass(cleanTitle + ' ' + slug);
+      const imageAlt = `${cleanTitle} কভার ছবি ১০ মিনিট স্কুল`;
+      const seoTitle = `${cleanTitle} | 10 Minute School Discount & Admission - 10mscourse.shop`;
+      const seoDescription = description || `১০ মিনিট স্কুলের ${cleanTitle} কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।`;
+      const seoKeywords = ['১০ মিনিট স্কুল', cleanTitle, 'অনলাইন কোর্স', category, targetClass].filter(Boolean) as string[];
+      const fullDescription = generateCourseFullDescription(cleanTitle, targetClass, promoCode, ['লাইভ ক্লাস', 'লেকচার শিট ও নোট', 'মডেল টেস্ট']);
+
+      return {
+        title: cleanTitle,
+        slug: slug || 'new-course',
+        imageUrl: imageUrl,
+        imageAlt,
+        shortDescription: description || `${cleanTitle} - সম্পূর্ণ অনলাইন কোর্স।`,
+        fullDescription,
+        seoTitle,
+        seoDescription,
+        seoKeywords,
+        category: category,
+        targetClass: targetClass,
+        affiliateLink: cleanUrl,
+        promoCode: promoCode,
+        instructor: '১০ মিনিট স্কুল',
+        instructorRole: 'অভিজ্ঞ শিক্ষকমণ্ডলী',
+      };
+    }
+  } catch (htmlErr) {
+    console.error('All scraper fallbacks failed:', htmlErr);
+  }
+
+  // Minimum safe object if network proxies were unreachable
+  const cleanTitle = slug.replace(/-/g, ' ');
+  const { category, targetClass } = detectCategoryAndClass(slug);
+  const imageAlt = `${cleanTitle} কভার ছবি ১০ মিনিট স্কুল`;
+  const seoTitle = `${cleanTitle} | 10 Minute School Discount & Admission - 10mscourse.shop`;
+  const seoDescription = `১০ মিনিট স্কুলের ${cleanTitle} কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।`;
+  const seoKeywords = ['১০ মিনিট স্কুল', cleanTitle, 'অনলাইন কোর্স', category, targetClass].filter(Boolean) as string[];
+  const fullDescription = generateCourseFullDescription(cleanTitle, targetClass, promoCode, ['লাইভ ক্লাস', 'লেকচার শিট ও নোট', 'মডেল টেস্ট']);
+
+  return {
+    title: cleanTitle,
+    slug: slug || `course-${Date.now().toString().slice(-4)}`,
+    imageUrl: '',
+    imageAlt,
+    shortDescription: 'কোর্সের বিস্তারিত প্রস্তুতি ও বিশেষ অফার।',
+    fullDescription,
+    seoTitle,
+    seoDescription,
+    seoKeywords,
+    category: category,
+    targetClass: targetClass,
+    affiliateLink: cleanUrl,
+    promoCode: promoCode,
+    instructor: '১০ মিনিট স্কুল',
+    instructorRole: 'অভিজ্ঞ শিক্ষকমণ্ডলী',
+  };
+}

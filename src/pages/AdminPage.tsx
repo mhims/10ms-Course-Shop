@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon } from 'lucide-react';
+import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2 } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
@@ -7,6 +7,7 @@ import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
 import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
 import { GithubPushModal } from '../components/GithubPushModal';
 import { pushDataToGithub } from '../utils/githubSync';
+import { scrapeCourseFromUrl } from '../utils/courseScraper';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -111,6 +112,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [lastModifiedAction, setLastModifiedAction] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState(false);
 
+  // Auto-fetch Course Metadata from Affiliate Link State
+  const [autoFetchUrl, setAutoFetchUrl] = useState('');
+  const [isAutoFetching, setIsAutoFetching] = useState(false);
+  const [autoFetchStatus, setAutoFetchStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string } | null>(null);
+
   // Authentication handler
   // Required credentials: accepts both mdadilah and mdadilahnaffahim
   const handleLogin = (e: React.FormEvent) => {
@@ -139,6 +145,8 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
   // Open add new course modal
   const handleStartAddCourse = () => {
+    setAutoFetchUrl('');
+    setAutoFetchStatus(null);
     const defaultCat = allAvailableCategories[0]?.id || '';
     const freshCourse: Course = {
       id: `c-custom-${Date.now()}`,
@@ -182,6 +190,8 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
   // Open edit existing course modal
   const handleStartEditCourse = (course: Course) => {
+    setAutoFetchUrl(course.affiliateLink || '');
+    setAutoFetchStatus(null);
     setEditingCourse({
       ...course,
       displayTargets: course.displayTargets || [],
@@ -233,15 +243,22 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     setIsNewBlog(false);
   };
 
-  const handleSaveBlogFromEditor = (blogToSave: BlogPost) => {
+  const handleSaveBlogFromEditor = (blogToSave: BlogPost, pushDirectly: boolean = false) => {
+    let updatedBlogs = [...blogPosts];
     if (isNewBlog) {
       addBlogPost(blogToSave);
-      showToast('নতুন আর্টিকেল সফলভাবে প্রকাশিত হয়েছে এবং ওয়েবসাইট ও ব্লগে লাইভ দেখাচ্ছে!');
+      updatedBlogs = [blogToSave, ...blogPosts];
+      showToast('নতুন আর্টিকেল সফলভাবে প্রকাশিত হয়েছে!');
     } else {
       updateBlogPost(blogToSave);
+      updatedBlogs = blogPosts.map((b) => (b.id === blogToSave.id ? blogToSave : b));
       showToast('আর্টিকেল সফলভাবে আপডেট করা হয়েছে!');
     }
     setEditingBlog(null);
+
+    if (pushDirectly) {
+      handleDirectGithubSync(undefined, updatedBlogs);
+    }
   };
 
   // Resource handlers
@@ -285,6 +302,60 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     if (!editingCourse) return;
     const currentSyllabus = (editingCourse.syllabus || []).filter((_, i) => i !== index);
     setEditingCourse({ ...editingCourse, syllabus: currentSyllabus });
+  };
+
+  // Automatically fetch course metadata from 10MS affiliate link without AI
+  const handleAutoFetchCourse = async () => {
+    if (!autoFetchUrl.trim()) {
+      setAutoFetchStatus({ type: 'error', message: 'দয়া করে আপনার ১০ মিনিট স্কুল এফিলিয়েট লিংক দিন।' });
+      return;
+    }
+    setIsAutoFetching(true);
+    setAutoFetchStatus(null);
+    try {
+      const data = await scrapeCourseFromUrl(autoFetchUrl);
+
+      setEditingCourse((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          title: data.title || prev.title,
+          slug: data.slug || prev.slug,
+          imageUrl: data.imageUrl || prev.imageUrl,
+          imageAlt: data.imageAlt || `${data.title} কভার ছবি ১০ মিনিট স্কুল`,
+          shortDescription: data.shortDescription || prev.shortDescription,
+          fullDescription: (!prev.fullDescription || prev.fullDescription.length < 50) ? data.fullDescription : prev.fullDescription,
+          category: data.category || prev.category,
+          targetClass: data.targetClass || prev.targetClass,
+          affiliateLink: data.affiliateLink || autoFetchUrl.trim() || prev.affiliateLink,
+          promoCode: data.promoCode !== undefined ? data.promoCode : prev.promoCode,
+          instructor: data.instructor || prev.instructor,
+          instructorRole: data.instructorRole || prev.instructorRole,
+          highlights: data.highlights && data.highlights.length > 0 ? data.highlights : prev.highlights,
+          seoTitle: data.seoTitle || `${data.title} | 10mscourse.shop`,
+          seoDescription: data.seoDescription || `১০ মিনিট স্কুলের ${data.title} কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।`,
+          seoKeywords: data.seoKeywords && data.seoKeywords.length > 0 ? data.seoKeywords : prev.seoKeywords,
+        };
+      });
+
+      // Update SEO keywords
+      const kwStr = data.seoKeywords ? data.seoKeywords.join(', ') : `১০ মিনিট স্কুল, ${data.title}, অনলাইন কোর্স, ${data.category || ''}`;
+      setSeoKeywordsRaw(kwStr);
+
+      setAutoFetchStatus({
+        type: 'success',
+        message: `আলহামদুলিল্লাহ! "${data.title}" কোর্সের কভার ছবি, নাম, স্লাগ ও তথ্য স্বয়ংক্রিয়ভাবে নিচে ফর্মে বসে গেছে। নিচে দাম ও অফার চেক করে নিন।`,
+      });
+      showToast('কোর্সের তথ্য স্বয়ংক্রিয়ভাবে ফর্মে বসে গেছে!');
+    } catch (err: any) {
+      console.error('Auto-fetch course error:', err);
+      setAutoFetchStatus({
+        type: 'error',
+        message: err.message || 'কোর্সের তথ্য সংগ্রহ করা যায়নি। লিংকটি সঠিক কিনা চেক করুন।',
+      });
+    } finally {
+      setIsAutoFetching(false);
+    }
   };
 
   // Save course (Add or Edit)
@@ -371,7 +442,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   };
 
   // Direct GitHub API Sync using Personal Access Token
-  const handleDirectGithubSync = async (coursesOverride?: Course[]) => {
+  const handleDirectGithubSync = async (coursesOverride?: Course[], blogsOverride?: BlogPost[]) => {
     if (!githubToken.trim()) {
       setShowGithubPushModal(true);
       showToast('দয়া করে GitHub Personal Access Token দিন');
@@ -385,6 +456,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     }
 
     const activeCourses = coursesOverride && Array.isArray(coursesOverride) ? coursesOverride : courses;
+    const activeBlogs = blogsOverride && Array.isArray(blogsOverride) ? blogsOverride : blogPosts;
 
     setIsPushingToGithub(true);
     setGithubPushStatus('গিটহাবে সরাসরি ডেটা পাঠানো হচ্ছে...');
@@ -396,7 +468,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         token: githubToken.trim(),
         repo: cleanRepo,
         courses: activeCourses,
-        blogPosts,
+        blogPosts: activeBlogs,
         siteSettings,
         categories,
         resources,
@@ -1509,6 +1581,85 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
             </div>
 
             <form onSubmit={handleSaveCourse} className="space-y-4 text-xs sm:text-sm">
+              {/* Magic Auto-Fetch Metadata Card (Zero AI Token Waste) */}
+              <div className="p-4 bg-gradient-to-br from-rose-50 via-red-50 to-amber-50 rounded-2xl border-2 border-rose-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600 to-red-600 text-white flex items-center justify-center shadow-sm">
+                      <Zap className="w-4 h-4 fill-white text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                        <span>এফিলিয়েট লিংক থেকে অটো-তথ্য আনুন</span>
+                        <span className="text-[10px] font-bold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          Auto Fetch
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        শুধু এফিলিয়েট লিংক দিন — কোর্সের নাম, কভার ছবি, স্লাগ ও তথ্য অটোমেটিক বসে যাবে (এরপর আপনি চাইলে এডিট করতে পারবেন)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      <Link2 className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="url"
+                      value={autoFetchUrl}
+                      onChange={(e) => setAutoFetchUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAutoFetchCourse();
+                        }
+                      }}
+                      placeholder="যেমন: https://10ms.io/XL0IZc বা কোর্স লিংক"
+                      className="w-full pl-9 pr-3 py-2.5 bg-white border border-rose-200 rounded-xl text-xs sm:text-sm font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isAutoFetching || !autoFetchUrl.trim()}
+                    onClick={handleAutoFetchCourse}
+                    className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0 active:scale-95"
+                  >
+                    {isAutoFetching ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>তথ্য আনা হচ্ছে...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>তথ্য অটো-আনুন ⚡</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Status Message */}
+                {autoFetchStatus && (
+                  <div
+                    className={`p-3 rounded-xl border text-xs font-semibold flex items-start gap-2.5 transition-all ${
+                      autoFetchStatus.type === 'success'
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                        : 'bg-rose-50 border-rose-300 text-rose-950'
+                    }`}
+                  >
+                    {autoFetchStatus.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    )}
+                    <span className="leading-relaxed flex-1">{autoFetchStatus.message}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Title & Slug (Requirement 2: Custom URL slug) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
