@@ -29,6 +29,9 @@ interface CourseContextType {
   blogPosts: BlogPost[];
   reviews: Review[];
   siteSettings: SiteSettings;
+  hasUnpushedChanges: boolean;
+  refreshFromLive: () => Promise<void>;
+  markChangesPushed: () => void;
   addCourse: (course: Course) => void;
   updateCourse: (course: Course) => void;
   deleteCourse: (id: string) => void;
@@ -62,6 +65,8 @@ const STORAGE_KEYS = {
   BLOGS: '10ms_shop_blogs_v3_clean',
   REVIEWS: '10ms_shop_reviews_v2',
   SETTINGS: '10ms_shop_settings_v3',
+  LOCAL_MODIFIED: '10ms_shop_local_modified_at',
+  REMOTE_LAST_UPDATED: '10ms_shop_remote_last_updated',
 };
 
 const defaultSettings: SiteSettings = {
@@ -71,6 +76,8 @@ const defaultSettings: SiteSettings = {
   announcementText: '🎉 ১০ মিনিট স্কুলের সকল কোর্সে স্পেশাল ডিসকাউন্ট ও ভর্তি অফার চলছে!',
   defaultAffiliateCode: '10mscourse_shop'
 };
+
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/mhims/10ms-Course-Shop/main';
 
 export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [courses, setCourses] = useState<Course[]>(() => {
@@ -85,6 +92,31 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     return initialCourses;
   });
+
+  const [hasUnpushedChanges, setHasUnpushedChanges] = useState<boolean>(() => {
+    try {
+      return Boolean(localStorage.getItem(STORAGE_KEYS.LOCAL_MODIFIED));
+    } catch {
+      return false;
+    }
+  });
+
+  const markLocalChange = () => {
+    const now = Date.now();
+    try {
+      localStorage.setItem(STORAGE_KEYS.LOCAL_MODIFIED, now.toString());
+    } catch {}
+    setHasUnpushedChanges(true);
+  };
+
+  const markChangesPushed = () => {
+    const now = Date.now();
+    try {
+      localStorage.removeItem(STORAGE_KEYS.LOCAL_MODIFIED);
+      localStorage.setItem(STORAGE_KEYS.REMOTE_LAST_UPDATED, now.toString());
+    } catch {}
+    setHasUnpushedChanges(false);
+  };
 
   // Helper to persist courses to backend API (in AI Studio / Vite dev server)
   const syncCoursesToDisk = (updatedCourses: Course[]) => {
@@ -101,79 +133,144 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Fetch live courses from API or static courses.json with cache-busting
-  useEffect(() => {
-    const fetchLive = async () => {
+  // Core live data fetcher with instant GitHub Raw bypass and local modification protection
+  const fetchLive = async () => {
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const cacheBust = `?t=${Date.now()}`;
+      let localModifiedTime = 0;
       try {
-        const cacheBust = `?t=${Date.now()}`;
-        let res = await fetch(`/api/courses${cacheBust}`);
-        if (!res.ok) {
-          res = await fetch(`./courses.json${cacheBust}`, { cache: 'no-store' });
-        }
+        const localModStr = localStorage.getItem(STORAGE_KEYS.LOCAL_MODIFIED);
+        if (localModStr) localModifiedTime = parseInt(localModStr, 10) || 0;
+      } catch {}
+
+      // 1. Fetch live settings to detect timestamps
+      let originSettings: SiteSettings | null = null;
+      let rawSettings: SiteSettings | null = null;
+
+      // Check local dev backend or domain origin settings.json (always root absolute!)
+      try {
+        const res = await fetch(`/api/settings${cacheBust}`);
         if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setCourses(data);
-          }
+          originSettings = await res.json();
+        } else {
+          const sRes = await fetch(`${origin}/settings.json${cacheBust}`, { cache: 'no-store' });
+          if (sRes.ok) originSettings = await sRes.json();
         }
+      } catch {}
 
-        // Also fetch live blogs
-        try {
-          const bRes = await fetch(`./blogs.json${cacheBust}`, { cache: 'no-store' });
-          if (bRes.ok) {
-            const bData = await bRes.json();
-            if (Array.isArray(bData) && bData.length > 0) {
-              setBlogPosts(bData);
-            }
-          }
-        } catch {
-          // ignore
+      // Check GitHub raw settings (updates instantly upon push, bypassing Fastly's 10-min cache)
+      try {
+        const rawRes = await fetch(`${GITHUB_RAW_BASE}/settings.json${cacheBust}`, { cache: 'no-store' });
+        if (rawRes.ok) {
+          rawSettings = await rawRes.json();
         }
+      } catch {}
 
-        // Also fetch live settings
-        try {
-          const sRes = await fetch(`./settings.json${cacheBust}`, { cache: 'no-store' });
-          if (sRes.ok) {
-            const sData = await sRes.json();
-            if (sData && typeof sData === 'object' && sData.siteName) {
-              setSiteSettings(prev => ({ ...prev, ...sData }));
-            }
-          }
-        } catch {
-          // ignore
-        }
+      const originTs = originSettings?.lastUpdated || 0;
+      const rawTs = rawSettings?.lastUpdated || 0;
 
-        // Also fetch live categories
-        try {
-          const cRes = await fetch(`./categories.json${cacheBust}`, { cache: 'no-store' });
-          if (cRes.ok) {
-            const cData = await cRes.json();
-            if (Array.isArray(cData) && cData.length > 0) {
-              setCategories(cData);
-            }
-          }
-        } catch {
-          // ignore
-        }
+      // Select freshest remote source
+      const preferRaw = rawTs > originTs;
+      const effectiveRemoteSettings = preferRaw ? rawSettings : (originSettings || rawSettings);
+      const effectiveRemoteTs = Math.max(originTs, rawTs);
 
-        // Also fetch live resources
-        try {
-          const rRes = await fetch(`./resources.json${cacheBust}`, { cache: 'no-store' });
-          if (rRes.ok) {
-            const rData = await rRes.json();
-            if (Array.isArray(rData) && rData.length > 0) {
-              setResources(rData);
-            }
-          }
-        } catch {
-          // ignore
+      // If user made local edits in Admin Panel that are newer than remote server deployment:
+      // DO NOT overwrite user's local edits!
+      if (localModifiedTime > 0 && localModifiedTime > effectiveRemoteTs) {
+        setHasUnpushedChanges(true);
+        if (effectiveRemoteSettings && effectiveRemoteSettings.siteName) {
+          setSiteSettings(prev => ({ ...prev, ...effectiveRemoteSettings, lastUpdated: localModifiedTime }));
         }
-      } catch {
-        // silently ignore
+        return;
       }
-    };
+
+      // If remote has newer or synchronized data, update local state
+      setHasUnpushedChanges(false);
+      try {
+        localStorage.removeItem(STORAGE_KEYS.LOCAL_MODIFIED);
+      } catch {}
+
+      if (effectiveRemoteSettings && effectiveRemoteSettings.siteName) {
+        setSiteSettings(prev => ({ ...prev, ...effectiveRemoteSettings }));
+      }
+
+      const activeBase = preferRaw ? GITHUB_RAW_BASE : origin;
+
+      // Fetch Courses (always root absolute!)
+      try {
+        let cRes = await fetch(`${activeBase}/courses.json${cacheBust}`, { cache: 'no-store' });
+        if (!cRes.ok && preferRaw) {
+          cRes = await fetch(`${origin}/courses.json${cacheBust}`, { cache: 'no-store' });
+        }
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          if (Array.isArray(cData) && cData.length > 0) {
+            setCourses(cData);
+          }
+        }
+      } catch (err) {
+        console.warn('Courses live fetch error:', err);
+      }
+
+      // Fetch Blogs
+      try {
+        let bRes = await fetch(`${activeBase}/blogs.json${cacheBust}`, { cache: 'no-store' });
+        if (!bRes.ok && preferRaw) {
+          bRes = await fetch(`${origin}/blogs.json${cacheBust}`, { cache: 'no-store' });
+        }
+        if (bRes.ok) {
+          const bData = await bRes.json();
+          if (Array.isArray(bData) && bData.length > 0) {
+            setBlogPosts(bData);
+          }
+        }
+      } catch {}
+
+      // Fetch Categories
+      try {
+        let catRes = await fetch(`${activeBase}/categories.json${cacheBust}`, { cache: 'no-store' });
+        if (!catRes.ok && preferRaw) {
+          catRes = await fetch(`${origin}/categories.json${cacheBust}`, { cache: 'no-store' });
+        }
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          if (Array.isArray(catData) && catData.length > 0) {
+            setCategories(catData);
+          }
+        }
+      } catch {}
+
+      // Fetch Resources
+      try {
+        let rRes = await fetch(`${activeBase}/resources.json${cacheBust}`, { cache: 'no-store' });
+        if (!rRes.ok && preferRaw) {
+          rRes = await fetch(`${origin}/resources.json${cacheBust}`, { cache: 'no-store' });
+        }
+        if (rRes.ok) {
+          const rData = await rRes.json();
+          if (Array.isArray(rData) && rData.length > 0) {
+            setResources(rData);
+          }
+        }
+      } catch {}
+
+    } catch (e) {
+      console.warn('Live fetch error:', e);
+    }
+  };
+
+  useEffect(() => {
     fetchLive();
   }, []);
+
+  const refreshFromLive = async () => {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.LOCAL_MODIFIED);
+    } catch {}
+    setHasUnpushedChanges(false);
+    await fetchLive();
+  };
 
   const [categories, setCategories] = useState<CustomCategory[]>(() => {
     try {
@@ -332,6 +429,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const addCategory = (category: CustomCategory) => {
+    markLocalChange();
     setCategories(prev => {
       if (prev.some(c => c.id === category.id)) {
         return prev.map(c => (c.id === category.id ? category : c));
@@ -341,14 +439,17 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateCategory = (category: CustomCategory) => {
+    markLocalChange();
     setCategories(prev => prev.map(c => (c.id === category.id ? category : c)));
   };
 
   const deleteCategory = (id: string) => {
+    markLocalChange();
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
   const addResource = (resource: SiteResource) => {
+    markLocalChange();
     setResources(prev => {
       if (prev.some(r => r.id === resource.id)) {
         return prev.map(r => (r.id === resource.id ? resource : r));
@@ -358,14 +459,17 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateResource = (resource: SiteResource) => {
+    markLocalChange();
     setResources(prev => prev.map(r => (r.id === resource.id ? resource : r)));
   };
 
   const deleteResource = (id: string) => {
+    markLocalChange();
     setResources(prev => prev.filter(r => r.id !== id));
   };
 
   const addCourse = (newCourse: Course) => {
+    markLocalChange();
     setCourses(prev => {
       const exists = prev.some(c => c.id === newCourse.id);
       const updated = exists ? prev.map(c => (c.id === newCourse.id ? newCourse : c)) : [newCourse, ...prev];
@@ -384,6 +488,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateCourse = (updatedCourse: Course) => {
+    markLocalChange();
     setCourses(prev => {
       const updated = prev.map(c => (c.id === updatedCourse.id ? updatedCourse : c));
       syncCoursesToDisk(updated);
@@ -392,6 +497,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const deleteCourse = (id: string) => {
+    markLocalChange();
     setCourses(prev => {
       const updated = prev.filter(c => c.id !== id);
       syncCoursesToDisk(updated);
@@ -400,10 +506,12 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateSiteSettings = (settings: Partial<SiteSettings>) => {
+    markLocalChange();
     setSiteSettings(prev => ({ ...prev, ...settings }));
   };
 
   const addBlogPost = (post: BlogPost) => {
+    markLocalChange();
     setBlogPosts(prev => {
       const updated = [post, ...prev];
       syncBlogsToDisk(updated);
@@ -412,6 +520,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const updateBlogPost = (post: BlogPost) => {
+    markLocalChange();
     setBlogPosts(prev => {
       const updated = prev.map(b => (b.id === post.id ? post : b));
       syncBlogsToDisk(updated);
@@ -420,6 +529,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const deleteBlogPost = (id: string) => {
+    markLocalChange();
     setBlogPosts(prev => {
       const updated = prev.filter(b => b.id !== id);
       syncBlogsToDisk(updated);
@@ -439,6 +549,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const parsed = JSON.parse(jsonString);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        markLocalChange();
         setCourses(parsed);
         syncCoursesToDisk(parsed);
         return true;
@@ -450,6 +561,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const clearAllCourses = () => {
+    markLocalChange();
     setCourses([]);
     syncCoursesToDisk([]);
     try {
@@ -473,6 +585,9 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.removeItem(STORAGE_KEYS.BLOGS);
     localStorage.removeItem(STORAGE_KEYS.REVIEWS);
     localStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    localStorage.removeItem(STORAGE_KEYS.LOCAL_MODIFIED);
+    localStorage.removeItem(STORAGE_KEYS.REMOTE_LAST_UPDATED);
+    setHasUnpushedChanges(false);
   };
 
   return (
@@ -484,6 +599,9 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         blogPosts,
         reviews,
         siteSettings,
+        hasUnpushedChanges,
+        refreshFromLive,
+        markChangesPushed,
         addCourse,
         updateCourse,
         deleteCourse,

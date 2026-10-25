@@ -92,6 +92,7 @@ export interface SiteSettings {
   whatsappNumber: string;
   announcementText: string;
   defaultAffiliateCode: string;
+  lastUpdated?: number;
 }
 
 export type PageRoute = 

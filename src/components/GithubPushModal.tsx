@@ -13,8 +13,11 @@ import {
   Terminal,
   ShieldCheck,
   CheckCircle2,
+  KeyRound,
+  CheckCircle,
 } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
+import { pushDataToGithub, testGithubConnection } from '../utils/githubSync';
 
 interface GithubPushModalProps {
   isOpen: boolean;
@@ -34,6 +37,8 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
   const [repo, setRepo] = useState(() => localStorage.getItem('10ms_gh_repo') || 'mhims/10ms-Course-Shop');
   const [showToken, setShowToken] = useState(false);
   const [isPushing, setIsPushing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [status, setStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({
     type: 'idle',
     message: '',
@@ -42,6 +47,21 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
   const [showGuide, setShowGuide] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      const res = await testGithubConnection(token, repo);
+      setTestResult(res);
+      if (res.ok) {
+        localStorage.setItem('10ms_gh_pat', token.trim());
+        localStorage.setItem('10ms_gh_repo', repo.trim());
+      }
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handlePush = async () => {
     if (!token.trim()) {
@@ -56,7 +76,7 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
     if (!cleanRepo || !cleanRepo.includes('/')) {
       setStatus({
         type: 'error',
-        message: 'দয়া করে সঠিক রিপোজিটরি নাম দিন (যেমন: mhims/mhims.github.io)',
+        message: 'দয়া করে সঠিক রিপোজিটরি নাম দিন (যেমন: mhims/10ms-Course-Shop)',
       });
       return;
     }
@@ -64,82 +84,25 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
     setIsPushing(true);
     setStatus({
       type: 'loading',
-      message: 'গিটহাবে সকল ডেটা (কোর্স, ব্লগ, সেটিংস) পাঠানো হচ্ছে...',
+      message: 'গিটহাবে সংযোগ স্থাপন ও ডেটা প্রস্তুত করা হচ্ছে...',
     });
 
     localStorage.setItem('10ms_gh_pat', token.trim());
     localStorage.setItem('10ms_gh_repo', cleanRepo);
 
     try {
-      // Also persist to local workspace disk in AI Studio
-      try {
-        fetch('/api/save-courses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ courses }),
-        }).catch(() => {});
-      } catch {
-        // ignore
-      }
-
-      // Complete website dataset to sync
-      const filesToSync = [
-        { name: 'courses.json', content: JSON.stringify(courses, null, 2) },
-        { name: 'blogs.json', content: JSON.stringify(blogPosts, null, 2) },
-        { name: 'settings.json', content: JSON.stringify(siteSettings, null, 2) },
-        { name: 'categories.json', content: JSON.stringify(categories, null, 2) },
-        { name: 'resources.json', content: JSON.stringify(resources, null, 2) },
-      ];
-
-      for (const file of filesToSync) {
-        // Target paths for GitHub Pages root and docs/
-        const targetPaths = [`docs/${file.name}`, `public/${file.name}`, file.name];
-
-        // Encode UTF-8 content to base64 safely
-        const utf8Bytes = new TextEncoder().encode(file.content);
-        let binaryStr = '';
-        utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
-        const base64Content = btoa(binaryStr);
-
-        for (const filePath of targetPaths) {
-          const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${filePath}`;
-          let sha: string | undefined = undefined;
-
-          try {
-            const getRes = await fetch(apiUrl, {
-              headers: {
-                Authorization: `token ${token.trim()}`,
-                Accept: 'application/vnd.github.v3+json',
-              },
-            });
-            if (getRes.ok) {
-              const fileData = await getRes.json();
-              sha = fileData.sha;
-            }
-          } catch {
-            // File might not exist yet, continue
-          }
-
-          const putRes = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-              Authorization: `token ${token.trim()}`,
-              Accept: 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: `Update ${file.name} from 10MS Admin Panel [skip ci] - ${new Date().toLocaleTimeString()}`,
-              content: base64Content,
-              sha: sha,
-            }),
-          });
-
-          if (!putRes.ok) {
-            const errData = await putRes.json().catch(() => ({}));
-            throw new Error(errData.message || `গিটহাবে ${filePath} ফাইল আপলোডে সমস্যা হয়েছে (${putRes.status})`);
-          }
-        }
-      }
+      const result = await pushDataToGithub({
+        token: token.trim(),
+        repo: cleanRepo,
+        courses,
+        blogPosts,
+        siteSettings,
+        categories,
+        resources,
+        onProgress: (msg) => {
+          setStatus({ type: 'loading', message: msg });
+        },
+      });
 
       setStatus({
         type: 'success',
@@ -153,7 +116,7 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
       console.error('GitHub Push error:', err);
       setStatus({
         type: 'error',
-        message: `পুশ ব্যর্থ হয়েছে: ${err.message || 'টোকেনের মেয়াদ বা repo পারমিশন চেক করুন'}`,
+        message: `পুশ ব্যর্থ হয়েছে: ${err.message || 'টোকেনের মেয়াদ বা পারমিশন চেক করুন'}`,
       });
     } finally {
       setIsPushing(false);
@@ -301,6 +264,45 @@ export const GithubPushModal: React.FC<GithubPushModalProps> = ({
                 আপনার GitHub Pages রিপোজিটরির নাম
               </p>
             </div>
+          </div>
+
+          {/* Connection Test & Diagnostic Button */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 pb-1">
+            <button
+              type="button"
+              disabled={isTesting || !token.trim() || !repo.trim()}
+              onClick={handleTestConnection}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40"
+            >
+              {isTesting ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-500" />
+                  <span>কানেকশন চেক হচ্ছে...</span>
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-3.5 h-3.5 text-slate-600" />
+                  <span>টোকেন ও রিপো পারমিশন টেস্ট করুন</span>
+                </>
+              )}
+            </button>
+
+            {testResult && (
+              <div
+                className={`text-xs font-bold flex items-center gap-1 px-3 py-1 rounded-lg ${
+                  testResult.ok
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}
+              >
+                {testResult.ok ? (
+                  <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                )}
+                <span>{testResult.message}</span>
+              </div>
+            )}
           </div>
 
           {/* Quick Guide Accordion */}

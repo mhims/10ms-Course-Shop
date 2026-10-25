@@ -6,6 +6,7 @@ import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
 import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
 import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
 import { GithubPushModal } from '../components/GithubPushModal';
+import { pushDataToGithub } from '../utils/githubSync';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -34,6 +35,9 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     categories,
     resources,
     blogPosts,
+    hasUnpushedChanges,
+    markChangesPushed,
+    refreshFromLive,
     addCategory,
     updateCategory,
     deleteCategory,
@@ -369,27 +373,18 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   // Direct GitHub API Sync using Personal Access Token
   const handleDirectGithubSync = async (coursesOverride?: Course[]) => {
     if (!githubToken.trim()) {
-      alert('দয়া করে আপনার GitHub Personal Access Token দিন!');
+      setShowGithubPushModal(true);
+      showToast('দয়া করে GitHub Personal Access Token দিন');
       return;
     }
     const cleanRepo = githubRepo.trim();
     if (!cleanRepo || !cleanRepo.includes('/')) {
-      alert('দয়া করে সঠিক রিপোজিটরি দিন (যেমন: username/repo-name)');
+      setShowGithubPushModal(true);
+      showToast('দয়া করে সঠিক রিপোজিটরি দিন (যেমন: mhims/10ms-Course-Shop)');
       return;
     }
 
     const activeCourses = coursesOverride && Array.isArray(coursesOverride) ? coursesOverride : courses;
-
-    // Immediately persist to local workspace disk in AI Studio
-    try {
-      fetch('/api/save-courses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courses: activeCourses }),
-      }).catch(() => {});
-    } catch {
-      // ignore
-    }
 
     setIsPushingToGithub(true);
     setGithubPushStatus('গিটহাবে সরাসরি ডেটা পাঠানো হচ্ছে...');
@@ -397,66 +392,27 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     localStorage.setItem('10ms_gh_repo', cleanRepo);
 
     try {
-      const filesToSync = [
-        { name: 'courses.json', content: JSON.stringify(activeCourses, null, 2) },
-        { name: 'blogs.json', content: JSON.stringify(blogPosts, null, 2) },
-        { name: 'settings.json', content: JSON.stringify(siteSettings, null, 2) },
-        { name: 'categories.json', content: JSON.stringify(categories, null, 2) },
-        { name: 'resources.json', content: JSON.stringify(resources, null, 2) },
-      ];
+      const res = await pushDataToGithub({
+        token: githubToken.trim(),
+        repo: cleanRepo,
+        courses: activeCourses,
+        blogPosts,
+        siteSettings,
+        categories,
+        resources,
+        onProgress: (statusMsg) => {
+          setGithubPushStatus(statusMsg);
+        },
+      });
 
-      for (const file of filesToSync) {
-        const paths = [`docs/${file.name}`, `public/${file.name}`, file.name];
-        const utf8Bytes = new TextEncoder().encode(file.content);
-        let binaryStr = '';
-        utf8Bytes.forEach((b) => (binaryStr += String.fromCharCode(b)));
-        const base64Content = btoa(binaryStr);
-
-        for (const p of paths) {
-          const apiUrl = `https://api.github.com/repos/${cleanRepo}/contents/${p}`;
-          let sha: string | undefined = undefined;
-          try {
-            const getRes = await fetch(apiUrl, {
-              headers: {
-                Authorization: `token ${githubToken.trim()}`,
-                Accept: 'application/vnd.github.v3+json',
-              },
-            });
-            if (getRes.ok) {
-              const fileData = await getRes.json();
-              sha = fileData.sha;
-            }
-          } catch {
-            // ignore
-          }
-
-          const putRes = await fetch(apiUrl, {
-            method: 'PUT',
-            headers: {
-              Authorization: `token ${githubToken.trim()}`,
-              Accept: 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              message: `Update ${file.name} from 10MS Admin Panel [skip ci] - ${new Date().toLocaleTimeString()}`,
-              content: base64Content,
-              sha: sha,
-            }),
-          });
-
-          if (!putRes.ok) {
-            const errData = await putRes.json().catch(() => ({}));
-            throw new Error(errData.message || `গিটহাবে ${p} আপলোড ব্যর্থ হয়েছে (${putRes.status})`);
-          }
-        }
-      }
-
+      markChangesPushed();
       setGithubPushStatus('অভিনন্দন! ওয়েবসাইটের সকল ডেটা (কোর্স, ব্লগ, সেটিংস) সরাসরি গিটহাবে আপডেট হয়ে গেছে!');
       showToast('গিটহাবে সরাসরি সব ডেটা আপডেট সম্পন্ন হয়েছে!');
       setTimeout(() => setGithubPushStatus(null), 5000);
     } catch (err: any) {
       console.error('GitHub Push error:', err);
       setGithubPushStatus(`ব্যর্থ হয়েছে: ${err.message || 'টোকেনের পারমিশন চেক করুন'}`);
+      showToast(`পুশ ব্যর্থ হয়েছে: ${err.message || 'টোকেন চেক করুন'}`);
     } finally {
       setIsPushingToGithub(false);
     }
@@ -617,12 +573,32 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowGithubPushModal(true)}
-            className="px-4 py-2 text-xs font-black bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl shadow-lg shadow-rose-950/40 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border border-rose-400/30"
+            disabled={isPushingToGithub}
+            onClick={() => {
+              if (githubToken.trim()) {
+                handleDirectGithubSync();
+              } else {
+                setShowGithubPushModal(true);
+              }
+            }}
+            className={`px-4 py-2 text-xs font-black rounded-xl shadow-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 border ${
+              hasUnpushedChanges
+                ? 'bg-gradient-to-r from-amber-500 via-rose-600 to-red-600 text-white shadow-rose-950/50 border-amber-300 animate-pulse'
+                : 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-950/40 border-rose-400/30'
+            }`}
             title="গিটহাবে সরাসরি আপডেট পাঠিয়ে মূল সাইট লাইভ করুন"
           >
-            <GitBranch className="w-3.5 h-3.5" />
-            <span>🚀 গিটহাবে পুশ করুন</span>
+            {isPushingToGithub ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>পুশ হচ্ছে...</span>
+              </>
+            ) : (
+              <>
+                <GitBranch className="w-3.5 h-3.5" />
+                <span>{hasUnpushedChanges ? '🚀 পরিবর্তন লাইভ করুন (Push)' : '🚀 গিটহাবে পুশ করুন'}</span>
+              </>
+            )}
           </button>
           <button
             onClick={() => onNavigate('/')}
@@ -639,6 +615,52 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           </button>
         </div>
       </div>
+
+      {/* Unpushed changes alert banner */}
+      {hasUnpushedChanges && (
+        <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <GitBranch className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <h4 className="text-sm font-extrabold text-amber-950 flex items-center gap-2">
+                <span>নতুন পরিবর্তন সেভ আছে (Live Pending)</span>
+                <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">
+                  পুশ প্রয়োজন
+                </span>
+              </h4>
+              <p className="text-xs text-amber-800 mt-0.5">
+                আপনার ব্রাউজারে পরিবর্তন সংরক্ষিত আছে। মূল সাইট (10mscourse.shop)-এ সকল দর্শকের জন্য এখনই লাইভ করতে পাশের বাটনে চাপ দিন।
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={isPushingToGithub}
+            onClick={() => {
+              if (githubToken.trim()) {
+                handleDirectGithubSync();
+              } else {
+                setShowGithubPushModal(true);
+              }
+            }}
+            className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-rose-200 flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0 disabled:opacity-50 active:scale-95"
+          >
+            {isPushingToGithub ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>গিটহাবে পাঠানো হচ্ছে...</span>
+              </>
+            ) : (
+              <>
+                <GitBranch className="w-4 h-4" />
+                <span>🚀 এক ক্লিকে লাইভ করুন (Push to Live)</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="flex items-center gap-2 border-b border-rose-100 pb-3 overflow-x-auto scrollbar-none">
@@ -2083,6 +2105,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         onClose={() => setShowGithubPushModal(false)}
         exportCoursesJSON={exportCoursesJSON}
         onSuccess={() => {
+          markChangesPushed();
           showToast('অভিনন্দন! গিটহাবে সরাসরি পুশ সফল হয়েছে।');
           setLastModifiedAction(null);
         }}

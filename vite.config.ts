@@ -130,21 +130,21 @@ function coursesBackendPlugin(): Plugin {
   };
 }
 
-function devHtmlPlugin(): Plugin {
+function viteHtmlEntryPlugin(): Plugin {
   return {
-    name: 'dev-html-plugin',
-    transformIndexHtml(html, ctx) {
-      if (ctx?.server) {
-        // In Vite dev mode, strip compiled production bundle and ensure /src/main.tsx is loaded
+    name: 'vite-html-entry-plugin',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html) {
+        // Strip any compiled production bundle references so both dev server and build always compile from /src/main.tsx
         let clean = html
-          .replace(/\n?\s*<script\s+type="module"\s+crossorigin\s+src="\.?\/?assets\/index-[^"]+\.js"><\/script>/gi, '')
-          .replace(/\n?\s*<link\s+rel="stylesheet"\s+crossorigin\s+href="\.?\/?assets\/index-[^"]+\.css">/gi, '');
+          .replace(/\n?\s*<script\s+type="module"\s+crossorigin\s+src="\.?\/?assets\/[^"]+\.js"><\/script>/gi, '')
+          .replace(/\n?\s*<link\s+rel="stylesheet"\s+crossorigin\s+href="\.?\/?assets\/[^"]+\.css">/gi, '');
         if (!clean.includes('/src/main.tsx')) {
           clean = clean.replace('</body>', '    <script type="module" src="/src/main.tsx"></script>\n  </body>');
         }
         return clean;
-      }
-      return html;
+      },
     },
   };
 }
@@ -152,7 +152,7 @@ function devHtmlPlugin(): Plugin {
 export default defineConfig(() => {
   return {
     base: './',
-    plugins: [react(), tailwindcss(), devHtmlPlugin(), coursesBackendPlugin()],
+    plugins: [react(), tailwindcss(), viteHtmlEntryPlugin(), coursesBackendPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), '.'),
@@ -161,6 +161,13 @@ export default defineConfig(() => {
     build: {
       outDir: 'docs',
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          entryFileNames: 'assets/app.js',
+          chunkFileNames: 'assets/[name].js',
+          assetFileNames: 'assets/app.[ext]',
+        },
+      },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
