@@ -1,6 +1,176 @@
-import { Course } from '../types';
+import { Course } from "../types";
 
 export const initialCourses: Course[] = [
+  {
+    "id": "c-custom-1792923762998",
+    "slug": "varsity-c-unit-and-gst-admission-course-2026",
+    "title": "ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+    "englishTitle": "",
+    "category": "admission",
+    "displayTargets": [
+      "home"
+    ],
+    "targetClass": "এডমিশন টেস্ট",
+    "regularPrice": 5000,
+    "offerPrice": 3500,
+    "offerEndDate": "2027-11-24",
+    "isLifetime": false,
+    "status": "active",
+    "imageUrl": "https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-c-unit-and-gst-admission-course-2026-thumbnail.png",
+    "imageAlt": "ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ কভার ছবি ১০ মিনিট স্কুল",
+    "affiliateLink": "https://10ms.io/1L03Sn",
+    "promoCode": "adm2026",
+    "instructor": "SMR Raiyan ও দেশের শীর্ষ শিক্ষকমণ্ডলী",
+    "instructorRole": "কোর্স ইন্সট্রাক্টর",
+    "rating": 5,
+    "reviewCount": 150,
+    "enrolledCount": 1500,
+    "shortDescription": "ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "fullDescription": "# ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬\n\n১০ মিনিট স্কুলের **ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬** কোর্সের মাধ্যমে শিক্ষার্থীরা ঘরে বসেই যেকোনো সময় যেকোনো ডিভাইস থেকে পূর্ণাঙ্গ ও সুশৃঙ্খল প্রস্তুতি সম্পন্ন করতে পারবে।\n\n## এই কোর্সের মূল বৈশিষ্ট্যসমূহ:\n- ৬টি বিষয়: একাউন্টিং, ম্যানেজমেন্ট, মার্কেটিং, ফাইন্যান্স, বাংলা, ইংলিশ\n- লাইভ ক্লাসে Basic থেকে Admission স্ট্যান্ডার্ডে পড়ানো হবে\n- বিগত ৫ বছরের Varsity C Unit Question Bank Solve (প্রিন্টেড বই)\n- বিগত ৫ বছরের ভার্সিটি প্রশ্নব্যাংক সলভ রেকর্ডেড ক্লাস\n- ২৪/৭ AI ডাউট সল্ভের মাধ্যমে যেকোনো প্রশ্নের সমাধান\n\n## কোর্সটিতে যা যা অন্তর্ভুক্ত থাকছে:\n- **লাইভ ইন্টারঅ্যাক্টিভ ক্লাস:** প্রতিটি বিষয়ের বেসিক থেকে শুরু করে এডভান্স টপিক ধরে ধরে বোঝানো।\n- **লেকচার শিট ও রিভিশন নোট:** প্রতিটি ক্লাসের পরপরই গুরুত্বপূর্ণ প্রশ্নের সমাধানসহ পিডিএফ নোট।\n- **মডেল টেস্ট ও প্র্যাকটিস:** নিয়মিত কুইজ ও বোর্ড প্রশ্ন সমাধানের মাধ্যমে পরীক্ষার ভয় দূর করা।\n- **সার্বক্ষণিক সাপোর্ট:** পড়াশোনার যেকোনো ডাউট দূর করতে স্পেশাল সাপোর্ট প্ল্যাটফর্ম সুবিধা।\n\n## কাদের জন্য এই কোর্স?\nএই কোর্সটি মূলত **এডমিশন টেস্ট**-এর শিক্ষার্থীদের জন্য অত্যন্ত কার্যকর ও সময়োপযোগীভাবে তৈরি করা হয়েছে।\n\n## কীভাবে ভর্তি হবেন ও ডিসকাউন্ট পাবেন?\nউপরে দেওয়া **\"কিনুন\"** বাটনে ক্লিক করে সরাসরি অফিসিয়াল পেজে গিয়ে ভর্তি হতে পারবেন। অতিরিক্ত ছাড়ের জন্য চেকআউটের সময় প্রোমো কোড বক্সে **adm2026** ব্যবহার করুন।",
+    "highlights": [
+      "৬টি বিষয়: একাউন্টিং, ম্যানেজমেন্ট, মার্কেটিং, ফাইন্যান্স, বাংলা, ইংলিশ",
+      "লাইভ ক্লাসে Basic থেকে Admission স্ট্যান্ডার্ডে পড়ানো হবে",
+      "বিগত ৫ বছরের Varsity C Unit Question Bank Solve (প্রিন্টেড বই)",
+      "বিগত ৫ বছরের ভার্সিটি প্রশ্নব্যাংক সলভ রেকর্ডেড ক্লাস",
+      "২৪/৭ AI ডাউট সল্ভের মাধ্যমে যেকোনো প্রশ্নের সমাধান"
+    ],
+    "syllabus": [
+      {
+        "title": "অধ্যায় ১: সূচনা ও মূল ভিত্তি",
+        "count": "১০ লাইভ ক্লাস ও নোট"
+      },
+      {
+        "title": "অধ্যায় ২: পূর্ণাঙ্গ সিলেবাস অনুশীলন",
+        "count": "১২ লাইভ ক্লাস ও ৫ পরীক্ষা"
+      }
+    ],
+    "seoTitle": "ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ | 10 Minute School Discount & Admission - 10mscourse.shop",
+    "seoDescription": "১০ মিনিট স্কুলের ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।",
+    "seoKeywords": [
+      "১০ মিনিট স্কুল",
+      "ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+      "ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ কোর্স",
+      "অনলাইন কোর্স",
+      "admission",
+      "এডমিশন টেস্ট",
+      "10 Minute School",
+      "কোর্স ফি ও ভর্তি"
+    ],
+    "badgeText": "",
+    "expiryDate": "2027-09-25"
+  },
+  {
+    "id": "c-custom-1792923036700",
+    "slug": "varsity-b-unit-and-gst-admission-course-2026",
+    "title": "ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+    "englishTitle": "",
+    "category": "admission",
+    "displayTargets": [
+      "home"
+    ],
+    "targetClass": "এডমিশন টেস্ট",
+    "regularPrice": 5000,
+    "offerPrice": 3500,
+    "offerEndDate": "2027-06-30",
+    "isLifetime": false,
+    "status": "active",
+    "imageUrl": "https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-b-unit-and-gst-admission-course-2026-thumbnail.png",
+    "imageAlt": "ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ কভার ছবি ১০ মিনিট স্কুল",
+    "affiliateLink": "https://10ms.io/7L09Il",
+    "promoCode": "adm2026",
+    "instructor": "Farhan Sakib ও দেশের শীর্ষ শিক্ষকমণ্ডলী",
+    "instructorRole": "কোর্স ইন্সট্রাক্টর",
+    "rating": 5,
+    "reviewCount": 150,
+    "enrolledCount": 1500,
+    "shortDescription": "ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "fullDescription": "# ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬\n\n১০ মিনিট স্কুলের **ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬** কোর্সের মাধ্যমে শিক্ষার্থীরা ঘরে বসেই যেকোনো সময় যেকোনো ডিভাইস থেকে পূর্ণাঙ্গ ও সুশৃঙ্খল প্রস্তুতি সম্পন্ন করতে পারবে।\n\n## এই কোর্সের মূল বৈশিষ্ট্যসমূহ:\n- ৩টি বিষয়: বাংলা, ইংরেজি ও সাধারণ জ্ঞান\n- লাইভ ক্লাসে Basic থেকে Admission স্ট্যান্ডার্ডে পড়ানো হবে\n- Varsity B Unit Question Bank Solve (প্রিন্টেড বই)\n- সাম্প্রতিক জিকে: Goldmine (PDF)\n- বিগত ৫ বছরের ভার্সিটি প্রশ্নব্যাংক সলভ রেকর্ডেড ক্লাস\n\n## কোর্সটিতে যা যা অন্তর্ভুক্ত থাকছে:\n- **লাইভ ইন্টারঅ্যাক্টিভ ক্লাস:** প্রতিটি বিষয়ের বেসিক থেকে শুরু করে এডভান্স টপিক ধরে ধরে বোঝানো।\n- **লেকচার শিট ও রিভিশন নোট:** প্রতিটি ক্লাসের পরপরই গুরুত্বপূর্ণ প্রশ্নের সমাধানসহ পিডিএফ নোট।\n- **মডেল টেস্ট ও প্র্যাকটিস:** নিয়মিত কুইজ ও বোর্ড প্রশ্ন সমাধানের মাধ্যমে পরীক্ষার ভয় দূর করা।\n- **সার্বক্ষণিক সাপোর্ট:** পড়াশোনার যেকোনো ডাউট দূর করতে স্পেশাল সাপোর্ট প্ল্যাটফর্ম সুবিধা।\n\n## কাদের জন্য এই কোর্স?\nএই কোর্সটি মূলত **এডমিশন টেস্ট**-এর শিক্ষার্থীদের জন্য অত্যন্ত কার্যকর ও সময়োপযোগীভাবে তৈরি করা হয়েছে।\n\n## কীভাবে ভর্তি হবেন ও ডিসকাউন্ট পাবেন?\nউপরে দেওয়া **\"কিনুন\"** বাটনে ক্লিক করে সরাসরি অফিসিয়াল পেজে গিয়ে ভর্তি হতে পারবেন। অতিরিক্ত ছাড়ের জন্য চেকআউটের সময় প্রোমো কোড বক্সে **adm2026** ব্যবহার করুন।",
+    "highlights": [
+      "৩টি বিষয়: বাংলা, ইংরেজি ও সাধারণ জ্ঞান",
+      "লাইভ ক্লাসে Basic থেকে Admission স্ট্যান্ডার্ডে পড়ানো হবে",
+      "Varsity B Unit Question Bank Solve (প্রিন্টেড বই)",
+      "সাম্প্রতিক জিকে: Goldmine (PDF)",
+      "বিগত ৫ বছরের ভার্সিটি প্রশ্নব্যাংক সলভ রেকর্ডেড ক্লাস"
+    ],
+    "syllabus": [
+      {
+        "title": "অধ্যায় ১: সূচনা ও মূল ভিত্তি",
+        "count": "১০ লাইভ ক্লাস ও নোট"
+      },
+      {
+        "title": "অধ্যায় ২: পূর্ণাঙ্গ সিলেবাস অনুশীলন",
+        "count": "১২ লাইভ ক্লাস ও ৫ পরীক্ষা"
+      }
+    ],
+    "seoTitle": "ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ | 10 Minute School Discount & Admission - 10mscourse.shop",
+    "seoDescription": "১০ মিনিট স্কুলের ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।",
+    "seoKeywords": [
+      "১০ মিনিট স্কুল",
+      "ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+      "ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ কোর্স",
+      "অনলাইন কোর্স",
+      "admission",
+      "এডমিশন টেস্ট",
+      "10 Minute School",
+      "কোর্স ফি ও ভর্তি"
+    ],
+    "badgeText": "",
+    "expiryDate": "2027-07-31"
+  },
+  {
+    "id": "c-custom-1792920862523",
+    "slug": "varsity-a-unit-and-gst-admission-course-2026",
+    "title": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+    "englishTitle": "",
+    "category": "admission",
+    "displayTargets": [
+      "home"
+    ],
+    "targetClass": "এডমিশন টেস্ট",
+    "regularPrice": 5000,
+    "offerPrice": 3500,
+    "offerEndDate": "2027-07-31",
+    "isLifetime": true,
+    "status": "active",
+    "imageUrl": "https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-a-unit-and-gst-admission-course-2026-thumbnail.png",
+    "imageAlt": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+    "affiliateLink": "https://10ms.io/sL0M6N",
+    "promoCode": "adm2026",
+    "instructor": "Md Kamrul Hasan Shovon ও দেশের শীর্ষ শিক্ষকমণ্ডলী",
+    "instructorRole": "কোর্স ইন্সট্রাক্টর",
+    "rating": 5,
+    "reviewCount": 150,
+    "enrolledCount": 1500,
+    "shortDescription": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "fullDescription": "",
+    "highlights": [
+      "৪টি বিষয়: পদার্থবিজ্ঞান, রসায়ন, উচ্চতর গণিত ও জীববিজ্ঞান",
+      "লাইভ ক্লাসে Basic থেকে Admission স্ট্যান্ডার্ডে পড়ানো হবে",
+      "বিগত ৫ বছরের DU A Unit Question Bank Solve (প্রিন্টেড বই)",
+      "বিগত ৫ বছরের ভার্সিটি প্রশ্নব্যাংক সলভ রেকর্ডেড ক্লাস",
+      "২৪/৭ AI ডাউট সল্ভের মাধ্যমে যেকোনো প্রশ্নের সমাধান"
+    ],
+    "syllabus": [
+      {
+        "title": "অধ্যায় ১: সূচনা ও মূল ভিত্তি",
+        "count": "১০ লাইভ ক্লাস ও নোট"
+      },
+      {
+        "title": "অধ্যায় ২: পূর্ণাঙ্গ সিলেবাস অনুশীলন",
+        "count": "১২ লাইভ ক্লাস ও ৫ পরীক্ষা"
+      }
+    ],
+    "seoTitle": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ | 10mscourse.shop",
+    "seoDescription": "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬ - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "seoKeywords": [
+      "১০ মিনিট স্কুল",
+      "ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬",
+      "অনলাইন কোর্স",
+      "admission"
+    ],
+    "badgeText": "",
+    "expiryDate": ""
+  },
   {
     "id": "c-hsc-28-online-batch",
     "slug": "hsc-2028-online-batch-bangla-english-ict",
@@ -73,12 +243,12 @@ export const initialCourses: Course[] = [
     "targetClass": "৯ম-১০ম (SSC)",
     "regularPrice": 3000,
     "offerPrice": 2000,
-    "offerEndDate": "2027-06-28",
+    "offerEndDate": "2026-12-31T23:59:59",
     "isLifetime": false,
     "status": "active",
     "imageUrl": "https://cdn.10minuteschool.com/thumbnails/ssc-27/ssc-2027-science-final-preparation-course-thuimbnail.jpg",
     "imageAlt": "SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স বিজ্ঞান বিভাগ ১০ মিনিট স্কুল",
-    "affiliateLink": "https://10ms.io/XL0IZc",
+    "affiliateLink": "https://10ms.io/2Lu8fc",
     "promoCode": "ssc27smp",
     "instructor": "১০ মিনিট স্কুল",
     "instructorRole": "অভিজ্ঞ শিক্ষকমণ্ডলী",
