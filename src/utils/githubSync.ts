@@ -1,4 +1,5 @@
 import { Course, BlogPost, SiteSettings, CustomCategory, SiteResource } from '../types';
+import { generateStaticHtml, getAllStaticPages } from './staticHtmlGenerator';
 
 export interface SyncPayload {
   token: string;
@@ -212,8 +213,15 @@ export async function pushDataToGithub({
       sitemapXml += `  <url>\n    <loc>https://10mscourse.shop/${encodeURIComponent(cat.id)}</loc>\n    <lastmod>${todayIso}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
     }
   }
+  const batchSlugs = [
+    'hsc-28', 'ssc-28', 'hsc-27', 'ssc-27', 'hsc-26', 'ssc-26',
+    'hsc-2028', 'ssc-2028', 'hsc-2027', 'ssc-2027', 'hsc-2026', 'ssc-2026'
+  ];
+  for (const bSlug of batchSlugs) {
+    sitemapXml += `  <url>\n    <loc>https://10mscourse.shop/${bSlug}</loc>\n    <lastmod>${todayIso}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+  }
   for (const course of courses) {
-    if (course.slug && course.status !== 'inactive') {
+    if (course.slug && course.status !== 'archived') {
       sitemapXml += `  <url>\n    <loc>https://10mscourse.shop/courses/${encodeURIComponent(course.slug)}</loc>\n    <lastmod>${todayIso}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.85</priority>\n`;
       if (course.imageUrl) {
         sitemapXml += `    <image:image>\n      <image:loc>${escapeXml(course.imageUrl)}</image:loc>\n      <image:title>${escapeXml(course.title || course.imageAlt || '')}</image:title>\n    </image:image>\n`;
@@ -393,6 +401,32 @@ export async function pushDataToGithub({
     treeEntries.push({ path: 'docs/CNAME', mode: '100644', type: 'blob', content: '10mscourse.shop\n' });
     treeEntries.push({ path: '.nojekyll', mode: '100644', type: 'blob', content: '' });
     treeEntries.push({ path: 'docs/.nojekyll', mode: '100644', type: 'blob', content: '' });
+
+    // Pre-render static route index.html files so GitHub Pages returns 200 OK to Googlebot on all routes
+    try {
+      const baseHtmlRes = await fetch('/index.html').catch(() => null);
+      if (baseHtmlRes && baseHtmlRes.ok) {
+        const baseHtml = await baseHtmlRes.text();
+        const staticPages = getAllStaticPages(courses, blogPosts);
+        for (const p of staticPages) {
+          const rendered = generateStaticHtml(baseHtml, p);
+          treeEntries.push({
+            path: `${p.route}/index.html`,
+            mode: '100644',
+            type: 'blob',
+            content: rendered,
+          });
+          treeEntries.push({
+            path: `docs/${p.route}/index.html`,
+            mode: '100644',
+            type: 'blob',
+            content: rendered,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Could not pre-render static HTML during GitHub sync:', e);
+    }
 
     // Note: Do NOT touch or overwrite compiled assets (app.js, app.css, index.html) during data sync.
     // Git Trees API with base_tree safely preserves all existing production build assets intact.

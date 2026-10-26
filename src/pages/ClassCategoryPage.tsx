@@ -73,16 +73,64 @@ const categoryMeta: Record<
     description: 'বিসিএস ক্যাডার ও শীর্ষ কর্মকর্তাদের এক্সক্লুসিভ গাইডলাইনে চাকরি পরীক্ষায় চূড়ান্ত সফলতার কোর্স।',
     seoTitle: 'BCS & Govt Job Preparation 10MS | 10mscourse.shop',
   },
+  'hsc-28': {
+    title: 'HSC 28 অনলাইন ব্যাচ (HSC 2028)',
+    subtitle: 'এইচএসসি ২০২৮ ব্যাচের বিজ্ঞান, মানবিক ও ব্যবসা শিক্ষার পূর্ণাঙ্গ বিষয়ভিত্তিক প্রস্তুতি',
+    description: '১০ মিনিট স্কুলের এইচএসসি ২০২৮ অনলাইন ব্যাচ: বাংলা, ইংরেজি, আইসিটি ও গ্রুপ সাবজেক্টের লাইভ ক্লাস ও স্পেশাল ডিসকাউন্ট অফার।',
+    seoTitle: 'HSC 28 Online Batch 2028 10MS Course Offer | 10mscourse.shop',
+  },
+  'hsc-2028': {
+    title: 'HSC 28 অনলাইন ব্যাচ (HSC 2028)',
+    subtitle: 'এইচএসসি ২০২৮ ব্যাচের বিজ্ঞান, মানবিক ও ব্যবসা শিক্ষার পূর্ণাঙ্গ বিষয়ভিত্তিক প্রস্তুতি',
+    description: '১০ মিনিট স্কুলের এইচএসসি ২০২৮ অনলাইন ব্যাচ: বাংলা, ইংরেজি, আইসিটি ও গ্রুপ সাবজেক্টের লাইভ ক্লাস ও স্পেশাল ডিসকাউন্ট অফার।',
+    seoTitle: 'HSC 2028 Online Batch 10MS Course Offer | 10mscourse.shop',
+  },
+  'hsc-27': {
+    title: 'HSC 27 অনলাইন ব্যাচ ও ক্র্যাশ কোর্স (HSC 2027)',
+    subtitle: 'এইচএসসি ২০২৭ ব্যাচের সকল বিভাগের পূর্ণাঙ্গ প্রস্তুতি ও টেস্ট পেপার সমাধান',
+    description: '১০ মিনিট স্কুলের এইচএসসি ২০২৭ অনলাইন ব্যাচের লাইভ ক্লাস, লেকচার শিট ও বোর্ড পরীক্ষার নিশ্চিত এ+ প্রস্তুতি।',
+    seoTitle: 'HSC 27 Online Batch 2027 10MS Course Offer | 10mscourse.shop',
+  },
+  'hsc-26': {
+    title: 'HSC 26 শেষ মুহূর্তের প্রস্তুতি (HSC 2026)',
+    subtitle: 'এইচএসসি ২০২৬ পরীক্ষার্থীদের জন্য শেষ মুহূর্তের রিভিশন ও মডেল টেস্ট',
+    description: '১০ মিনিট স্কুলের এইচএসসি ২০২৬ পরীক্ষার্থীদের পূর্ণাঙ্গ রিভিশন ও বোর্ড পরীক্ষায় জিপিএ ৫ অর্জনের এক্সক্লুসিভ কোর্স।',
+    seoTitle: 'HSC 26 Revision & Crash Course 10MS | 10mscourse.shop',
+  },
+  'ssc-28': {
+    title: 'SSC 28 অনলাইন ব্যাচ (৯ম শ্রেণি / SSC 2028)',
+    subtitle: 'নতুন কারিকুলাম ও এসএসসি ২০২৮ এর গণিত, বিজ্ঞান ও ইংরেজির শক্তিশালী ভিত্তি',
+    description: '১০ মিনিট স্কুলের এসএসসি ২০২৮ অনলাইন ব্যাচ: অভিজ্ঞ শিক্ষকদের লাইভ ক্লাসের মাধ্যমে স্কুলের মূল্যায়ন ও এসএসসির পূর্ণাঙ্গ প্রস্তুতি।',
+    seoTitle: 'SSC 28 Online Batch 2028 10MS Course Offer | 10mscourse.shop',
+  },
+  'ssc-27': {
+    title: 'SSC 27 শেষ মুহূর্তের প্রস্তুতি ও অনলাইন ব্যাচ (SSC 2027)',
+    subtitle: 'এসএসসি ২০২৭ বিজ্ঞান, মানবিক ও ব্যবসায় শিক্ষার নিশ্চিত এ+ কোর্স',
+    description: '১০ মিনিট স্কুলের এসএসসি ২০২৭ শেষ মুহূর্তের প্রস্তুতি কোর্স (SMP Bundle): ১১টি বিষয়ে লাইভ ক্লাস, লেকচার শিট ও বোর্ড প্রশ্ন সমাধান।',
+    seoTitle: 'SSC 27 Shesh Muhurter Prostuti & Batch 10MS Offer | 10mscourse.shop',
+  },
+  'ssc-2027': {
+    title: 'SSC 27 শেষ মুহূর্তের প্রস্তুতি ও অনলাইন ব্যাচ (SSC 2027)',
+    subtitle: 'এসএসসি ২০২৭ বিজ্ঞান, মানবিক ও ব্যবসায় শিক্ষার নিশ্চিত এ+ কোর্স',
+    description: '১০ মিনিট স্কুলের এসএসসি ২০২৭ শেষ মুহূর্তের প্রস্তুতি কোর্স (SMP Bundle): ১১টি বিষয়ে লাইভ ক্লাস, লেকচার শিট ও বোর্ড প্রশ্ন সমাধান।',
+    seoTitle: 'SSC 2027 Shesh Muhurter Prostuti & Batch 10MS Offer | 10mscourse.shop',
+  },
+  'ssc-26': {
+    title: 'SSC 26 রিভিশন ও টেস্ট পেপার সলভ (SSC 2026)',
+    subtitle: 'এসএসসি ২০২৬ পরীক্ষার্থীদের জন্য চূড়ান্ত রিভিশন ও মেগা মডেল টেস্ট',
+    description: '১০ মিনিট স্কুলের এসএসসি ২০২৬ পরীক্ষার্থীদের বোর্ড পরীক্ষায় সেরা সাফল্যের নিশ্চিত কোর্স।',
+    seoTitle: 'SSC 26 Crash Course & Revision 10MS | 10mscourse.shop',
+  },
 };
 
 export const ClassCategoryPage: React.FC<ClassCategoryPageProps> = ({ category, onNavigate }) => {
   const { courses, isCourseExpired } = useCourseContext();
 
   const meta = categoryMeta[category] || {
-    title: '১০ মিনিট স্কুল কোর্সসমূহ',
-    subtitle: 'সকল একাডেমিক ও স্কিল কোর্স',
-    description: '১০ মিনিট স্কুলের সেরা অফার ও ডিসকাউন্ট লিংক।',
-    seoTitle: '10MS Courses | 10mscourse.shop',
+    title: category.toUpperCase().replace('-', ' ') + ' কোর্সসমূহ',
+    subtitle: '১০ মিনিট স্কুলের ব্যাচভিত্তিক স্পেশাল অফার ও ডিসকাউন্ট',
+    description: 'সেরা ডিসকাউন্ট ও কুপন কোড দিয়ে সহজেই কোর্সে ভর্তি হোন।',
+    seoTitle: `${category.toUpperCase()} Courses & Batch Offer | 10mscourse.shop`,
   };
 
   const isClass6to8 = ['class-6-8', 'class-6', 'class-7', 'class-8'].includes(category);
@@ -90,6 +138,34 @@ export const ClassCategoryPage: React.FC<ClassCategoryPageProps> = ({ category, 
   const categoryCourses = useMemo(() => {
     return courses.filter((c) => {
       if (isCourseExpired(c)) return false;
+
+      // Batch specific filters e.g. hsc-28, ssc-27, hsc-27, ssc-28, etc.
+      const isBatchMatch = (batchNum: string, level: 'hsc' | 'ssc') => {
+        const text = `${c.title} ${c.slug} ${c.targetClass || ''} ${c.shortDescription || ''}`.toLowerCase();
+        const matchesBatch = text.includes(batchNum) || text.includes(`২০${batchNum}`) || text.includes(`20${batchNum}`);
+        const matchesLevel = text.includes(level) || c.category === level || (level === 'ssc' && c.category === 'class-9-10');
+        return matchesBatch && matchesLevel;
+      };
+
+      if (category === 'hsc-28' || category === 'hsc-2028') {
+        return isBatchMatch('28', 'hsc');
+      }
+      if (category === 'hsc-27' || category === 'hsc-2027') {
+        return isBatchMatch('27', 'hsc');
+      }
+      if (category === 'hsc-26' || category === 'hsc-2026') {
+        return isBatchMatch('26', 'hsc');
+      }
+      if (category === 'ssc-28' || category === 'ssc-2028') {
+        return isBatchMatch('28', 'ssc');
+      }
+      if (category === 'ssc-27' || category === 'ssc-2027') {
+        return isBatchMatch('27', 'ssc');
+      }
+      if (category === 'ssc-26' || category === 'ssc-2026') {
+        return isBatchMatch('26', 'ssc');
+      }
+
       if (category === 'class-6-8') {
         return (
           c.category === 'class-6-8' ||

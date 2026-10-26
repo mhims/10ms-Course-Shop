@@ -120,6 +120,13 @@ function AppContent() {
       return <ClassCategoryPage category="job-prep" onNavigate={handleNavigate} />;
     }
 
+    // 1.1 Dedicated Batch Pages e.g. /hsc-28, /ssc-28, /ssc-27, /hsc-27, /hsc-26, /ssc-26, /hsc-2028, /ssc-2028
+    const batchMatch = currentPath.match(/^\/(hsc|ssc)-(\d{2,4})$/i);
+    if (batchMatch) {
+      const batchCat = currentPath.replace(/^\/+/, '').toLowerCase();
+      return <ClassCategoryPage category={batchCat} onNavigate={handleNavigate} />;
+    }
+
     // 2. Blog page & single blog post
     if (currentPath === '/blog') {
       return <BlogPage onNavigate={handleNavigate} />;
@@ -143,8 +150,10 @@ function AppContent() {
       return <HomePage onNavigate={handleNavigate} searchQuery={searchQuery} />;
     }
 
-    // 5. Individual Course Slug: e.g. 10mscourse.shop/ghore-boshe-spoken-english-munzereen
-    const potentialSlug = currentPath.replace(/^\/+/, '');
+    // 5. Individual Course Slug: e.g. 10mscourse.shop/ghore-boshe-spoken-english OR 10mscourse.shop/courses/ghore-boshe-spoken-english
+    const potentialSlug = currentPath.startsWith('/courses/')
+      ? currentPath.replace(/^\/courses\//, '')
+      : currentPath.replace(/^\/+/, '');
     if (potentialSlug) {
       const isCourseMatch = courses.some((c) => c.slug === potentialSlug || c.id === potentialSlug);
       if (isCourseMatch) {

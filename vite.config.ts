@@ -172,7 +172,7 @@ function viteHtmlEntryPlugin(): Plugin {
 
 export default defineConfig(() => {
   return {
-    base: './',
+    base: '/',
     plugins: [react(), tailwindcss(), viteHtmlEntryPlugin(), coursesBackendPlugin()],
     resolve: {
       alias: {
