@@ -165,7 +165,7 @@ const CategoryScrollRow: React.FC<CategoryScrollRowProps> = ({
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) => {
   const { courses, categories: customCategories, isOfferActive, isCourseExpired } = useCourseContext();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'rows'>('grid');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'rows'>('rows');
   const [showIntentModal, setShowIntentModal] = useState<boolean>(false);
 
   // Active non-expired courses (Expired courses are automatically excluded from homepage!)
