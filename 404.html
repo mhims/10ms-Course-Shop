@@ -1,31 +1,30 @@
 <!DOCTYPE html>
 <html lang="bn">
   <head>
-    <meta charset="utf-8" />
-    <title>10MS Course Shop - ১০ মিনিট স্কুল কোর্স ও অফার</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8">
+    <title>10MS Course Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, follow">
+    <meta http-equiv="refresh" content="0; url=/">
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages: https://github.com/rafgraph/spa-github-pages
-      // Redirects deep links to index.html with route encoded in query string
-      try {
-        var l = window.location;
-        var isProjectPage = l.pathname.split('/')[1] === '10ms-Course-Shop';
-        var pathSegments = isProjectPage ? 1 : 0;
-        var redirectUrl = 
+      var pathSegmentsToKeep = 0;
+      var l = window.location;
+      var rawPath = l.pathname.slice(1);
+      var isKnownSection = rawPath.startsWith('courses') || rawPath.startsWith('blog') || rawPath.startsWith('review') || rawPath.startsWith('class-') || rawPath.startsWith('hsc') || rawPath.startsWith('ssc') || rawPath.startsWith('admission') || rawPath.startsWith('skills') || rawPath.startsWith('spoken-english') || rawPath.startsWith('job-prep') || rawPath.startsWith('adminpanelofficial');
+      if (rawPath && isKnownSection) {
+        l.replace(
           l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-          l.pathname.split('/').slice(0, 1 + pathSegments).join('/') + '/?/' +
-          l.pathname.slice(1).split('/').slice(pathSegments).join('/').replace(/&/g, '~and~') +
+          l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+          l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
           (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-          (l.hash || '');
-        l.replace(redirectUrl);
-      } catch (e) {
-        // Fallback
-        window.location.href = '/';
+          l.hash
+        );
+      } else {
+        window.location.replace('/');
       }
     </script>
   </head>
-  <body style="font-family: sans-serif; text-align: center; padding: 40px; background: #faf5f5; color: #334155;">
-    <h2>পুনর্নির্দেশ করা হচ্ছে... (Redirecting)</h2>
-    <p>অনুগ্রহ করে অপেক্ষা করুন। যদি স্বয়ংক্রিয়ভাবে পেজ লোড না হয়, <a href="/" style="color: #e11d48; font-weight: bold;">এখানে ক্লিক করুন</a>।</p>
+  <body>
+    <script>window.location.replace('/');</script>
   </body>
 </html>

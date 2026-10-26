@@ -93,7 +93,7 @@
       "কোর্স ফি ও ভর্তি"
     ],
     "badgeText": "",
-    "inHeroSlider": true
+    "inHeroSlider": false
   },
   {
     "id": "c-custom-1792926916335",
@@ -140,7 +140,7 @@
       "কোর্স ফি ও ভর্তি"
     ],
     "badgeText": "",
-    "inHeroSlider": true
+    "inHeroSlider": false
   },
   {
     "id": "c-custom-1792926839823",
@@ -242,7 +242,7 @@
       "কোর্স ফি ও ভর্তি"
     ],
     "badgeText": "",
-    "inHeroSlider": true
+    "inHeroSlider": false
   },
   {
     "id": "c-custom-1792926747519",
@@ -291,7 +291,7 @@
       "কোর্স ফি ও ভর্তি"
     ],
     "badgeText": "",
-    "inHeroSlider": true
+    "inHeroSlider": false
   },
   {
     "id": "c-custom-1792926656632",
@@ -719,7 +719,8 @@
       "10 Minute School",
       "কোর্স ফি ও ভর্তি"
     ],
-    "badgeText": ""
+    "badgeText": "",
+    "inHeroSlider": false
   },
   {
     "id": "c-custom-1792925779751",
@@ -775,7 +776,8 @@
       "10 Minute School",
       "কোর্স ফি ও ভর্তি"
     ],
-    "badgeText": ""
+    "badgeText": "",
+    "inHeroSlider": false
   },
   {
     "id": "c-custom-1792925715495",
@@ -987,7 +989,8 @@
       "কোর্স ফি ও ভর্তি"
     ],
     "badgeText": "",
-    "expiryDate": "2027-07-31"
+    "expiryDate": "2027-07-31",
+    "inHeroSlider": true
   },
   {
     "id": "c-custom-1792920862523",
@@ -1033,7 +1036,8 @@
       "admission"
     ],
     "badgeText": "",
-    "expiryDate": ""
+    "expiryDate": "",
+    "inHeroSlider": true
   },
   {
     "id": "c-hsc-28-online-batch",
@@ -1093,7 +1097,8 @@
     ],
     "isFeatured": true,
     "badgeText": "৳৩৮০০ ছাড়",
-    "expiryDate": "2028-08-01"
+    "expiryDate": "2028-08-01",
+    "inHeroSlider": true
   },
   {
     "id": "c-ssc-27-smp-bundle",
@@ -1154,6 +1159,7 @@
     ],
     "isFeatured": true,
     "badgeText": "৳৭৫০ ছাড়",
-    "expiryDate": "2027-05-01"
+    "expiryDate": "2027-05-01",
+    "inHeroSlider": true
   }
 ]
