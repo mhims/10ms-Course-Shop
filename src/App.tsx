@@ -151,13 +151,16 @@ function AppContent() {
     }
 
     // 5. Individual Course Slug: e.g. 10mscourse.shop/ghore-boshe-spoken-english OR 10mscourse.shop/courses/ghore-boshe-spoken-english
-    const potentialSlug = currentPath.startsWith('/courses/')
+    const rawCourseSlug = currentPath.startsWith('/courses/')
       ? currentPath.replace(/^\/courses\//, '')
       : currentPath.replace(/^\/+/, '');
-    if (potentialSlug) {
-      const isCourseMatch = courses.some((c) => c.slug === potentialSlug || c.id === potentialSlug);
+    const cleanCourseSlug = decodeURIComponent(rawCourseSlug).replace(/\/+$/, '').trim().toLowerCase();
+    if (cleanCourseSlug) {
+      const isCourseMatch = courses.some(
+        (c) => c.slug?.toLowerCase() === cleanCourseSlug || c.id === cleanCourseSlug
+      );
       if (isCourseMatch) {
-        return <CourseDetailPage slug={potentialSlug} onNavigate={handleNavigate} />;
+        return <CourseDetailPage slug={cleanCourseSlug} onNavigate={handleNavigate} />;
       }
     }
 

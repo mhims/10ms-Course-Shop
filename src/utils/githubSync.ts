@@ -346,6 +346,37 @@ export async function pushDataToGithub({
     ]
   }, null, 2);
 
+  const notFoundHtml = `<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8">
+    <title>10MS Course Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, follow">
+    <meta http-equiv="refresh" content="0; url=/">
+    <script type="text/javascript">
+      var pathSegmentsToKeep = 0;
+      var l = window.location;
+      var rawPath = l.pathname.slice(1);
+      var isKnownSection = rawPath.startsWith('courses') || rawPath.startsWith('blog') || rawPath.startsWith('review') || rawPath.startsWith('class-') || rawPath.startsWith('hsc') || rawPath.startsWith('ssc') || rawPath.startsWith('admission') || rawPath.startsWith('skills') || rawPath.startsWith('spoken-english') || rawPath.startsWith('job-prep') || rawPath.startsWith('adminpanelofficial');
+      if (rawPath && isKnownSection) {
+        l.replace(
+          l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+          l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+          l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+          (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+          l.hash
+        );
+      } else {
+        window.location.replace('/');
+      }
+    </script>
+  </head>
+  <body>
+    <script>window.location.replace('/');</script>
+  </body>
+</html>`;
+
   // Prepare files to sync (both root and docs/ so any GitHub Pages configuration works)
   const files = [
     { name: 'courses.json', content: JSON.stringify(courses, null, 2) },
@@ -358,6 +389,7 @@ export async function pushDataToGithub({
     { name: 'robots.txt', content: robotsTxt },
     { name: 'llms.txt', content: llmsTxt },
     { name: 'site.webmanifest', content: siteManifest },
+    { name: '404.html', content: notFoundHtml },
   ];
 
   // Try Strategy A: Git Trees API (1 single atomic commit for all files)

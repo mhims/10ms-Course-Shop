@@ -276,21 +276,14 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
     });
   };
 
+  useEffect(() => {
+    if (!course) {
+      onNavigate('/');
+    }
+  }, [course, onNavigate]);
+
   if (!course) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold text-slate-800">কোর্সটি খুঁজে পাওয়া যায়নি</h2>
-        <p className="text-sm text-slate-500 mt-2">
-          সম্ভবত কোর্সটির লিংক পরিবর্তন হয়েছে অথবা মেয়াদ শেষ হয়ে গেছে।
-        </p>
-        <button
-          onClick={() => onNavigate('/')}
-          className="mt-6 px-6 py-2.5 bg-rose-600 text-white font-bold text-sm rounded-xl hover:bg-rose-700 cursor-pointer"
-        >
-          হোমপেজে ফিরে যান
-        </button>
-      </div>
-    );
+    return null;
   }
 
   const isExpired = isCourseExpired(course);

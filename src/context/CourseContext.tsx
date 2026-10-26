@@ -433,8 +433,20 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const getCourseBySlug = (slug: string): Course | undefined => {
-    const cleanSlug = slug.replace(/^\/+/, '');
-    return courses.find(c => c.slug === cleanSlug || c.slug === slug || c.id === slug);
+    if (!slug) return undefined;
+    const cleanSlug = decodeURIComponent(slug)
+      .replace(/^\/+/, '')
+      .replace(/^courses\//i, '')
+      .replace(/\/+$/, '')
+      .trim()
+      .toLowerCase();
+
+    return courses.find(c => 
+      c.slug?.toLowerCase() === cleanSlug || 
+      c.id === slug || 
+      c.id === cleanSlug ||
+      c.slug === slug
+    );
   };
 
   const addCategory = (category: CustomCategory) => {
