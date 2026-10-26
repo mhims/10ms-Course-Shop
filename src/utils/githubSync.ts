@@ -442,14 +442,16 @@ export async function pushDataToGithub({
         const staticPages = getAllStaticPages(courses, blogPosts);
         for (const p of staticPages) {
           const rendered = generateStaticHtml(baseHtml, p);
+          const targetPath = p.route ? `${p.route}/index.html` : 'index.html';
+          const docsTargetPath = p.route ? `docs/${p.route}/index.html` : 'docs/index.html';
           treeEntries.push({
-            path: `${p.route}/index.html`,
+            path: targetPath,
             mode: '100644',
             type: 'blob',
             content: rendered,
           });
           treeEntries.push({
-            path: `docs/${p.route}/index.html`,
+            path: docsTargetPath,
             mode: '100644',
             type: 'blob',
             content: rendered,

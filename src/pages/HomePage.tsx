@@ -152,7 +152,7 @@ const CategoryScrollRow: React.FC<CategoryScrollRowProps> = ({
         {courses.map((course) => (
           <div
             key={course.id}
-            className="w-[245px] sm:w-[270px] md:w-[285px] shrink-0 snap-start flex flex-col"
+            className="w-[175px] sm:w-[270px] md:w-[285px] shrink-0 snap-start flex flex-col"
           >
             <CourseCard course={course} onNavigate={onNavigate} />
           </div>
@@ -165,7 +165,7 @@ const CategoryScrollRow: React.FC<CategoryScrollRowProps> = ({
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) => {
   const { courses, categories: customCategories, isOfferActive, isCourseExpired } = useCourseContext();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'rows'>('rows');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'rows'>('grid');
   const [showIntentModal, setShowIntentModal] = useState<boolean>(false);
 
   // Active non-expired courses (Expired courses are automatically excluded from homepage!)
@@ -322,40 +322,46 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
           )}
         </div>
 
-        {/* Mobile View: High-Visibility Dynamic Quick Filter Grid (ONLY categories with active courses) */}
+        {/* Mobile View: High-Visibility Dynamic Quick Filter Wrap (All categories visible at a glance without horizontal swipe) */}
         {categories.length > 1 && (
-          <div className="block sm:hidden bg-white/95 backdrop-blur-xs p-2.5 rounded-2xl border border-rose-100 shadow-xs mb-3">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-2 px-1">
-              <span className="flex items-center gap-1 text-slate-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>
-                <span>কোর্স ক্যাটাগরি বেছে নিন:</span>
+          <div className="block sm:hidden bg-white/95 backdrop-blur-xs p-3 rounded-2xl border border-rose-100 shadow-xs mb-3.5">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-600 mb-2.5 px-0.5">
+              <span className="flex items-center gap-1.5 text-slate-900">
+                <span className="w-2 h-2 rounded-full bg-rose-600 inline-block animate-pulse"></span>
+                <span>কোর্স ক্যাটাগরি:</span>
               </span>
               {selectedCategory !== 'all' && (
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className="text-rose-600 text-[10px] font-bold"
+                  className="text-rose-600 text-[11px] font-bold hover:underline cursor-pointer"
                 >
-                  সকল ক্যাটাগরি
+                  সকল কোর্স ({activeCourses.length}টি)
                 </button>
               )}
             </div>
 
-            <div className={`grid ${categories.length > 4 ? 'grid-cols-4' : categories.length === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-1.5 text-center`}>
+            <div className="flex flex-wrap gap-1.5">
               {categories.map((cat) => {
                 const isSelected = selectedCategory === cat.id;
                 return (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer truncate ${
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                       isSelected
-                        ? 'bg-rose-600 text-white shadow-xs scale-98'
-                        : 'bg-slate-50 hover:bg-rose-50 text-slate-700 border border-slate-200/80 active:bg-rose-100'
+                        ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-200'
+                        : 'bg-slate-50 hover:bg-rose-50 text-slate-700 border border-slate-200 hover:border-rose-200 active:bg-rose-100'
                     }`}
                   >
-                    <span>{cat.shortLabel}</span>
+                    <span>{cat.label}</span>
                     {cat.count !== undefined && (
-                      <span className="text-[10px] opacity-75 ml-1">({cat.count})</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                          isSelected ? 'bg-white/25 text-white' : 'bg-slate-200/70 text-slate-600'
+                        }`}
+                      >
+                        {cat.count}
+                      </span>
                     )}
                   </button>
                 );

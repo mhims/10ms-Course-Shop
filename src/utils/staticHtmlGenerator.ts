@@ -92,6 +92,96 @@ export function generateStaticHtml(baseHtml: string, config: PageConfig): string
 export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageConfig[] {
   const pages: PageConfig[] = [];
 
+  // 0. Homepage (route: '') with Comprehensive Content for Search Engines
+  pages.push({
+    route: '',
+    title: '10MS Course Shop - ১০ মিনিট স্কুল কোর্স ও অফার',
+    description: '১০ মিনিট স্কুলের সকল একাডেমিক, এডমিশন ও স্কিল কোর্সের প্রোমো অফার, ডিসকাউন্ট ও ভর্তি লিংক এক প্ল্যাটফর্মে।',
+    canonicalUrl: 'https://10mscourse.shop/',
+    ogImage: 'https://10mscourse.shop/favicon-512x512.png',
+    seoBodyHtml: `
+      <header style="background: linear-gradient(135deg, #fff1f2 0%, #ffffff 100%); padding: 36px 20px; border-bottom: 1px solid #ffe4e6; text-align: center;">
+        <h1 style="font-size: 28px; font-weight: 800; color: #e11d48; margin: 0 0 12px 0;">১০ মিনিট স্কুল কোর্স শপ - সকল অনলাইন কোর্স, ডিসকাউন্ট ও ভর্তি লিংক ২০২৬</h1>
+        <p style="font-size: 15px; color: #475569; max-width: 850px; margin: 0 auto; line-height: 1.7;">
+          ১০ মিনিট স্কুল (10 Minute School)-এর অফিসিয়াল অ্যাফিলিয়েট প্ল্যাটফর্ম <strong>10mscourse.shop</strong>-এ আপনাকে স্বাগতম। এখানে ক্লাস ৬-১২ এর সম্পূর্ণ অনলাইন ব্যাচ, এসএসসি ও এইচএসসি ক্র্যাশ কোর্স, বিশ্ববিদ্যালয় ভর্তি পরীক্ষা, মুনজেরিন শহীদের ঘরে বসে স্পোকেন ইংলিশ এবং স্কিল কোর্সের সর্বোচ্চ ছাড়, ডিসকাউন্ট অফার, ভেরিফাইড প্রোমো কোড ও সরাসরি ভর্তি লিংক পাওয়া যাবে।
+        </p>
+      </header>
+
+      <main style="max-width: 1200px; margin: 0 auto; padding: 32px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #334155;">
+        <section style="margin-bottom: 36px;">
+          <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 16px; border-left: 4px solid #e11d48; padding-left: 12px;">
+            চলতি জনপ্রিয় কোর্স ও এক্সক্লুসিভ ডিসকাউন্ট অফার
+          </h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            ${courses.map(c => `
+              <div style="background: #ffffff; border: 1px solid #ffe4e6; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                ${c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(c.title)}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;" />` : ''}
+                <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 6px 0;"><a href="/courses/${escapeHtml(c.slug)}" style="color: #0f172a; text-decoration: none;">${escapeHtml(c.title)}</a></h3>
+                <p style="font-size: 13px; color: #64748b; margin: 0 0 8px 0;">ইন্সট্রাক্টর: ${escapeHtml(c.instructor || '১০ মিনিট স্কুল এক্সপার্ট প্যানেল')}</p>
+                <div style="font-size: 15px; font-weight: bold; color: #e11d48; margin-bottom: 8px;">
+                  ৳${c.offerPrice} <span style="font-size: 12px; color: #94a3b8; text-decoration: line-through;">৳${c.regularPrice}</span>
+                </div>
+                ${c.promoCode ? `<div style="font-size: 12px; background: #fff1f2; color: #e11d48; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-bottom: 10px;">প্রোমো কোড: <strong>${escapeHtml(c.promoCode)}</strong></div>` : ''}
+                <div>
+                  <a href="${escapeHtml(c.affiliateLink || `https://10mscourse.shop/courses/${c.slug}`)}" target="_blank" rel="noopener noreferrer" style="background: #e11d48; color: #fff; padding: 8px 16px; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: bold; display: inline-block;">ভর্তি লিংক</a>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+
+        <section style="margin-bottom: 36px; background: #fff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0;">
+          <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 14px;">
+            সকল ক্যাটাগরি ও ব্যাচভিত্তিক অনলাইন কোর্স
+          </h2>
+          <p style="margin-bottom: 12px;">আপনার প্রয়োজনীয় কোর্স বেছে নিন:</p>
+          <ul style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; list-style: none; padding: 0; margin: 0;">
+            <li><a href="/hsc-28" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ HSC 2028 অনলাইন ব্যাচ</a></li>
+            <li><a href="/hsc-27" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ HSC 2027 শেষ মুহূর্তের প্রস্তুতি</a></li>
+            <li><a href="/ssc-27" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ SSC 2027 শেষ মুহূর্তের প্রস্তুতি</a></li>
+            <li><a href="/spoken-english" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ ঘরে বসে Spoken English</a></li>
+            <li><a href="/admission" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ ভার্সিটি ও মেডিকেল এডমিশন</a></li>
+            <li><a href="/class-6-8" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ ক্লাস ৬-৮ অনলাইন ব্যাচ</a></li>
+            <li><a href="/skills" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ স্কিল ডেভেলপমেন্ট ও ফ্রিল্যান্সিং</a></li>
+            <li><a href="/job-prep" style="color: #e11d48; font-weight: 600; text-decoration: none;">✓ বিসিএস ও সরকারি চাকরি প্রস্তুতি</a></li>
+          </ul>
+        </section>
+
+        <section style="margin-bottom: 36px; line-height: 1.8;">
+          <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 14px;">
+            কেন 10mscourse.shop থেকে ভর্তি হবেন?
+          </h2>
+          <p>
+            ১০ মিনিট স্কুল হলো বাংলাদেশের শীর্ষ এডটেক প্ল্যাটফর্ম, যেখানে অভিজ্ঞ শিক্ষক এবং সেরা ক্লাস ম্যাটেরিয়ালের মাধ্যমে লাখ লাখ শিক্ষার্থী তাদের একাডেমিক ও ক্যারিয়ার লক্ষ্য অর্জন করছে। <strong>10mscourse.shop</strong> হলো ১০ মিনিট স্কুলের একটি ভেরিফাইড অ্যাফিলিয়েট অংশীদার।
+          </p>
+          <ul style="padding-left: 20px;">
+            <li><strong>সর্বোচ্চ ডিসকাউন্ট নিশ্চিত:</strong> প্রতিটি কোর্সের সাথে ভেরিফাইড প্রোমো কোড দেওয়া থাকে যা ব্যবহারে কোর্স ফিতে সর্বোচ্চ ছাড় নিশ্চিত হয়।</li>
+            <li><strong>১০০% অফিসিয়াল পেমেন্ট গেটওয়ে:</strong> ভর্তি হতে ক্লিক করলে সরাসরি ১০ মিনিট স্কুলের অফিসিয়াল পেমেন্ট সিস্টেমে নিয়ে যাওয়া হয় (বিকাশ, নগদ, কার্ডে নিরাপদ পেমেন্ট)।</li>
+            <li><strong>২৪/৭ ফ্রি স্টাডি সাপোর্ট:</strong> ভর্তি সংক্রান্ত যেকোনো সমস্যায় সরাসরি হোয়াটসঅ্যাপে বিশেষজ্ঞ পরামর্শ পাওয়ার সুবিধা।</li>
+          </ul>
+        </section>
+
+        <section style="margin-bottom: 36px; background: #fff; padding: 24px; border-radius: 16px; border: 1px solid #e2e8f0;">
+          <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 16px;">
+            সচরাচর জিজ্ঞাসিত প্রশ্নাবলী (FAQ)
+          </h2>
+          <div style="margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">১০ মিনিট স্কুলের কোর্সে প্রোমো কোড কীভাবে ব্যবহার করব?</h3>
+            <p style="font-size: 14px; color: #64748b; margin-top: 4px;">যেকোনো কোর্সে 'ভর্তি লিংক' বা 'কিনুন' বাটনে ক্লিক করে ১০ মিনিট স্কুলের পেমেন্ট পেজে যান। এরপর প্রোমো কোড ঘরে আমাদের সাইটে দেওয়া কোডটি বসিয়ে 'Apply' করলেই সাথে সাথে কোর্স ফি কমে যাবে।</p>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">ঘরে বসে Spoken English কোর্সটি কার জন্য উপযুক্ত?</h3>
+            <p style="font-size: 14px; color: #64748b; margin-top: 4px;">স্কুল, কলেজ, বিশ্ববিদ্যালয় শিক্ষার্থী কিংবা চাকরিপ্রার্থী—যেকোনো বয়সের মানুষের জন্য মুনজেরিন শহীদের এই কোর্সটি ঘরে বসে ফ্লুয়েন্টলি ইংরেজি বলার জন্য সম্পূর্ণ প্রস্তুত করা হয়েছে।</p>
+          </div>
+          <div>
+            <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">HSC 2028 এবং SSC 2027 অনলাইন ব্যাচে কী কী সুবিধা পাওয়া যাবে?</h3>
+            <p style="font-size: 14px; color: #64748b; margin-top: 4px;">লাইভ ইন্টারঅ্যাক্টিভ ক্লাস, প্রতিটি ক্লাসের পর লেকচার শিট ও পিডিএফ নোট, বোর্ড স্ট্যান্ডার্ড মডেল টেস্ট ও সার্বক্ষণিক ডাউট সলভ প্ল্যাটফর্ম সুবিধা পাওয়া যাবে।</p>
+          </div>
+        </section>
+      </main>
+    `
+  });
+
   // 1. All Courses Page (/courses)
   pages.push({
     route: 'courses',
