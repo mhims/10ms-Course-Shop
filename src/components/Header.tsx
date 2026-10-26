@@ -288,7 +288,8 @@ export const Header: React.FC<HeaderProps> = ({
                 <img
                   src="https://res.cloudinary.com/drvyjj7td/image/upload/v1790516284/10msshop_knpcl3.png"
                   alt="10MS Shop"
-                  className="h-7 w-auto object-contain"
+                  className="h-7 w-auto object-contain shrink-0"
+                  style={{ height: '28px', maxHeight: '30px', width: 'auto', maxWidth: '140px' }}
                 />
               </div>
               <button

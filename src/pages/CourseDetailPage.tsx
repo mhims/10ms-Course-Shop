@@ -64,6 +64,31 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
     }
   }, [course, getEffectivePrice]);
 
+  // Helper to parse markdown bold, italic, and links safely while preventing accidental whole-block bolding
+  const parseInlineMarkdown = (text: string): string => {
+    if (!text) return '';
+    let cleaned = text.trim();
+
+    // Strip accidental wrapping of an entire paragraph in bold marks
+    if (cleaned.startsWith('**') && cleaned.endsWith('**') && cleaned.length > 10 && !cleaned.slice(2, -2).includes('**')) {
+      cleaned = cleaned.slice(2, -2);
+    }
+    if (cleaned.startsWith('<b>') && cleaned.endsWith('</b>') && cleaned.length > 10 && !cleaned.slice(3, -4).includes('<b>')) {
+      cleaned = cleaned.slice(3, -4);
+    }
+
+    // Convert **bold** to font-bold text-slate-900
+    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>');
+
+    // Convert *italic* to em
+    cleaned = cleaned.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em class="italic">$1</em>');
+
+    // Convert [link](url)
+    cleaned = cleaned.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-rose-600 underline font-semibold">$1</a>');
+
+    return cleaned;
+  };
+
   // Helper to render SEO-rich course description with H1, H2, H3, lists, links, and cross-course cards
   const renderRichCourseDescription = (fullDesc: string) => {
     if (!fullDesc) return null;
@@ -78,7 +103,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
 
         const paragraphs = part.split('\n\n');
         return (
-          <div key={index} className="space-y-4">
+          <div key={index} className="space-y-4 font-normal text-slate-700">
             {paragraphs.map((p, pIdx) => {
               const trimmed = p.trim();
               if (!trimmed) return null;
@@ -118,7 +143,7 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
               if (trimmed.startsWith('> ')) {
                 const quoteText = trimmed.replace(/^>\s+/, '');
                 return (
-                  <blockquote key={pIdx} className="p-4 bg-rose-50/70 border-l-4 border-rose-500 rounded-r-2xl text-slate-800 text-xs sm:text-sm font-medium italic my-2">
+                  <blockquote key={pIdx} className="p-4 bg-rose-50/70 border-l-4 border-rose-500 rounded-r-2xl text-slate-800 text-xs sm:text-sm font-normal italic my-2">
                     {quoteText}
                   </blockquote>
                 );
@@ -132,11 +157,11 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
                   .filter(Boolean);
 
                 return (
-                  <ul key={pIdx} className="space-y-2 text-xs sm:text-sm text-slate-700 pl-1 my-2">
+                  <ul key={pIdx} className="space-y-2 text-xs sm:text-sm text-slate-700 pl-1 my-2 font-normal">
                     {items.map((item, iIdx) => (
                       <li key={iIdx} className="flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span dangerouslySetInnerHTML={{ __html: item }} />
+                        <span dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(item) }} />
                       </li>
                     ))}
                   </ul>
@@ -151,9 +176,9 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
                   .filter(Boolean);
 
                 return (
-                  <ol key={pIdx} className="list-decimal list-inside space-y-1.5 text-xs sm:text-sm text-slate-700 pl-1 my-2">
+                  <ol key={pIdx} className="list-decimal list-inside space-y-1.5 text-xs sm:text-sm text-slate-700 pl-1 my-2 font-normal">
                     {items.map((item, iIdx) => (
-                      <li key={iIdx} dangerouslySetInnerHTML={{ __html: item }} />
+                      <li key={iIdx} dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(item) }} />
                     ))}
                   </ol>
                 );
@@ -163,8 +188,8 @@ export const CourseDetailPage: React.FC<CourseDetailPageProps> = ({ slug, onNavi
               return (
                 <div
                   key={pIdx}
-                  className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line"
-                  dangerouslySetInnerHTML={{ __html: trimmed }}
+                  className="text-xs sm:text-sm text-slate-700 font-normal leading-relaxed whitespace-pre-line"
+                  dangerouslySetInnerHTML={{ __html: parseInlineMarkdown(trimmed) }}
                 />
               );
             })}

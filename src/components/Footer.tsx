@@ -50,13 +50,18 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           {/* Brand Info */}
           <div className="space-y-4 md:col-span-1">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('/')}>
+            <div
+              className="flex items-center gap-2.5 cursor-pointer select-none group"
+              onClick={() => onNavigate('/')}
+              style={{ maxHeight: '42px', maxWidth: '240px' }}
+            >
               <img
                 src={siteSettings.logoUrl}
                 alt="10MS Course Shop"
-                className="h-10 w-auto bg-white p-1 rounded-lg"
+                className="h-8 sm:h-9 w-auto bg-white p-1 rounded-lg object-contain shrink-0 group-hover:opacity-90 transition-opacity"
+                style={{ height: '34px', maxHeight: '36px', width: 'auto', maxWidth: '120px', objectFit: 'contain' }}
               />
-              <span className="font-extrabold text-xl text-white">
+              <span className="font-extrabold text-xl text-white tracking-tight">
                 10ms<span className="text-rose-500">course</span>.shop
               </span>
             </div>
@@ -140,14 +145,20 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Bottom copyright row with hidden admin dot */}
-        <div className="pt-6 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} 10mscourse.shop — সর্বস্বত্ব সংরক্ষিত।</p>
+        {/* Bottom copyright row with affiliate declaration & hidden admin dot */}
+        <div className="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-center sm:text-left">
+            <span>© {new Date().getFullYear()} 10mscourse.shop — সর্বস্বত্ব সংরক্ষিত।</span>
+            <span className="hidden sm:inline text-slate-600">•</span>
+            <span className="text-rose-400 font-medium">
+              এটি ১০ মিনিট স্কুলের একটি স্বাধীন অ্যাফিলিয়েট ওয়েবসাইট
+            </span>
+          </div>
           
           {/* Secret tiny dot for Admin Panel */}
           <button
             onClick={() => onNavigate('/adminpanelofficial')}
-            className="w-2.5 h-2.5 rounded-full bg-slate-800 hover:bg-slate-600 transition-colors cursor-pointer"
+            className="w-2.5 h-2.5 rounded-full bg-slate-800 hover:bg-slate-600 transition-colors cursor-pointer shrink-0"
             title=""
             aria-label=""
           ></button>

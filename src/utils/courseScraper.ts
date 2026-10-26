@@ -19,15 +19,37 @@ export interface ScrapedCourseData {
   syllabus?: Array<{ title: string; count: string }>;
   regularPrice?: number;
   offerPrice?: number;
+  displayTargets?: string[];
+  reviewCount?: number;
+  enrolledCount?: number;
 }
 
 /**
  * Intelligent category detection based on slug or course title
  */
-export function detectCategoryAndClass(text: string): { category: string; targetClass?: string } {
+/**
+ * Generates realistic randomized review and enrolled count matching natural patterns
+ */
+export function getRandomReviewCount(): { reviewCount: number; enrolledCount: number; rating: number } {
+  const pool = [154, 185, 230, 275, 343, 412, 538, 720, 895, 1133, 1280];
+  const reviewCount = pool[Math.floor(Math.random() * pool.length)] + Math.floor(Math.random() * 12);
+  const enrolledCount = reviewCount * (8 + Math.floor(Math.random() * 5));
+  const rating = Number((4.8 + Math.random() * 0.2).toFixed(1));
+  return { reviewCount, enrolledCount, rating: Math.min(5.0, rating) };
+}
+
+/**
+ * Intelligent category detection based on slug or course title.
+ * Maps BOTH main category and specific batch categories (e.g. HSC 28, HSC 27, SSC 26, Class 8 etc.)
+ */
+export function detectCategoryAndClass(text: string): {
+  category: string;
+  targetClass?: string;
+  displayTargets: string[];
+} {
   const lower = text.toLowerCase();
 
-  // SSC / Class 9-10
+  // SSC / Class 9-10 & Specific Batches
   if (
     lower.includes('ssc') ||
     lower.includes('৯ম') ||
@@ -37,19 +59,38 @@ export function detectCategoryAndClass(text: string): { category: string; target
     lower.includes('দাখিল')
   ) {
     let targetClass = '৯ম-১০ম (SSC)';
-    if (lower.includes('27') || lower.includes('২০২৭')) targetClass = 'SSC 27';
-    if (lower.includes('26') || lower.includes('২০২৬')) targetClass = 'SSC 26';
-    if (lower.includes('25') || lower.includes('২০২৫')) targetClass = 'SSC 25';
-    return { category: 'class-9-10', targetClass };
+    const displayTargets = ['home', 'class-9-10'];
+
+    if (lower.includes('27') || lower.includes('২০২৭')) {
+      targetClass = 'SSC 2027';
+      displayTargets.push('ssc-2027');
+    } else if (lower.includes('26') || lower.includes('২০২৬')) {
+      targetClass = 'SSC 2026';
+      displayTargets.push('ssc-2026');
+    } else if (lower.includes('25') || lower.includes('২০২৫')) {
+      targetClass = 'SSC 2025';
+    }
+
+    return { category: 'class-9-10', targetClass, displayTargets };
   }
 
-  // HSC
+  // HSC & Specific Batches (e.g. HSC 2028, HSC 2027, HSC 2026)
   if (lower.includes('hsc') || lower.includes('এইচএসসি') || lower.includes('আলিম')) {
     let targetClass = 'এইচএসসি (HSC)';
-    if (lower.includes('28') || lower.includes('২০২৮')) targetClass = 'HSC 2028';
-    if (lower.includes('27') || lower.includes('২০২৭')) targetClass = 'HSC 2027';
-    if (lower.includes('26') || lower.includes('২০২৬')) targetClass = 'HSC 2026';
-    return { category: 'hsc', targetClass };
+    const displayTargets = ['home', 'hsc'];
+
+    if (lower.includes('28') || lower.includes('২০২৮')) {
+      targetClass = 'HSC 2028';
+      displayTargets.push('hsc-2028');
+    } else if (lower.includes('27') || lower.includes('২০২৭')) {
+      targetClass = 'HSC 2027';
+      displayTargets.push('hsc-2027');
+    } else if (lower.includes('26') || lower.includes('২০২৬')) {
+      targetClass = 'HSC 2026';
+      displayTargets.push('hsc-2026');
+    }
+
+    return { category: 'hsc', targetClass, displayTargets };
   }
 
   // Admission
@@ -62,23 +103,40 @@ export function detectCategoryAndClass(text: string): { category: string; target
     lower.includes('engineering') ||
     lower.includes('বিশ্ববিদ্যালয়')
   ) {
-    return { category: 'admission', targetClass: 'এডমিশন টেস্ট' };
+    return {
+      category: 'admission',
+      targetClass: 'এডমিশন টেস্ট',
+      displayTargets: ['home', 'admission'],
+    };
   }
 
-  // Class 6-8
+  // Class 6-8 & Specific Classes
   if (
     lower.includes('class-6') ||
     lower.includes('class-7') ||
     lower.includes('class-8') ||
     lower.includes('৬ষ্ঠ') ||
     lower.includes('৭ম') ||
-    lower.includes('৮ম')
+    lower.includes('৮ম') ||
+    lower.includes('অষ্টম') ||
+    lower.includes('সপ্তম') ||
+    lower.includes('ষষ্ঠ')
   ) {
     let targetClass = 'ক্লাস ৬-৮';
-    if (lower.includes('৬ষ্ঠ') || lower.includes('class-6')) targetClass = '৬ষ্ঠ শ্রেণী';
-    if (lower.includes('৭ম') || lower.includes('class-7')) targetClass = '৭ম শ্রেণী';
-    if (lower.includes('৮ম') || lower.includes('class-8')) targetClass = '৮ম শ্রেণী';
-    return { category: 'class-6-8', targetClass };
+    const displayTargets = ['home', 'class-6-8'];
+
+    if (lower.includes('৮ম') || lower.includes('class-8') || lower.includes('অষ্টম')) {
+      targetClass = '৮ম শ্রেণি';
+      displayTargets.push('class-8');
+    } else if (lower.includes('৭ম') || lower.includes('class-7') || lower.includes('সপ্তম')) {
+      targetClass = '৭ম শ্রেণি';
+      displayTargets.push('class-7');
+    } else if (lower.includes('৬ষ্ঠ') || lower.includes('class-6') || lower.includes('ষষ্ঠ')) {
+      targetClass = '৬ষ্ঠ শ্রেণি';
+      displayTargets.push('class-6');
+    }
+
+    return { category: 'class-6-8', targetClass, displayTargets };
   }
 
   // Spoken English / IELTS
@@ -89,7 +147,11 @@ export function detectCategoryAndClass(text: string): { category: string; target
     lower.includes('ইংরেজি') ||
     lower.includes('স্পোকেন')
   ) {
-    return { category: 'spoken-english' };
+    return {
+      category: 'spoken-english',
+      targetClass: 'স্পোকেন ইংলিশ',
+      displayTargets: ['home', 'spoken-english'],
+    };
   }
 
   // Job Prep / BCS
@@ -101,7 +163,11 @@ export function detectCategoryAndClass(text: string): { category: string; target
     lower.includes('job') ||
     lower.includes('primary')
   ) {
-    return { category: 'job-prep', targetClass: 'সরকারি ও ব্যাংক চাকরি' };
+    return {
+      category: 'job-prep',
+      targetClass: 'সরকারি ও ব্যাংক চাকরি',
+      displayTargets: ['home', 'job-prep'],
+    };
   }
 
   // Skills / Freelancing
@@ -114,10 +180,18 @@ export function detectCategoryAndClass(text: string): { category: string; target
     lower.includes('video') ||
     lower.includes('marketing')
   ) {
-    return { category: 'skills' };
+    return {
+      category: 'skills',
+      targetClass: 'প্রফেশনাল স্কিলস',
+      displayTargets: ['home', 'skills'],
+    };
   }
 
-  return { category: 'class-9-10' };
+  return {
+    category: 'class-9-10',
+    targetClass: '৯ম-১০ম (SSC)',
+    displayTargets: ['home', 'class-9-10'],
+  };
 }
 
 /**
@@ -254,8 +328,9 @@ export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseDat
             imageUrl = imgObj?.resource_value || imgObj?.url || '';
           }
 
-          // Category and Target Class
-          const { category, targetClass } = detectCategoryAndClass(rawTitle + ' ' + slug);
+          // Category and Target Class with multi-category mapping
+          const { category, targetClass, displayTargets } = detectCategoryAndClass(rawTitle + ' ' + slug);
+          const reviews = getRandomReviewCount();
 
           // Extract highlights from pointers / features
           let highlights: string[] = [];
@@ -328,6 +403,9 @@ export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseDat
             seoKeywords,
             category: category,
             targetClass: targetClass,
+            displayTargets: displayTargets,
+            reviewCount: reviews.reviewCount,
+            enrolledCount: reviews.enrolledCount,
             affiliateLink: cleanUrl,
             promoCode: promoCode,
             instructor: instructor,
@@ -360,7 +438,8 @@ export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseDat
       const imageUrl = getMeta('image');
       const description = getMeta('description');
 
-      const { category, targetClass } = detectCategoryAndClass(cleanTitle + ' ' + slug);
+      const { category, targetClass, displayTargets } = detectCategoryAndClass(cleanTitle + ' ' + slug);
+      const reviews = getRandomReviewCount();
       const imageAlt = `${cleanTitle} কভার ছবি ১০ মিনিট স্কুল`;
       const seoTitle = `${cleanTitle} | 10 Minute School Discount & Admission - 10mscourse.shop`;
       const seoDescription = description || `১০ মিনিট স্কুলের ${cleanTitle} কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।`;
@@ -379,6 +458,9 @@ export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseDat
         seoKeywords,
         category: category,
         targetClass: targetClass,
+        displayTargets: displayTargets,
+        reviewCount: reviews.reviewCount,
+        enrolledCount: reviews.enrolledCount,
         affiliateLink: cleanUrl,
         promoCode: promoCode,
         instructor: '১০ মিনিট স্কুল',
@@ -391,7 +473,8 @@ export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseDat
 
   // Minimum safe object if network proxies were unreachable
   const cleanTitle = slug.replace(/-/g, ' ');
-  const { category, targetClass } = detectCategoryAndClass(slug);
+  const { category, targetClass, displayTargets } = detectCategoryAndClass(slug);
+  const reviews = getRandomReviewCount();
   const imageAlt = `${cleanTitle} কভার ছবি ১০ মিনিট স্কুল`;
   const seoTitle = `${cleanTitle} | 10 Minute School Discount & Admission - 10mscourse.shop`;
   const seoDescription = `১০ মিনিট স্কুলের ${cleanTitle} কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।`;
@@ -410,6 +493,9 @@ export async function scrapeCourseFromUrl(url: string): Promise<ScrapedCourseDat
     seoKeywords,
     category: category,
     targetClass: targetClass,
+    displayTargets: displayTargets,
+    reviewCount: reviews.reviewCount,
+    enrolledCount: reviews.enrolledCount,
     affiliateLink: cleanUrl,
     promoCode: promoCode,
     instructor: '১০ মিনিট স্কুল',

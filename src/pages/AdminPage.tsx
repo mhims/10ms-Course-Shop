@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2 } from 'lucide-react';
+import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2, ArrowUp, ArrowDown, Flame, Sliders } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
@@ -7,7 +7,7 @@ import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
 import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
 import { GithubPushModal } from '../components/GithubPushModal';
 import { pushDataToGithub } from '../utils/githubSync';
-import { scrapeCourseFromUrl } from '../utils/courseScraper';
+import { scrapeCourseFromUrl, getRandomReviewCount } from '../utils/courseScraper';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -41,6 +41,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     refreshFromLive,
     addCategory,
     updateCategory,
+    reorderCategories,
     deleteCategory,
     addResource,
     deleteResource,
@@ -73,7 +74,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'expired'>('all');
-  const [activeTab, setActiveTab] = useState<'courses' | 'categories' | 'blogs-resources' | 'settings' | 'export'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'hero-slider' | 'categories' | 'blogs-resources' | 'settings' | 'export'>('courses');
   const [notification, setNotification] = useState('');
   const [seoKeywordsRaw, setSeoKeywordsRaw] = useState('');
 
@@ -148,6 +149,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     setAutoFetchUrl('');
     setAutoFetchStatus(null);
     const defaultCat = allAvailableCategories[0]?.id || '';
+    const initialStats = getRandomReviewCount();
     const freshCourse: Course = {
       id: `c-custom-${Date.now()}`,
       slug: `new-course-${Date.now().toString().slice(-4)}`,
@@ -158,7 +160,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       targetClass: '',
       regularPrice: 2000,
       offerPrice: 1500,
-      offerEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      offerEndDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       isLifetime: true,
       status: 'active',
       imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80',
@@ -167,19 +169,18 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       promoCode: '',
       instructor: '',
       instructorRole: '',
-      rating: 5.0,
-      reviewCount: 150,
-      enrolledCount: 1500,
+      rating: initialStats.rating,
+      reviewCount: initialStats.reviewCount,
+      enrolledCount: initialStats.enrolledCount,
       shortDescription: '',
       fullDescription: '',
       highlights: ['লাইভ ক্লাস', 'লেকচার শিট ও নোট', 'মডেল টেস্ট'],
-      syllabus: [
-        { title: 'অধ্যায় ১: সূচনা ও মূল ভিত্তি', count: '১০ লাইভ ক্লাস ও নোট' },
-        { title: 'অধ্যায় ২: পূর্ণাঙ্গ সিলেবাস অনুশীলন', count: '১২ লাইভ ক্লাস ও ৫ পরীক্ষা' },
-      ],
+      syllabus: [], // Start clean and empty so admin doesn't have to delete dummy items!
       seoTitle: '',
       seoDescription: '',
       seoKeywords: ['১০ মিনিট স্কুল কোর্স', 'অনলাইন কোর্স'],
+      inHeroSlider: false,
+      excludeFromHotDeals: false,
       badgeText: '',
     };
     setEditingCourse(freshCourse);
@@ -327,6 +328,9 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           fullDescription: (!prev.fullDescription || prev.fullDescription.length < 50) ? data.fullDescription : prev.fullDescription,
           category: data.category || prev.category,
           targetClass: data.targetClass || prev.targetClass,
+          displayTargets: data.displayTargets || prev.displayTargets || ['home'],
+          reviewCount: data.reviewCount || prev.reviewCount,
+          enrolledCount: data.enrolledCount || prev.enrolledCount,
           affiliateLink: data.affiliateLink || autoFetchUrl.trim() || prev.affiliateLink,
           promoCode: data.promoCode !== undefined ? data.promoCode : prev.promoCode,
           instructor: data.instructor || prev.instructor,
@@ -747,6 +751,17 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           কোর্স তালিকা ({courses.length})
         </button>
         <button
+          onClick={() => setActiveTab('hero-slider')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+            activeTab === 'hero-slider'
+              ? 'bg-rose-600 text-white shadow-md'
+              : 'bg-white text-slate-700 hover:bg-rose-50'
+          }`}
+        >
+          <Flame className="w-4 h-4 text-rose-500 fill-rose-500" />
+          <span>হিরো স্লাইডার ব্যানার ({courses.filter(c => c.inHeroSlider).length})</span>
+        </button>
+        <button
           onClick={() => setActiveTab('categories')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === 'categories'
@@ -755,7 +770,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           }`}
         >
           <Tag className="w-4 h-4" />
-          <span>ক্যাটাগরি সমূহ ({allAvailableCategories.length})</span>
+          <span>ক্যাটাগরি সমূহ ও ক্রম ({allAvailableCategories.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('blogs-resources')}
@@ -1085,7 +1100,108 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         </div>
       )}
 
-      {/* TAB: Custom Category Management */}
+      {/* TAB: Hero Slider Banner Manager (User Request 1) */}
+      {activeTab === 'hero-slider' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-slate-900 via-rose-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-rose-500/30 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white shadow-xs mb-2">
+                  <Flame className="w-4 h-4 fill-white" />
+                  <span>হোমপেজ হিরো ব্যানার স্লাইডার</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black">
+                  হিরো স্লাইডার কোর্স নির্বাচন ও নিয়ন্ত্রণ
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                  হোমপেজের উপরের অংশে প্রতি ১.৮ সেকেন্ড পর পর ঘূর্ণায়মান ব্যানারে কোন কোন কোর্স প্রদর্শন করবেন তা নিচে এক ক্লিকে অন/অফ করুন। এসএসসি, এইচএসসি, ভর্তি পরীক্ষা, ৬-৮ এবং স্কিলস ক্যাটাগরি থেকে নিজের পছন্দমতো কোর্স যুক্ত করুন।
+                </p>
+              </div>
+
+              <div className="bg-slate-800/80 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 text-center shrink-0">
+                <span className="text-[11px] text-slate-400 font-semibold block">বর্তমানে স্লাইডারে সক্রিয়</span>
+                <span className="text-2xl font-black text-rose-400">
+                  {courses.filter((c) => c.inHeroSlider).length}টি কোর্স
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Select Grid of All Courses with 1-Click Toggle for Slider */}
+          <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <h4 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-rose-600" />
+                <span>কোর্সের তালিকা থেকে স্লাইডার নির্বাচন করুন</span>
+              </h4>
+              <span className="text-xs text-slate-500">
+                * সবুজ বাটন দেওয়া কোর্সগুলো স্লাইডারে সারাক্ষণ ঘুরবে
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {courses.map((course) => {
+                const isInSlider = Boolean(course.inHeroSlider);
+                return (
+                  <div
+                    key={course.id}
+                    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                      isInSlider
+                        ? 'border-rose-400 bg-rose-50/40 shadow-xs ring-2 ring-rose-300/40'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={normalizeImageUrl(course.imageUrl)}
+                        alt=""
+                        className="w-12 h-12 rounded-xl object-cover bg-slate-200 shrink-0 border border-slate-200"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-bold text-rose-600 bg-white px-2 py-0.5 rounded border border-rose-200">
+                          {getCourseClassLabel(course)}
+                        </span>
+                        <h5 className="font-bold text-xs text-slate-900 truncate mt-1" title={course.title}>
+                          {course.title}
+                        </h5>
+                        <p className="text-[11px] text-slate-500 font-bold mt-0.5">
+                          ৳{course.offerPrice || course.regularPrice}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = { ...course, inHeroSlider: !isInSlider };
+                        updateCourse(updated);
+                        showToast(
+                          !isInSlider
+                            ? `"${course.title}" হিরো স্লাইডারে যুক্ত হয়েছে!`
+                            : `"${course.title}" স্লাইডার থেকে সরানো হয়েছে`
+                        );
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1 ${
+                        isInSlider
+                          ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                          : 'bg-white hover:bg-rose-50 text-slate-700 border border-slate-300'
+                      }`}
+                    >
+                      <Flame className={`w-3.5 h-3.5 ${isInSlider ? 'fill-white text-white' : 'text-slate-400'}`} />
+                      <span>{isInSlider ? 'সক্রিয় ✓' : '+ যোগ করুন'}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: Custom Category Management & Reordering (User Requests 2 & 3) */}
       {activeTab === 'categories' && (
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-rose-100 shadow-xs space-y-4">
@@ -1095,7 +1211,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                 <span>নতুন কাস্টম ক্যাটাগরি তৈরি করুন</span>
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                ভবিষ্যতে যেসব নতুন নতুন কোর্স বা ক্যাটাগরি আসবে (যেমন: IELTS, কোরআন শিক্ষা, ভিডিও এডিটিং, বিসিএস, স্পোকেন ইত্যাদি) তা এখানে যুক্ত করুন। ক্যাটাগরিতে কোর্স যোগ করলেই তা হোমপেজে দেখা যাবে।
+                ভবিষ্যতে যেসব নতুন নতুন কোর্স বা ক্যাটাগরি আসবে (যেমন: HSC 2028, SSC 2027, IELTS, কোরআন শিক্ষা, বিসিএস ইত্যাদি) তা এখানে যুক্ত করুন।
               </p>
             </div>
 
@@ -1109,7 +1225,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                   required
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="যেমন: IELTS প্রিপারেশন, কোরআন শিক্ষা, অ্যানিমেশন, এসএসসি..."
+                  placeholder="যেমন: HSC 2028, SSC 2027, IELTS প্রিপারেশন, ইত্যাদি..."
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white"
                 />
               </div>
@@ -1125,39 +1241,119 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
             </form>
           </div>
 
-          {/* List of categories */}
+          {/* List of categories with Up / Down Reorder Controls (User Request 2) */}
           <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Tag className="w-4 h-4 text-rose-600" />
-                <span>বর্তমান সকল ক্যাটাগরি ({allAvailableCategories.length}টি)</span>
-              </h4>
-              <span className="text-[11px] text-slate-500">
-                * যেসব ক্যাটাগরিতে অন্তত ১টি কোর্স থাকবে সেগুলোই শুধু হোমপেজে প্রদর্শিত হবে
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-rose-600" />
+                  <span>ক্যাটাগরির ক্রম নির্ধারণ (Category Display Order)</span>
+                </h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  হোমপেজে কোন ক্যাটাগরি আগে আর কোনটা পরে শো করবে তা ডানপাশের <strong>↑ উপরে</strong> ও <strong>↓ নিচে</strong> বাটন দিয়ে সাজিয়ে নিন।
+                </p>
+              </div>
+
+              {/* Sync missing batch categories button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const defaultBatchCats = [
+                    { id: 'admission', name: 'ভর্তি পরীক্ষা' },
+                    { id: 'hsc', name: 'এইচএসসি' },
+                    { id: 'hsc-2028', name: 'HSC 2028' },
+                    { id: 'hsc-2027', name: 'HSC 2027' },
+                    { id: 'hsc-2026', name: 'HSC 2026' },
+                    { id: 'class-9-10', name: 'এসএসসি' },
+                    { id: 'ssc-2027', name: 'SSC 2027' },
+                    { id: 'ssc-2026', name: 'SSC 2026' },
+                    { id: 'class-6-8', name: 'ক্লাস ৬-৮' },
+                    { id: 'class-8', name: '৮ম শ্রেণি' },
+                    { id: 'class-7', name: '৭ম শ্রেণি' },
+                    { id: 'class-6', name: '৬ষ্ঠ শ্রেণি' },
+                    { id: 'skills', name: 'স্কিলস ও ফ্রিল্যান্সিং' },
+                    { id: 'spoken-english', name: 'স্পোকেন ইংলিশ' },
+                    { id: 'job-prep', name: 'বিসিএস ও চাকরি প্রস্তুতি' },
+                  ];
+                  defaultBatchCats.forEach((c) => addCategory(c));
+                  showToast('সকল প্রয়োজনীয় ব্যাচ ক্যাটাগরি সিঙ্ক হয়েছে!');
+                }}
+                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>সকল স্ট্যান্ডার্ড ব্যাচ যুক্ত করুন</span>
+              </button>
             </div>
 
-            {allAvailableCategories.length === 0 ? (
+            {categories.length === 0 ? (
               <div className="text-center py-8 text-slate-400 text-xs">
-                এখনো কোনো ক্যাটাগরি তৈরি করা হয়নি। উপরের ফর্ম থেকে নতুন ক্যাটাগরি তৈরি করুন।
+                এখনো কোনো ক্যাটাগরি তৈরি করা হয়নি।
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {allAvailableCategories.map((cat) => {
-                  const courseCount = courses.filter((c) => c.category === cat.id || c.category === cat.name).length;
+              <div className="space-y-2.5">
+                {categories.map((cat, idx) => {
+                  const courseCount = courses.filter((c) => c.category === cat.id || c.displayTargets?.includes(cat.id)).length;
+                  const isFirst = idx === 0;
+                  const isLast = idx === categories.length - 1;
+
                   return (
                     <div
                       key={cat.id}
-                      className="p-4 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-rose-50/30 transition-colors flex items-center justify-between gap-3 shadow-2xs"
+                      className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-rose-50/30 transition-colors flex items-center justify-between gap-3 shadow-2xs"
                     >
-                      <div className="min-w-0">
-                        <h5 className="font-bold text-sm text-slate-900 truncate">{cat.name}</h5>
-                        <p className="text-[11px] text-slate-500 mt-0.5">
-                          কোর্স সংখ্যা: <strong className={courseCount > 0 ? "text-emerald-600 font-bold" : "text-slate-400"}>{courseCount}টি {courseCount > 0 ? '(হোমপেজে সক্রিয়)' : '(হোমপেজে লুকানো)'}</strong>
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="w-6 h-6 rounded-lg bg-rose-100 text-rose-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0">
+                          <h5 className="font-bold text-sm text-slate-900 truncate flex items-center gap-2">
+                            <span>{cat.name}</span>
+                            <span className="font-mono text-[10px] text-slate-400 font-normal">({cat.id})</span>
+                          </h5>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            কোর্স সংখ্যা: <strong className={courseCount > 0 ? "text-emerald-600 font-bold" : "text-slate-400"}>{courseCount}টি {courseCount > 0 ? '(হোমপেজে রো হিসেবে প্রদর্শিত)' : '(কোর্স না থাকায় লুকানো)'}</strong>
+                          </p>
+                        </div>
                       </div>
 
+                      {/* Up, Down, Delete Reorder Actions */}
                       <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          disabled={isFirst}
+                          onClick={() => {
+                            const newOrder = [...categories];
+                            const temp = newOrder[idx];
+                            newOrder[idx] = newOrder[idx - 1];
+                            newOrder[idx - 1] = temp;
+                            reorderCategories(newOrder);
+                            showToast(`"${cat.name}" উপরে নেওয়া হয়েছে`);
+                          }}
+                          title="উপরে নিন"
+                          className="px-2 py-1 bg-white hover:bg-rose-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5 text-rose-600" />
+                          <span className="hidden sm:inline">উপরে</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isLast}
+                          onClick={() => {
+                            const newOrder = [...categories];
+                            const temp = newOrder[idx];
+                            newOrder[idx] = newOrder[idx + 1];
+                            newOrder[idx + 1] = temp;
+                            reorderCategories(newOrder);
+                            showToast(`"${cat.name}" নিচে নেওয়া হয়েছে`);
+                          }}
+                          title="নিচে নামান"
+                          className="px-2 py-1 bg-white hover:bg-rose-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5 text-rose-600" />
+                          <span className="hidden sm:inline">নিচে</span>
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => {
@@ -1167,7 +1363,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                             }
                           }}
                           title="মুছে ফেলুন"
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer ml-1"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1719,16 +1915,99 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">অফার শেষ হওয়ার তারিখ</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-semibold text-slate-700">অফার শেষ হওয়ার তারিখ</label>
+                      <span className="text-[10px] text-rose-600 font-bold">শর্টকাট:</span>
+                    </div>
                     <input
                       type="date"
                       value={editingCourse.offerEndDate ? editingCourse.offerEndDate.split('T')[0] : ''}
                       onChange={(e) =>
                         setEditingCourse({ ...editingCourse, offerEndDate: e.target.value })
                       }
-                      className="w-full p-2 bg-white border border-slate-300 rounded-lg"
+                      className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs"
                     />
+                    {/* User Request 6: Quick 1-year shortcut button */}
+                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const oneYearLater = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          setEditingCourse({ ...editingCourse, offerEndDate: oneYearLater });
+                          showToast('অফারের মেয়াদ ১ বছর বাড়িয়ে দেওয়া হয়েছে!');
+                        }}
+                        className="px-2 py-0.5 rounded bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[10px] cursor-pointer"
+                        title="আজ থেকে ঠিক ১ বছর মেয়াদ সেট করুন"
+                      >
+                        ⚡ +১ বছর
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sixMoLater = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          setEditingCourse({ ...editingCourse, offerEndDate: sixMoLater });
+                          showToast('অফারের মেয়াদ ৬ মাস সেট করা হয়েছে!');
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[10px] cursor-pointer"
+                      >
+                        +৬ মাস
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const oneMoLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          setEditingCourse({ ...editingCourse, offerEndDate: oneMoLater });
+                          showToast('অফারের মেয়াদ ১ মাস সেট করা হয়েছে!');
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[10px] cursor-pointer"
+                      >
+                        +১ মাস
+                      </button>
+                    </div>
                   </div>
+                </div>
+
+                {/* Hero Slider & Hot Deals Toggles (User Requests 1 & 2) */}
+                <div className="pt-3 border-t border-rose-200/80 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-rose-200 cursor-pointer hover:bg-rose-50/50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(editingCourse.inHeroSlider)}
+                      onChange={(e) =>
+                        setEditingCourse({ ...editingCourse, inHeroSlider: e.target.checked })
+                      }
+                      className="mt-0.5 w-4 h-4 text-rose-600 rounded focus:ring-rose-500 cursor-pointer"
+                    />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 flex items-center gap-1">
+                        <Flame className="w-3.5 h-3.5 text-rose-600 fill-rose-600" />
+                        <span>হিরো স্লাইডার ব্যানারে দেখান</span>
+                      </span>
+                      <p className="text-[11px] text-slate-500 leading-tight mt-0.5">
+                        হোমপেজের উপরের ১.৮ সেকেন্ড পর পর পরিবর্তন হওয়া প্রধান স্লাইডারে প্রদর্শিত হবে।
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-rose-200 cursor-pointer hover:bg-rose-50/50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={!editingCourse.excludeFromHotDeals}
+                      onChange={(e) =>
+                        setEditingCourse({ ...editingCourse, excludeFromHotDeals: !e.target.checked })
+                      }
+                      className="mt-0.5 w-4 h-4 text-rose-600 rounded focus:ring-rose-500 cursor-pointer"
+                    />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <span>হট ডিল অফার রো-তে দেখান</span>
+                      </span>
+                      <p className="text-[11px] text-slate-500 leading-tight mt-0.5">
+                        আনচেক করলে এই কোর্সটিতে অফার থাকলেও হোমপেজের "হট ডিল" সেকশনে দেখাবে না।
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
 

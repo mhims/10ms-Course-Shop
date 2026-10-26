@@ -6,8 +6,16 @@ import { initialReviews } from '../data/reviewData';
 
 export const initialDefaultCategories: CustomCategory[] = [
   { id: 'class-6-8', name: 'ক্লাস ৬-৮' },
+  { id: 'class-8', name: '৮ম শ্রেণি' },
+  { id: 'class-7', name: '৭ম শ্রেণি' },
+  { id: 'class-6', name: '৬ষ্ঠ শ্রেণি' },
   { id: 'class-9-10', name: 'এসএসসি' },
+  { id: 'ssc-2026', name: 'SSC 2026' },
+  { id: 'ssc-2027', name: 'SSC 2027' },
   { id: 'hsc', name: 'এইচএসসি' },
+  { id: 'hsc-2026', name: 'HSC 2026' },
+  { id: 'hsc-2027', name: 'HSC 2027' },
+  { id: 'hsc-2028', name: 'HSC 2028' },
   { id: 'admission', name: 'ভর্তি পরীক্ষা' },
   { id: 'skills', name: 'স্কিলস ও ফ্রিল্যান্সিং' },
   { id: 'spoken-english', name: 'স্পোকেন ইংলিশ' },
@@ -37,6 +45,7 @@ interface CourseContextType {
   deleteCourse: (id: string) => void;
   addCategory: (category: CustomCategory) => void;
   updateCategory: (category: CustomCategory) => void;
+  reorderCategories: (newOrder: CustomCategory[]) => void;
   deleteCategory: (id: string) => void;
   addResource: (resource: SiteResource) => void;
   updateResource: (resource: SiteResource) => void;
@@ -443,6 +452,11 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCategories(prev => prev.map(c => (c.id === category.id ? category : c)));
   };
 
+  const reorderCategories = (newOrder: CustomCategory[]) => {
+    markLocalChange();
+    setCategories(newOrder);
+  };
+
   const deleteCategory = (id: string) => {
     markLocalChange();
     setCategories(prev => prev.filter(c => c.id !== id));
@@ -607,6 +621,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         deleteCourse,
         addCategory,
         updateCategory,
+        reorderCategories,
         deleteCategory,
         addResource,
         updateResource,

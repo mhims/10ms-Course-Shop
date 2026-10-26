@@ -47,3 +47,20 @@
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 }
+
+/* Continuously rotating & shimmering gradient border animation for Hero Slider */
+@keyframes gradient-x {
+  0%, 100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+}
+

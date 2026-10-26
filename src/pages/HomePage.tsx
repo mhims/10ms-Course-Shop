@@ -3,7 +3,37 @@ import { Filter, Search, PlusCircle, BookOpen, Sparkles, ChevronRight, ChevronLe
 import { Course, CourseCategory } from '../types';
 import { useCourseContext } from '../context/CourseContext';
 import { CourseCard } from '../components/CourseCard';
+import { HeroSlider } from '../components/HeroSlider';
 import { VisitorIntentModal } from '../components/VisitorIntentModal';
+
+export function courseMatchesCategory(course: Course, categoryId: string): boolean {
+  if (categoryId === 'all') return true;
+  if (course.category === categoryId) return true;
+  if (course.displayTargets && course.displayTargets.includes(categoryId)) return true;
+
+  const target = (course.targetClass || '').toLowerCase();
+  const title = (course.title || '').toLowerCase();
+  const slug = (course.slug || '').toLowerCase();
+  const combined = `${target} ${title} ${slug}`;
+
+  if (categoryId === 'hsc-2028' && (combined.includes('28') || combined.includes('২০২৮'))) return true;
+  if (categoryId === 'hsc-2027' && (combined.includes('27') || combined.includes('২০২৭')) && (combined.includes('hsc') || combined.includes('এইচএসসি'))) return true;
+  if (categoryId === 'hsc-2026' && (combined.includes('26') || combined.includes('২০২৬')) && (combined.includes('hsc') || combined.includes('এইচএসসি'))) return true;
+  if (categoryId === 'ssc-2027' && (combined.includes('27') || combined.includes('২০২৭')) && (combined.includes('ssc') || combined.includes('১০ম') || combined.includes('৯ম') || combined.includes('এসএসসি'))) return true;
+  if (categoryId === 'ssc-2026' && (combined.includes('26') || combined.includes('২০২৬')) && (combined.includes('ssc') || combined.includes('১০ম') || combined.includes('৯ম') || combined.includes('এসএসসি'))) return true;
+  if (categoryId === 'class-8' && (combined.includes('class-8') || combined.includes('৮ম') || combined.includes('অষ্টম'))) return true;
+  if (categoryId === 'class-7' && (combined.includes('class-7') || combined.includes('৭ম') || combined.includes('সপ্তম'))) return true;
+  if (categoryId === 'class-6' && (combined.includes('class-6') || combined.includes('৬ষ্ঠ') || combined.includes('ষষ্ঠ'))) return true;
+
+  // Parent categories match child courses
+  if (categoryId === 'hsc' && (combined.includes('hsc') || combined.includes('এইচএসসি') || course.category?.startsWith('hsc'))) return true;
+  if (categoryId === 'class-9-10' && (combined.includes('ssc') || combined.includes('এসএসসি') || combined.includes('৯ম') || combined.includes('১০ম') || course.category?.startsWith('ssc'))) return true;
+  if (categoryId === 'class-6-8' && (combined.includes('class-6') || combined.includes('class-7') || combined.includes('class-8') || combined.includes('৬ষ্ঠ') || combined.includes('৭ম') || combined.includes('৮ম') || course.category?.startsWith('class-6'))) return true;
+  if (categoryId === 'spoken-english' && (combined.includes('spoken') || combined.includes('english') || combined.includes('ielts'))) return true;
+  if (categoryId === 'admission' && (combined.includes('admission') || combined.includes('ভর্তি') || combined.includes('buet') || combined.includes('medical') || combined.includes('varsity'))) return true;
+
+  return false;
+}
 
 interface HomePageProps {
   onNavigate: (path: string) => void;
@@ -131,32 +161,46 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
     return courses.filter((c) => !isCourseExpired(c));
   }, [courses, isCourseExpired]);
 
-  // Featured courses with active special offers
+  // Featured courses with active special offers (excluding any course explicitly excluded by admin)
   const offerCourses = useMemo(() => {
-    return activeCourses.filter((c) => isOfferActive(c));
+    return activeCourses.filter((c) => isOfferActive(c) && !c.excludeFromHotDeals);
   }, [activeCourses, isOfferActive]);
 
-  // STRICT RULE: No hardcoded pre-existing categories!
-  // Only categories that currently have active courses will appear!
+  // Order category rows STRICTLY based on admin-defined category order (customCategories)
   const activeCategoryGroups = useMemo(() => {
-    const groupMap = new Map<string, { id: string; name: string; courses: Course[] }>();
+    const groups: { id: string; name: string; courses: Course[] }[] = [];
+    const seenCatIds = new Set<string>();
 
-    activeCourses.forEach((c) => {
-      const catKey = (c.category || '').trim();
-      if (!catKey) return;
-
-      if (!groupMap.has(catKey)) {
-        const found = customCategories.find((cat) => cat.id === catKey || cat.name === catKey);
-        groupMap.set(catKey, {
-          id: catKey,
-          name: found?.name || catKey,
-          courses: [],
+    // 1. First populate based on customCategories ordered list
+    customCategories.forEach((cat) => {
+      const matchingCourses = activeCourses.filter((c) => courseMatchesCategory(c, cat.id));
+      if (matchingCourses.length > 0) {
+        groups.push({
+          id: cat.id,
+          name: cat.name,
+          courses: matchingCourses,
         });
+        seenCatIds.add(cat.id);
       }
-      groupMap.get(catKey)!.courses.push(c);
     });
 
-    return Array.from(groupMap.values());
+    // 2. Fallback: Any courses whose category wasn't in customCategories
+    activeCourses.forEach((c) => {
+      const catKey = (c.category || '').trim();
+      if (catKey && !seenCatIds.has(catKey)) {
+        const matchingCourses = activeCourses.filter((ac) => ac.category === catKey);
+        if (matchingCourses.length > 0) {
+          groups.push({
+            id: catKey,
+            name: catKey,
+            courses: matchingCourses,
+          });
+          seenCatIds.add(catKey);
+        }
+      }
+    });
+
+    return groups;
   }, [activeCourses, customCategories]);
 
   // Dynamic category pills for filter buttons
@@ -184,10 +228,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
   // Main filtered courses (Used for search & specific category tab)
   const filteredCourses = useMemo(() => {
     return activeCourses.filter((course) => {
-      const matchesCategory =
-        selectedCategory === 'all' ||
-        course.category === selectedCategory ||
-        course.displayTargets?.includes(selectedCategory);
+      const matchesCategory = courseMatchesCategory(course, selectedCategory);
 
       if (!searchQuery.trim()) return matchesCategory;
 
@@ -200,7 +241,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
         course.seoKeywords.some((k) => k.toLowerCase().includes(q)) ||
         course.shortDescription.toLowerCase().includes(q);
 
-      return selectedCategory === 'all' ? matchesSearch : matchesCategory && matchesSearch;
+      return matchesCategory && matchesSearch;
     });
   }, [activeCourses, selectedCategory, searchQuery]);
 
@@ -249,7 +290,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
 
             {/* Target change button centered (Only shown if categories exist) */}
             {categories.length > 1 && (
-              <div className="mt-3 flex items-center justify-center">
+              <div className="mt-2.5 flex items-center justify-center">
                 <button
                   onClick={() => setShowIntentModal(true)}
                   className="px-3.5 py-1.5 text-xs font-bold text-rose-700 bg-white hover:bg-rose-50 border border-rose-200 rounded-full transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
@@ -260,6 +301,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
               </div>
             )}
           </div>
+
+          {/* User Request 1: Interactive Hero Slider with 1.8s auto-rotation, glowing animated border & direct affiliate click */}
+          {activeCourses.length > 0 && (
+            <div className="max-w-4xl mx-auto mt-2 sm:mt-3">
+              <HeroSlider courses={activeCourses} onNavigate={onNavigate} />
+            </div>
+          )}
         </div>
 
         {/* Mobile View: High-Visibility Dynamic Quick Filter Grid (ONLY categories with active courses) */}

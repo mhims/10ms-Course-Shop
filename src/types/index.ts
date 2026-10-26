@@ -44,6 +44,8 @@ export interface Course {
   seoDescription: string;
   seoKeywords: string[];
   isFeatured?: boolean;
+  inHeroSlider?: boolean;
+  excludeFromHotDeals?: boolean;
   badgeText?: string;
 }
 
@@ -92,6 +94,8 @@ export interface SiteSettings {
   whatsappNumber: string;
   announcementText: string;
   defaultAffiliateCode: string;
+  heroSliderCourseIds?: string[];
+  categoryOrder?: string[];
   lastUpdated?: number;
 }
 
