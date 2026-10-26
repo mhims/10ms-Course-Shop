@@ -112,11 +112,13 @@ export const Header: React.FC<HeaderProps> = ({
           <div
             onClick={() => onNavigate('/')}
             className="flex items-center cursor-pointer select-none shrink-0 py-1 hover:opacity-95 transition-opacity"
+            style={{ maxHeight: '40px', maxWidth: '180px' }}
           >
             <img
               src="https://res.cloudinary.com/drvyjj7td/image/upload/v1790516284/10msshop_knpcl3.png"
               alt="10MS Course Shop"
-              className="h-8 sm:h-9 md:h-10 w-auto max-w-[170px] sm:max-w-[220px] object-contain"
+              className="h-8 sm:h-9 md:h-10 w-auto object-contain shrink-0"
+              style={{ height: '34px', maxHeight: '38px', width: 'auto', maxWidth: '170px' }}
             />
           </div>
 
