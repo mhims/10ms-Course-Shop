@@ -1,152 +1,339 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Core Pages -->
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://10mscourse.shop/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://10mscourse.shop/class-9-10</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/hsc</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/admission</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/spoken-english</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/skills</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/class-6-8</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/job-prep</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://10mscourse.shop/courses</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://10mscourse.shop/blog</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://10mscourse.shop/review</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Key High Ranking 10MS Course Slugs -->
-  <url>
-    <loc>https://10mscourse.shop/ssc-2026-crash-course</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/ghore-boshe-spoken-english-munzereen</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/varsity-ka-unit-admission-course</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/medical-admission-special-batch</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/hsc-2026-first-paper-science</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://10mscourse.shop/ielts-course-by-munzereen-shahid</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://10mscourse.shop/complete-web-development-course</loc>
-    <lastmod>2026-09-27</lastmod>
+    <loc>https://10mscourse.shop/class-6-8</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/class-8</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/class-7</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/class-6</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/class-9-10</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/ssc-2026</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/ssc-2027</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/hsc</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/hsc-2026</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/hsc-2027</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/hsc-2028</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/admission</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/skills</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/spoken-english</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/job-prep</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/ghore-boshe-spoken-english</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/thumbnails/skills/ghore-boshe-Spoken-English-course-thumbnail-by-Munzereen-Shahid-1x1.jpg</image:loc>
+      <image:title>ঘরে বসে Spoken English</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://10mscourse.shop/graphic-design-with-photoshop-illustrator</loc>
-    <lastmod>2026-09-27</lastmod>
+    <loc>https://10mscourse.shop/courses/class-8-online-batch-2026</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/catalog/media/class-8-britti-porikkhar-course-thumbnails_1788154159636.png</image:loc>
+      <image:title>অষ্টম শ্রেণি - বার্ষিক ও বৃত্তি পরীক্ষা প্রস্তুতি ২০২৬</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://10mscourse.shop/digital-marketing-masterclass</loc>
-    <lastmod>2026-09-27</lastmod>
+    <loc>https://10mscourse.shop/courses/ielts-live-batch</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/thumbnails/batch-12-ielts-live-batch-thumbnails.jpg</image:loc>
+      <image:title>IELTS LIVE Batch</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://10mscourse.shop/bcs-preliminary-complete-course</loc>
-    <lastmod>2026-09-27</lastmod>
+    <loc>https://10mscourse.shop/courses/hsc-27-sesh-muhurter-prostuti-bangla-english-ict</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Blog Posts -->
-  <url>
-    <loc>https://10mscourse.shop/blog/ssc-2026-preparation-guideline</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/catalog/media/hsc-27-shesh-muhurtor-prostuti-course-bangla-english-ict-thumbnail_1788940336375.jpg</image:loc>
+      <image:title>HSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বাংলা, ইংরেজি, ICT]</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://10mscourse.shop/blog/ghore-boshe-spoken-english-guide</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://10mscourse.shop/courses/hsc-27-sesh-muhurter-prostuti-humanities</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/catalog/media/hsc-27-shesh-muhurtor-prostuti-course-manobik-bibhag-bundle-thumbnail_1788940281585.jpg</image:loc>
+      <image:title>HSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [মানবিক বিভাগ Bundle]</image:title>
+    </image:image>
   </url>
   <url>
-    <loc>https://10mscourse.shop/blog/university-admission-tips-2026</loc>
-    <lastmod>2026-09-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://10mscourse.shop/courses/hsc-27-sesh-muhurter-prostuti-business-studies</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/catalog/media/hsc-27-shesh-muhurtor-prostuti-course-business-shikkha-bundle-thumbnail_1788940187535.jpg</image:loc>
+      <image:title>HSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [ব্যবসায় শিক্ষা বিভাগ Bundle]</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-27-sesh-muhurter-prostuti-science</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/catalog/media/hsc-27-shesh-muhurtor-prostuti-course-biggyan-bibhag-bundle-thumbnail_1788940053523.jpg</image:loc>
+      <image:title>HSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ Bundle]</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/class-9-online-batch-2026-bangla-english-ict-ssc-28</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/catalog/media/Class---9--All-Subject_1769956878995.jpg</image:loc>
+      <image:title>নবম শ্রেণি - বাংলা, ইংরেজি ও আইসিটি অনলাইন ব্যাচ ২০২৬ [সকল বিভাগ - SSC 2028]</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-geography-economics-civics</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-geography-economics-civics-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (জিওগ্রাফি, ইকোনমিক্স, পৌরনীতি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-geography-economics-civics</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-geography-economics-civics-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (জিওগ্রাফি, ইকোনমিক্স, পৌরনীতি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-finance-accounting-management-marketing</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-finance-accounting-management-marketing-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (ফাইন্যান্স, একাউন্টিং, ম্যানেজমেন্ট, মার্কেটিং)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-finance-accounting-management-marketing</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-finance-accounting-management-marketing-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (ফাইন্যান্স, একাউন্টিং, ম্যানেজমেন্ট, মার্কেটিং)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-bangla-english-ict</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-bangla-english-ict-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (বাংলা, ইংরেজি, তথ্য ও যোগাযোগ প্রযুক্তি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-physics-chemistry-biology-higher-math</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-physics-chemistry-biology-higher-math-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (ফিজিক্স, কেমিস্ট্রি, ম্যাথ, বায়োলজি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-physics-chemistry-biology-higher-math</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-physics-chemistry-biology-higher-math-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (ফিজিক্স, কেমিস্ট্রি, ম্যাথ, বায়োলজি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-physics-chemistry-biology-higher-math</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-physics-chemistry-biology-higher-math-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (ফিজিক্স, কেমিস্ট্রি, ম্যাথ, বায়োলজি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-28-online-batch-physics-chemistry-biology-higher-math</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-physics-chemistry-biology-higher-math-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (ফিজিক্স, কেমিস্ট্রি, ম্যাথ, বায়োলজি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/varsity-c-unit-and-gst-admission-course-2026</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-c-unit-and-gst-admission-course-2026-thumbnail.png</image:loc>
+      <image:title>ভার্সিটি C Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/varsity-b-unit-and-gst-admission-course-2026</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-b-unit-and-gst-admission-course-2026-thumbnail.png</image:loc>
+      <image:title>ভার্সিটি B Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/varsity-a-unit-and-gst-admission-course-2026</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/thumbnails/Admission_2026/varsity-a-unit-and-gst-admission-course-2026-thumbnail.png</image:loc>
+      <image:title>ভার্সিটি A Unit + গুচ্ছ এডমিশন কোর্স - ২০২৬</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/hsc-2028-online-batch-bangla-english-ict</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/Thumbnails/hsc-28-ob-individual-course/bundle_new/hsc-28-online-batch-bangla-english-ict-thumbnail.jpg</image:loc>
+      <image:title>HSC 28 অনলাইন ব্যাচ (বাংলা, ইংরেজি, তথ্য ও যোগাযোগ প্রযুক্তি)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://10mscourse.shop/courses/ssc-27-shesh-muhurter-prostuti-course</loc>
+    <lastmod>2026-10-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/thumbnails/ssc-27/ssc-2027-science-final-preparation-course-thuimbnail.jpg</image:loc>
+      <image:title>SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ]</image:title>
+    </image:image>
   </url>
 </urlset>

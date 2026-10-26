@@ -16,21 +16,33 @@ export function courseMatchesCategory(course: Course, categoryId: string): boole
   const slug = (course.slug || '').toLowerCase();
   const combined = `${target} ${title} ${slug}`;
 
-  if (categoryId === 'hsc-2028' && (combined.includes('28') || combined.includes('২০২৮'))) return true;
-  if (categoryId === 'hsc-2027' && (combined.includes('27') || combined.includes('২০২৭')) && (combined.includes('hsc') || combined.includes('এইচএসসি'))) return true;
-  if (categoryId === 'hsc-2026' && (combined.includes('26') || combined.includes('২০২৬')) && (combined.includes('hsc') || combined.includes('এইচএসসি'))) return true;
-  if (categoryId === 'ssc-2027' && (combined.includes('27') || combined.includes('২০২৭')) && (combined.includes('ssc') || combined.includes('১০ম') || combined.includes('৯ম') || combined.includes('এসএসসি'))) return true;
-  if (categoryId === 'ssc-2026' && (combined.includes('26') || combined.includes('২০২৬')) && (combined.includes('ssc') || combined.includes('১০ম') || combined.includes('৯ম') || combined.includes('এসএসসি'))) return true;
-  if (categoryId === 'class-8' && (combined.includes('class-8') || combined.includes('৮ম') || combined.includes('অষ্টম'))) return true;
-  if (categoryId === 'class-7' && (combined.includes('class-7') || combined.includes('৭ম') || combined.includes('সপ্তম'))) return true;
-  if (categoryId === 'class-6' && (combined.includes('class-6') || combined.includes('৬ষ্ঠ') || combined.includes('ষষ্ঠ'))) return true;
+  // Batch specific categories (only match relevant academic batches)
+  if (categoryId === 'hsc-2028' && (combined.includes('28') || combined.includes('২০২৮')) && (combined.includes('hsc') || combined.includes('এইচএসসি') || course.category === 'hsc')) return true;
+  if (categoryId === 'hsc-2027' && (combined.includes('27') || combined.includes('২০২৭')) && (combined.includes('hsc') || combined.includes('এইচএসসি') || course.category === 'hsc')) return true;
+  if (categoryId === 'hsc-2026' && (combined.includes('26') || combined.includes('২০২৬')) && (combined.includes('hsc') || combined.includes('এইচএসসি') || course.category === 'hsc')) return true;
+  if (categoryId === 'ssc-2027' && (combined.includes('27') || combined.includes('২০২৭')) && (combined.includes('ssc') || combined.includes('১০ম') || combined.includes('৯ম') || combined.includes('এসএসসি') || course.category === 'class-9-10')) return true;
+  if (categoryId === 'ssc-2026' && (combined.includes('26') || combined.includes('২০২৬')) && (combined.includes('ssc') || combined.includes('১০ম') || combined.includes('৯ম') || combined.includes('এসএসসি') || course.category === 'class-9-10')) return true;
+  if (categoryId === 'class-8' && (combined.includes('class-8') || combined.includes('৮ম') || combined.includes('অষ্টম') || target.includes('৮ম'))) return true;
+  if (categoryId === 'class-7' && (combined.includes('class-7') || combined.includes('৭ম') || combined.includes('সপ্তম') || target.includes('৭ম'))) return true;
+  if (categoryId === 'class-6' && (combined.includes('class-6') || combined.includes('৬ষ্ঠ') || combined.includes('ষষ্ঠ') || target.includes('৬ষ্ঠ'))) return true;
 
   // Parent categories match child courses
-  if (categoryId === 'hsc' && (combined.includes('hsc') || combined.includes('এইচএসসি') || course.category?.startsWith('hsc'))) return true;
-  if (categoryId === 'class-9-10' && (combined.includes('ssc') || combined.includes('এসএসসি') || combined.includes('৯ম') || combined.includes('১০ম') || course.category?.startsWith('ssc'))) return true;
-  if (categoryId === 'class-6-8' && (combined.includes('class-6') || combined.includes('class-7') || combined.includes('class-8') || combined.includes('৬ষ্ঠ') || combined.includes('৭ম') || combined.includes('৮ম') || course.category?.startsWith('class-6'))) return true;
-  if (categoryId === 'spoken-english' && (combined.includes('spoken') || combined.includes('english') || combined.includes('ielts'))) return true;
-  if (categoryId === 'admission' && (combined.includes('admission') || combined.includes('ভর্তি') || combined.includes('buet') || combined.includes('medical') || combined.includes('varsity'))) return true;
+  if (categoryId === 'hsc' && (course.category === 'hsc' || (combined.includes('hsc') || combined.includes('এইচএসসি')) && !combined.includes('ielts'))) return true;
+  if (categoryId === 'class-9-10' && (course.category === 'class-9-10' || (combined.includes('ssc') || combined.includes('এসএসসি') || combined.includes('৯ম') || combined.includes('১০ম')))) return true;
+  if (categoryId === 'class-6-8' && (course.category === 'class-6-8' || (combined.includes('class-6') || combined.includes('class-7') || combined.includes('class-8') || combined.includes('৬ষ্ঠ') || combined.includes('৭ম') || combined.includes('৮ম')))) return true;
+
+  // Spoken English category MUST ONLY match courses explicitly in spoken-english or true language courses (NEVER academic school/college courses)
+  if (categoryId === 'spoken-english') {
+    if (course.category === 'hsc' || course.category === 'class-9-10' || course.category === 'class-6-8' || course.category === 'admission') {
+      return false;
+    }
+    if (course.category === 'spoken-english') return true;
+    if (combined.includes('spoken english') || combined.includes('স্পোকেন ইংলিশ') || combined.includes('ielts')) return true;
+    return false;
+  }
+
+  // Admission
+  if (categoryId === 'admission' && (course.category === 'admission' || combined.includes('admission') || combined.includes('ভর্তি পরীক্ষা') || combined.includes('মেডিকেল') || combined.includes('buet') || combined.includes('varsity'))) return true;
 
   return false;
 }
