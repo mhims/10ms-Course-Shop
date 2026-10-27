@@ -1,12 +1,9 @@
 # robots.txt for 10mscourse.shop
-# Clean SEO & Generative AI Crawler Guidelines
-
 User-agent: *
 Allow: /
 Disallow: /adminpanelofficial
 Disallow: /admin
 
-# Allow Google Search & Gemini AI Overviews
 User-agent: Googlebot
 Allow: /
 
@@ -18,25 +15,21 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-# Allow OpenAI ChatGPT & SearchGPT
 User-agent: GPTBot
 Allow: /
 
 User-agent: ChatGPT-User
 Allow: /
 
-# Allow Anthropic Claude
 User-agent: ClaudeBot
 Allow: /
 
 User-agent: anthropic-ai
 Allow: /
 
-# Allow Perplexity AI
 User-agent: PerplexityBot
 Allow: /
 
-# Allow Apple & Bing
 User-agent: Applebot
 Allow: /
 
@@ -46,10 +39,4 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-# Sitemap Location
 Sitemap: https://10mscourse.shop/sitemap.xml
-
-# LLM & AI Knowledge Base
-# See: https://llmstxt.org
-# LLMs-Txt: https://10mscourse.shop/llms.txt
-# LLMs-Full-Txt: https://10mscourse.shop/llms-full.txt
