@@ -276,6 +276,24 @@ export function cleanMarkdownDescription(markdown: string): string {
 }
 
 /**
+ * Helper to extract short code from 10ms.io URLs (e.g. https://10ms.io/1L03Sn?aff=... -> 1l03sn)
+ */
+export function extract10msCode(url: string): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.trim().match(/10ms\.io\/([a-zA-Z0-9_-]+)/i);
+  return match && match[1] ? match[1].toLowerCase() : null;
+}
+
+/**
+ * Helper to extract product slug from 10minuteschool product URLs (e.g. /product/spoken-english -> spoken-english)
+ */
+export function extractProductSlug(url: string): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.trim().match(/(?:10minuteschool\.com\/product\/|product\/|\/courses\/)([a-zA-Z0-9_-]+)/i);
+  return match && match[1] ? match[1].toLowerCase() : null;
+}
+
+/**
  * Normalizes course link for robust duplicate detection
  */
 export function normalizeCourseLink(url: string): string {
@@ -288,17 +306,15 @@ export function normalizeCourseLink(url: string): string {
   str = str.replace(/\/+$/, '');
 
   // 10ms.io shortlinks: extract code e.g. 10ms.io/SL2sUT
-  const shortMatch = str.match(/^10ms\.io\/([a-zA-Z0-9_-]+)/i);
-  if (shortMatch && shortMatch[1]) {
-    return `10ms.io/${shortMatch[1].toLowerCase()}`;
+  const code = extract10msCode(str);
+  if (code) {
+    return `10ms.io/${code}`;
   }
 
   // 10minuteschool.com product pages: extract slug e.g. /product/ssc-26-science
-  if (str.includes('10minuteschool.com/product/')) {
-    const slugMatch = str.match(/10minuteschool\.com\/product\/([a-zA-Z0-9_-]+)/i);
-    if (slugMatch && slugMatch[1]) {
-      return `10ms-product/${slugMatch[1].toLowerCase()}`;
-    }
+  const prodSlug = extractProductSlug(str);
+  if (prodSlug) {
+    return `10ms-product/${prodSlug}`;
   }
 
   // Fallback normalize: strip query parameters and hash
@@ -316,23 +332,39 @@ export function findDuplicateCourse<
   excludeCourseId?: string
 ): T | undefined {
   if (!inputLink || !inputLink.trim()) return undefined;
-  const rawInput = inputLink.trim().toLowerCase();
+  const rawInput = inputLink.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  const inputCode = extract10msCode(inputLink);
+  const inputProductSlug = extractProductSlug(inputLink);
   const normalizedInput = normalizeCourseLink(inputLink);
-  if (!normalizedInput || normalizedInput.length < 5) return undefined;
 
   return existingCourses.find((c) => {
     if (excludeCourseId && c.id === excludeCourseId) return false;
-    if (!c.affiliateLink) return false;
 
-    // Exact raw check (case-insensitive)
-    if (c.affiliateLink.trim().toLowerCase() === rawInput) {
-      return true;
+    // A. Check against c.affiliateLink if present
+    if (c.affiliateLink) {
+      const cRaw = c.affiliateLink.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+      if (cRaw === rawInput) return true;
+
+      // 1. 10ms.io shortcode match
+      if (inputCode) {
+        const cCode = extract10msCode(c.affiliateLink);
+        if (cCode && cCode === inputCode) return true;
+      }
+
+      // 2. Normalized match
+      const normalizedAff = normalizeCourseLink(c.affiliateLink);
+      if (normalizedAff && normalizedInput && normalizedAff === normalizedInput) return true;
+
+      // 3. Extracted product slug match from c.affiliateLink
+      const cProductSlug = extractProductSlug(c.affiliateLink);
+      if (inputProductSlug && cProductSlug && inputProductSlug === cProductSlug) return true;
     }
 
-    // Normalized link check
-    const normalizedAff = normalizeCourseLink(c.affiliateLink);
-    if (normalizedAff && normalizedInput && normalizedAff === normalizedInput) {
-      return true;
+    // B. Check against c.slug
+    if (c.slug) {
+      const cleanSlug = c.slug.toLowerCase().trim();
+      if (inputProductSlug && inputProductSlug === cleanSlug) return true;
+      if (cleanSlug.length >= 5 && rawInput.includes(cleanSlug)) return true;
     }
 
     return false;

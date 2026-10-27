@@ -117,18 +117,19 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [autoFetchUrl, setAutoFetchUrl] = useState('');
   const [isAutoFetching, setIsAutoFetching] = useState(false);
   const [autoFetchStatus, setAutoFetchStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string } | null>(null);
+  const [duplicateWarningCourse, setDuplicateWarningCourse] = useState<Course | null>(null);
 
   // Live duplicate course check for autoFetchUrl
   const autoFetchDuplicate = useMemo(() => {
     if (!autoFetchUrl.trim()) return undefined;
-    return findDuplicateCourse(autoFetchUrl, courses, editingCourse?.id);
-  }, [autoFetchUrl, courses, editingCourse?.id]);
+    return findDuplicateCourse(autoFetchUrl, courses, isNewCourse ? undefined : editingCourse?.id);
+  }, [autoFetchUrl, courses, isNewCourse, editingCourse?.id]);
 
   // Live duplicate course check for editingCourse.affiliateLink
   const affiliateLinkDuplicate = useMemo(() => {
     if (!editingCourse?.affiliateLink?.trim()) return undefined;
-    return findDuplicateCourse(editingCourse.affiliateLink, courses, editingCourse.id);
-  }, [editingCourse?.affiliateLink, courses, editingCourse?.id]);
+    return findDuplicateCourse(editingCourse.affiliateLink, courses, isNewCourse ? undefined : editingCourse?.id);
+  }, [editingCourse?.affiliateLink, courses, isNewCourse, editingCourse?.id]);
 
   // Authentication handler
   // Required credentials: accepts both mdadilah and mdadilahnaffahim
@@ -319,14 +320,45 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
   // Automatically fetch course metadata from 10MS affiliate link without AI
   const handleAutoFetchCourse = async () => {
-    if (!autoFetchUrl.trim()) {
+    const rawUrl = autoFetchUrl.trim();
+    if (!rawUrl) {
       setAutoFetchStatus({ type: 'error', message: 'দয়া করে আপনার ১০ মিনিট স্কুল এফিলিয়েট লিংক দিন।' });
       return;
     }
+
+    // 1. INSTANT ZERO-DELAY PRE-CHECK: Check duplicate BEFORE making any network call!
+    const immediateDuplicate = findDuplicateCourse(rawUrl, courses, isNewCourse ? undefined : editingCourse?.id);
+    if (immediateDuplicate) {
+      setDuplicateWarningCourse(immediateDuplicate);
+      setAutoFetchStatus({
+        type: 'error',
+        message: `⚠️ সতর্কতা: এই কোর্সটি ("${immediateDuplicate.title}") ইতিমধ্যে আপনার ওয়েবসাইটে যুক্ত রয়েছে! ভুলবশত ডুপ্লিকেট এন্ট্রি প্রতিরোধ করতে অটো-ফেচ বন্ধ রাখা হয়েছে।`,
+      });
+      showToast('⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!');
+      return; // STOP RIGHT HERE! Zero time wasted!
+    }
+
     setIsAutoFetching(true);
     setAutoFetchStatus(null);
     try {
-      const data = await scrapeCourseFromUrl(autoFetchUrl);
+      const data = await scrapeCourseFromUrl(rawUrl);
+
+      // 2. CHECK AFTER RESOLVING LINK/SLUG: Ensure resolved link or product slug isn't already in courses
+      const resolvedDuplicate = findDuplicateCourse(
+        data.affiliateLink || data.slug || rawUrl,
+        courses,
+        isNewCourse ? undefined : editingCourse?.id
+      );
+      if (resolvedDuplicate) {
+        setIsAutoFetching(false);
+        setDuplicateWarningCourse(resolvedDuplicate);
+        setAutoFetchStatus({
+          type: 'error',
+          message: `⚠️ সতর্কতা: এই কোর্সটি ("${resolvedDuplicate.title}") ইতিমধ্যে আপনার ওয়েবসাইটে যুক্ত রয়েছে!`,
+        });
+        showToast('⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!');
+        return; // STOP! Do not overwrite form!
+      }
 
       setEditingCourse((prev) => {
         if (!prev) return null;
@@ -343,7 +375,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           displayTargets: data.displayTargets || prev.displayTargets || ['home'],
           reviewCount: data.reviewCount || prev.reviewCount,
           enrolledCount: data.enrolledCount || prev.enrolledCount,
-          affiliateLink: data.affiliateLink || autoFetchUrl.trim() || prev.affiliateLink,
+          affiliateLink: data.affiliateLink || rawUrl || prev.affiliateLink,
           promoCode: data.promoCode !== undefined ? data.promoCode : prev.promoCode,
           instructor: data.instructor || prev.instructor,
           instructorRole: data.instructorRole || prev.instructorRole,
@@ -358,20 +390,11 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       const kwStr = data.seoKeywords ? data.seoKeywords.join(', ') : `১০ মিনিট স্কুল, ${data.title}, অনলাইন কোর্স, ${data.category || ''}`;
       setSeoKeywordsRaw(kwStr);
 
-      // Check if a course with this affiliate link already exists
-      const dupCourse = findDuplicateCourse(autoFetchUrl, courses, editingCourse?.id);
-      if (dupCourse) {
-        setAutoFetchStatus({
-          type: 'error',
-          message: `⚠️ সতর্কতা: এই এফিলিয়েট লিংকের কোর্সটি ("${dupCourse.title}") ইতিমধ্যে আপনার ওয়েবসাইটে রয়েছে! ভুলবশত ডুপ্লিকেট এন্ট্রি প্রতিরোধ করতে নিচে চেক করুন।`,
-        });
-      } else {
-        setAutoFetchStatus({
-          type: 'success',
-          message: `আলহামদুলিল্লাহ! "${data.title}" কোর্সের কভার ছবি, নাম, স্লাগ ও তথ্য স্বয়ংক্রিয়ভাবে নিচে ফর্মে বসে গেছে। নিচে দাম ও অফার চেক করে নিন।`,
-        });
-      }
-      showToast(dupCourse ? '⚠️ একই লিংকের কোর্স বিদ্যমান রয়েছে!' : 'কোর্সের তথ্য স্বয়ংক্রিয়ভাবে ফর্মে বসে গেছে!');
+      setAutoFetchStatus({
+        type: 'success',
+        message: `আলহামদুলিল্লাহ! "${data.title}" কোর্সের কভার ছবি, নাম, স্লাগ ও তথ্য স্বয়ংক্রিয়ভাবে নিচে ফর্মে বসে গেছে। নিচে দাম ও অফার চেক করে নিন।`,
+      });
+      showToast('কোর্সের তথ্য স্বয়ংক্রিয়ভাবে ফর্মে বসে গেছে!');
     } catch (err: any) {
       console.error('Auto-fetch course error:', err);
       setAutoFetchStatus({
@@ -2622,6 +2645,75 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Real-time Immediate Duplicate Course Warning Modal */}
+      {duplicateWarningCourse && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-2 border-amber-500 space-y-5 animate-in zoom-in-95">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200">
+                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                  ⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!
+                </h3>
+                <p className="text-xs text-amber-800">
+                  ভুলবশত একই কোর্স দুইবার এন্ট্রি রোধ করতে অটো-ফেচ বন্ধ রাখা হয়েছে। আপনার সময় বাঁচাতে সরাসরি বিদ্যমান কোর্সটি এডিট করার সুযোগ রয়েছে:
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2 text-xs">
+              <div>
+                <span className="font-bold text-slate-600">বিদ্যমান কোর্স:</span>{' '}
+                <strong className="text-rose-700 text-sm">{duplicateWarningCourse.title}</strong>
+              </div>
+              <div>
+                <span className="font-bold text-slate-600">কোর্স স্লাগ (URL):</span>{' '}
+                <code className="text-rose-600 bg-white px-1.5 py-0.5 rounded font-mono border border-rose-100">
+                  /{duplicateWarningCourse.slug}
+                </code>
+              </div>
+              <div className="flex items-center gap-4 pt-1 text-slate-700">
+                <div>
+                  <span className="font-bold">বর্তমান অফার মূল্য:</span>{' '}
+                  <span className="text-rose-600 font-black">৳{duplicateWarningCourse.offerPrice}</span>
+                </div>
+                <div>
+                  <span className="font-bold">ক্যাটাগরি:</span> {duplicateWarningCourse.category}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const courseToEdit = duplicateWarningCourse;
+                  setDuplicateWarningCourse(null);
+                  handleStartEditCourse(courseToEdit);
+                }}
+                className="w-full sm:flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>বিদ্যমান কোর্সটি এডিট করুন</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicateWarningCourse(null);
+                  setAutoFetchUrl('');
+                  setAutoFetchStatus(null);
+                }}
+                className="w-full sm:w-auto py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer"
+              >
+                অন্য লিংক দেব
+              </button>
+            </div>
           </div>
         </div>
       )}
