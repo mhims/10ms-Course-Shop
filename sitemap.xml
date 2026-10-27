@@ -468,4 +468,14 @@
       <image:title>SSC 27 শেষ মুহূর্তের প্রস্তুতি কোর্স [বিজ্ঞান বিভাগ Bundle]</image:title>
     </image:image>
   </url>
+  <url>
+    <loc>https://10mscourse.shop/blog/10ms</loc>
+    <lastmod>2026-10-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://cdn.10minuteschool.com/images/1_1732614151461.png</image:loc>
+      <image:title>10ms কী? 10ms সম্পর্কে বিস্তারিত জানুন</image:title>
+    </image:image>
+  </url>
 </urlset>
