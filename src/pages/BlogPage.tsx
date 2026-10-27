@@ -20,6 +20,8 @@ import { useCourseContext } from '../context/CourseContext';
 import { BlogPost, Course } from '../types';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { getWhatsAppUrl } from '../utils/whatsapp';
+import { BlogCourseCarousel } from '../components/BlogCourseCarousel';
+import { parseRichBlogContent, resolveBlogRecommendedCourses } from '../utils/blogEmbedHelper';
 
 interface BlogPageProps {
   slug?: string;
@@ -27,7 +29,7 @@ interface BlogPageProps {
 }
 
 export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
-  const { blogPosts, courses, siteSettings } = useCourseContext();
+  const { blogPosts, courses, categories: customCategories, siteSettings } = useCourseContext();
   const [copied, setCopied] = useState(false);
   const [blogSearch, setBlogSearch] = useState('');
   const [selectedBlogCategory, setSelectedBlogCategory] = useState<string>('all');
@@ -111,115 +113,39 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Helper to render article content with embedded course suggestion cards
+  // Helper to render article content with rich embed shortcodes (cards & carousels)
   const renderRichContent = (contentString: string) => {
-    // Regex splits by: [course-card:identifier]
-    const parts = contentString.split(/\[course-card:([^\]]+)\]/g);
+    const parts = parseRichBlogContent(contentString, courses, customCategories);
 
     return parts.map((part, index) => {
-      // Even indexes are normal text/HTML
-      if (index % 2 === 0) {
+      if (part.type === 'html') {
         return (
           <div
             key={index}
             className="prose prose-slate max-w-none text-slate-800 leading-relaxed text-sm sm:text-base space-y-4 pt-1"
-            dangerouslySetInnerHTML={{ __html: part }}
+            dangerouslySetInnerHTML={{ __html: part.content || '' }}
           />
         );
       }
 
-      // Odd indexes are course identifiers
-      const courseMatch = courses.find((c) => c.slug === part || c.id === part);
-      if (!courseMatch) return null;
-
-      const hasOffer = courseMatch.offerPrice > 0 && courseMatch.offerPrice < courseMatch.regularPrice;
-
+      // Course card, latest carousel, or category carousel
       return (
-        <div
+        <BlogCourseCarousel
           key={index}
-          className="my-8 p-4 sm:p-6 bg-gradient-to-r from-rose-50 to-red-50/60 rounded-3xl border-2 border-rose-200/90 shadow-sm space-y-4 transition-all hover:shadow-md"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-600 bg-white px-3 py-1 rounded-full border border-rose-200 flex items-center gap-1.5 shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-rose-500" />
-              <span>নিবন্ধের সুপারিশকৃত ১০ মিনিট স্কুল কোর্স</span>
-            </span>
-            {courseMatch.promoCode && (
-              <span className="text-xs font-bold text-slate-700 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
-                প্রোমো কোড: <strong className="font-mono text-rose-600">{courseMatch.promoCode}</strong>
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <img
-                src={courseMatch.imageUrl}
-                alt={courseMatch.title}
-                loading="lazy"
-                decoding="async"
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border border-rose-100 shadow-xs shrink-0"
-                onError={(e) => {
-                  e.currentTarget.src =
-                    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80';
-                }}
-              />
-              <div className="min-w-0">
-                <h4 className="font-black text-sm sm:text-base md:text-lg text-slate-900 line-clamp-1">
-                  {courseMatch.title}
-                </h4>
-                <p className="text-xs text-slate-600 line-clamp-1 mt-0.5">
-                  {courseMatch.shortDescription}
-                </p>
-                <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-rose-600 mt-1">
-                  <span>৳{courseMatch.offerPrice || courseMatch.regularPrice}</span>
-                  {hasOffer && (
-                    <span className="line-through text-slate-400 font-normal">
-                      ৳{courseMatch.regularPrice}
-                    </span>
-                  )}
-                  {hasOffer && (
-                    <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-1.5 py-0.5 rounded">
-                      ৳{courseMatch.regularPrice - courseMatch.offerPrice} ছাড়
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => onNavigate(`/${courseMatch.slug}`)}
-                className="px-3.5 py-2 bg-white hover:bg-rose-50 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
-              >
-                বিস্তারিত দেখুন
-              </button>
-              <a
-                href={courseMatch.affiliateLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
-              >
-                <span>১০ মিনিট স্কুলে ভর্তি হন</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-        </div>
+          title={part.title}
+          badge={part.badge}
+          courses={part.courses || []}
+          onNavigate={onNavigate}
+        />
       );
     });
   };
 
   // 1. Single Blog View
   if (activePost) {
-    // Pick suggested courses or top courses
-    const recommendedCourses = courses
-      .filter((c) =>
-        activePost.suggestedCourseIds && activePost.suggestedCourseIds.length > 0
-          ? activePost.suggestedCourseIds.includes(c.id) || activePost.suggestedCourseIds.includes(c.slug)
-          : true
-      )
-      .slice(0, 3);
+    // Resolve dynamic recommended courses (latest, category-synced, or manual)
+    const { courses: recommendedCourses, title: recommendedTitle, badge: recommendedBadge } =
+      resolveBlogRecommendedCourses(activePost, courses);
 
     const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
       `${activePost.title}\n\nপড়ুন 10MS Course Shop ব্লগে:\nhttps://10mscourse.shop/blog/${activePost.slug}`
@@ -330,51 +256,14 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
             </div>
           )}
 
-          {/* Related Recommended 10MS Courses Box at Bottom */}
+          {/* Dynamic Recommended 10MS Courses Carousel at Bottom */}
           {recommendedCourses.length > 0 && (
-            <div className="p-6 bg-gradient-to-r from-rose-50/80 to-red-50/80 rounded-3xl border border-rose-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-rose-700 font-black text-sm sm:text-base">
-                  <Sparkles className="w-4 h-4 text-rose-600" />
-                  <span>নিবন্ধ সংশ্লিষ্ট ১০ মিনিট স্কুল কোর্স অফার ও প্রোমো কোড</span>
-                </div>
-                <button
-                  onClick={() => onNavigate('/courses')}
-                  className="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span>সকল কোর্স দেখুন</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {recommendedCourses.map((c) => (
-                  <div
-                    key={c.id}
-                    onClick={() => onNavigate(`/${c.slug}`)}
-                    className="bg-white p-3.5 rounded-2xl border border-rose-100 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
-                  >
-                    <div>
-                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 group-hover:text-rose-600 line-clamp-1 transition-colors">
-                        {c.title}
-                      </h4>
-                      <p className="text-xs text-rose-600 font-extrabold mt-1">
-                        ফি: ৳{c.offerPrice || c.regularPrice}
-                        {c.promoCode && (
-                          <span className="ml-2 font-mono text-[10px] bg-rose-50 px-1.5 py-0.5 rounded text-rose-700">
-                            কোড: {c.promoCode}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-400 mt-2">
-                      <span>বিস্তারিত দেখুন</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-rose-500" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <BlogCourseCarousel
+              title={recommendedTitle}
+              badge={recommendedBadge}
+              courses={recommendedCourses}
+              onNavigate={onNavigate}
+            />
           )}
         </article>
       </div>

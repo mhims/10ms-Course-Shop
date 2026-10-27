@@ -2524,6 +2524,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           initialBlog={editingBlog}
           isNew={isNewBlog}
           courses={courses}
+          categories={allAvailableCategories}
           onSave={handleSaveBlogFromEditor}
           onClose={() => setEditingBlog(null)}
         />

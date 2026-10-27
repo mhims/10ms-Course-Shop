@@ -49,6 +49,8 @@ export interface Course {
   badgeText?: string;
 }
 
+export type BlogCourseRecommendationType = 'specific' | 'latest' | 'category' | 'none';
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -66,6 +68,9 @@ export interface BlogPost {
   seoDescription?: string;
   seoKeywords?: string[];
   suggestedCourseIds?: string[];
+  courseRecommendationType?: BlogCourseRecommendationType;
+  courseRecommendationCount?: number | 'all';
+  courseRecommendationCategory?: string;
 }
 
 export interface SiteResource {

@@ -28,13 +28,16 @@ import {
   FolderPlus,
   Clipboard,
 } from 'lucide-react';
-import { BlogPost, Course } from '../types';
+import { BlogPost, Course, CustomCategory } from '../types';
 import { convertHtmlToFormattedMarkdown } from '../utils/formatConverter';
+import { BlogCourseCarousel } from './BlogCourseCarousel';
+import { parseRichBlogContent, resolveBlogRecommendedCourses } from '../utils/blogEmbedHelper';
 
 interface WordPressBlogEditorProps {
   initialBlog: BlogPost;
   isNew: boolean;
   courses: Course[];
+  categories?: CustomCategory[];
   onSave: (blog: BlogPost, pushDirectly?: boolean) => void;
   onClose: () => void;
 }
@@ -43,6 +46,7 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
   initialBlog,
   isNew,
   courses,
+  categories = [],
   onSave,
   onClose,
 }) => {
@@ -51,12 +55,23 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
     tags: initialBlog.tags || [],
     suggestedCourseIds: initialBlog.suggestedCourseIds || [],
     seoKeywords: initialBlog.seoKeywords || [],
+    courseRecommendationType: initialBlog.courseRecommendationType || 'latest',
+    courseRecommendationCount: initialBlog.courseRecommendationCount || 3,
+    courseRecommendationCategory: initialBlog.courseRecommendationCategory || categories[0]?.id || '',
   });
 
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   const [tagsRaw, setTagsRaw] = useState((initialBlog.tags || []).join(', '));
   const [seoKeywordsRaw, setSeoKeywordsRaw] = useState((initialBlog.seoKeywords || []).join(', '));
+  
+  // Course Embed Picker Modal State
   const [showCoursePicker, setShowCoursePicker] = useState(false);
+  const [coursePickerTab, setCoursePickerTab] = useState<'latest' | 'category' | 'specific'>('latest');
+  const [embedLatestCount, setEmbedLatestCount] = useState<number>(3);
+  const [embedCategory, setEmbedCategory] = useState<string>(categories[0]?.id || 'hsc');
+  const [embedCategoryCount, setEmbedCategoryCount] = useState<number | 'all'>('all');
+  const [courseSearch, setCourseSearch] = useState('');
+
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
@@ -139,10 +154,26 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
     }, 50);
   };
 
-  // Insert a Course Suggestion Card shortcode at cursor
+  // 1. Insert a Single Course Suggestion Card shortcode at cursor
   const handleInsertCourse = (course: Course) => {
     insertAtCursor(
       `\n\n<!-- COURSE_SUGGESTION_START -->\n[course-card:${course.slug || course.id}]\n<!-- COURSE_SUGGESTION_END -->\n\n`
+    );
+    setShowCoursePicker(false);
+  };
+
+  // 2. Insert Latest Courses (1-5) carousel shortcode at cursor
+  const handleInsertLatestCourses = (count: number) => {
+    insertAtCursor(
+      `\n\n<!-- LATEST_COURSES_CAROUSEL_START -->\n[courses-latest count="${count}"]\n<!-- LATEST_COURSES_CAROUSEL_END -->\n\n`
+    );
+    setShowCoursePicker(false);
+  };
+
+  // 3. Insert Category Dynamic Courses carousel shortcode at cursor
+  const handleInsertCategoryCourses = (categoryId: string, count: number | 'all') => {
+    insertAtCursor(
+      `\n\n<!-- CATEGORY_COURSES_CAROUSEL_START -->\n[courses-category category="${categoryId}" count="${count}"]\n<!-- CATEGORY_COURSES_CAROUSEL_END -->\n\n`
     );
     setShowCoursePicker(false);
   };
@@ -272,88 +303,29 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
     onSave(blogToSave, pushDirectly);
   };
 
-  // Render course preview embed card inside editor preview
+  // Render course preview embed card & carousel inside editor preview
   const renderPreviewContent = (rawContent: string) => {
-    // Split by course-card shortcode: [course-card:identifier]
-    const parts = rawContent.split(/\[course-card:([^\]]+)\]/g);
+    const parts = parseRichBlogContent(rawContent, courses, categories);
 
     return parts.map((part, index) => {
-      // Even indexes are normal HTML
-      if (index % 2 === 0) {
+      if (part.type === 'html') {
         return (
           <div
             key={index}
             className="prose prose-slate max-w-none text-slate-800 leading-relaxed space-y-4"
-            dangerouslySetInnerHTML={{ __html: part }}
+            dangerouslySetInnerHTML={{ __html: part.content || '' }}
           />
         );
       }
 
-      // Odd indexes are course slugs or IDs
-      const courseMatch = courses.find((c) => c.slug === part || c.id === part);
-      if (!courseMatch) {
-        return (
-          <div
-            key={index}
-            className="my-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2"
-          >
-            <GraduationCap className="w-4 h-4 text-amber-600" />
-            <span>সাজেস্টেড কোর্স পাওয়া যায়নি: <strong>{part}</strong></span>
-          </div>
-        );
-      }
-
       return (
-        <div
+        <BlogCourseCarousel
           key={index}
-          className="my-6 p-4 sm:p-5 bg-gradient-to-r from-rose-50/90 to-red-50/90 rounded-2xl border-2 border-rose-200/80 shadow-sm space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-600 bg-white px-2.5 py-0.5 rounded-full border border-rose-200 flex items-center gap-1 shadow-2xs">
-              <Sparkles className="w-3 h-3 text-rose-500" />
-              <span>নিবন্ধের সুপারিশকৃত কোর্স</span>
-            </span>
-            {courseMatch.promoCode && (
-              <span className="text-xs font-bold text-slate-700 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
-                প্রোমো কোড: <strong className="font-mono text-rose-600">{courseMatch.promoCode}</strong>
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-            <div className="flex items-center gap-3">
-              <img
-                src={courseMatch.imageUrl}
-                alt={courseMatch.title}
-                className="w-16 h-16 rounded-xl object-cover border border-rose-100 shadow-2xs shrink-0"
-              />
-              <div>
-                <h4 className="font-bold text-sm sm:text-base text-slate-900 line-clamp-1">
-                  {courseMatch.title}
-                </h4>
-                <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                  {courseMatch.shortDescription}
-                </p>
-                <div className="flex items-center gap-2 text-xs font-bold text-rose-600 mt-1">
-                  <span>৳{courseMatch.offerPrice || courseMatch.regularPrice}</span>
-                  {courseMatch.offerPrice > 0 && courseMatch.offerPrice < courseMatch.regularPrice && (
-                    <span className="line-through text-slate-400 font-normal">৳{courseMatch.regularPrice}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <a
-              href={courseMatch.affiliateLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
-            >
-              <span>১০ মিনিট স্কুলে ভর্তি হন</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        </div>
+          title={part.title}
+          badge={part.badge}
+          courses={part.courses || []}
+          onNavigate={() => {}}
+        />
       );
     });
   };
@@ -728,6 +700,23 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                   {renderPreviewContent(blog.content)}
                 </div>
 
+                {/* Bottom Course Recommendations Live Preview */}
+                {(() => {
+                  const { courses: bottomRecCourses, title: bottomTitle, badge: bottomBadge } =
+                    resolveBlogRecommendedCourses(blog, courses);
+                  if (bottomRecCourses.length === 0) return null;
+                  return (
+                    <div className="pt-6 border-t border-slate-100">
+                      <BlogCourseCarousel
+                        title={bottomTitle}
+                        badge={bottomBadge}
+                        courses={bottomRecCourses}
+                        onNavigate={() => {}}
+                      />
+                    </div>
+                  );
+                })()}
+
                 {blog.tags && blog.tags.length > 0 && (
                   <div className="pt-6 border-t border-slate-100 flex flex-wrap items-center gap-2">
                     <Tag className="w-4 h-4 text-slate-400" />
@@ -953,19 +942,179 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* 5. Bottom Course Recommendations Setting */}
+            <div className="bg-white rounded-3xl p-5 border-2 border-rose-200/90 shadow-xs space-y-3">
+              <h4 className="font-black text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-rose-100">
+                <GraduationCap className="w-4 h-4 text-rose-600" />
+                <span>আর্টিকেলের নিচে কোর্স রেকমেন্ডেশন</span>
+              </h4>
+
+              <div className="space-y-2 text-xs">
+                {/* Option 1: Latest Courses */}
+                <label className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="courseRecType"
+                    checked={blog.courseRecommendationType === 'latest'}
+                    onChange={() => setBlog({ ...blog, courseRecommendationType: 'latest' })}
+                    className="mt-0.5 text-rose-600 cursor-pointer"
+                  />
+                  <div>
+                    <span className="font-bold text-slate-900 block">লেটেস্ট কোর্স (সর্বশেষ প্রকাশিত)</span>
+                    <span className="text-[11px] text-slate-500">সবচেয়ে নতুন ১-৫টি কোর্স স্বয়ংক্রিয় ক্যারোজাল আকারে দেখাবে</span>
+                  </div>
+                </label>
+
+                {blog.courseRecommendationType === 'latest' && (
+                  <div className="pl-6 pt-1 flex items-center gap-2">
+                    <span className="text-xs text-slate-600 font-bold">কোর্সের সংখ্যা:</span>
+                    {[1, 2, 3, 4, 5].map((cnt) => (
+                      <button
+                        key={cnt}
+                        type="button"
+                        onClick={() => setBlog({ ...blog, courseRecommendationCount: cnt })}
+                        className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          (blog.courseRecommendationCount || 3) === cnt
+                            ? 'bg-rose-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {cnt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Option 2: Category Based Dynamic Sync */}
+                <label className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="courseRecType"
+                    checked={blog.courseRecommendationType === 'category'}
+                    onChange={() => setBlog({ ...blog, courseRecommendationType: 'category' })}
+                    className="mt-0.5 text-rose-600 cursor-pointer"
+                  />
+                  <div>
+                    <span className="font-bold text-slate-900 block">ক্যাটাগরি / ব্যাচ অনুযায়ী (অটো-আপডেট)</span>
+                    <span className="text-[11px] text-slate-500">ভবিষ্যতে নতুন কোর্স যোগ হলেও অটোমেটিক চলে আসবে</span>
+                  </div>
+                </label>
+
+                {blog.courseRecommendationType === 'category' && (
+                  <div className="pl-6 pt-1 space-y-2">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">ক্যাটাগরি বেছে নিন:</label>
+                      <select
+                        value={blog.courseRecommendationCategory || categories[0]?.id || ''}
+                        onChange={(e) => setBlog({ ...blog, courseRecommendationCategory: e.target.value })}
+                        className="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"
+                      >
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1">প্রদর্শন সংখ্যা:</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { val: 1, label: '১টি' },
+                          { val: 2, label: '২টি' },
+                          { val: 3, label: '৩টি' },
+                          { val: 4, label: '৪টি' },
+                          { val: 5, label: '৫টি' },
+                          { val: 'all', label: 'সকল কোর্স' },
+                        ].map((opt) => (
+                          <button
+                            key={String(opt.val)}
+                            type="button"
+                            onClick={() => setBlog({ ...blog, courseRecommendationCount: opt.val as any })}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              (blog.courseRecommendationCount || 'all') === opt.val
+                                ? 'bg-rose-600 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Option 3: Specific Manual Selection */}
+                <label className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="courseRecType"
+                    checked={blog.courseRecommendationType === 'specific'}
+                    onChange={() => setBlog({ ...blog, courseRecommendationType: 'specific' })}
+                    className="mt-0.5 text-rose-600 cursor-pointer"
+                  />
+                  <div>
+                    <span className="font-bold text-slate-900 block">ম্যানুয়ালি নির্দিষ্ট কোর্স নির্বাচন</span>
+                    <span className="text-[11px] text-slate-500">নিচের তালিকা থেকে টিকচিহ্ন দিন</span>
+                  </div>
+                </label>
+
+                {blog.courseRecommendationType === 'specific' && (
+                  <div className="pl-6 pt-1 max-h-36 overflow-y-auto space-y-1.5 border border-slate-200 rounded-xl p-2 bg-slate-50">
+                    {courses.map((c) => {
+                      const isChecked = (blog.suggestedCourseIds || []).includes(c.id) || (blog.suggestedCourseIds || []).includes(c.slug);
+                      return (
+                        <label key={c.id} className="flex items-center gap-2 text-[11px] text-slate-700 cursor-pointer hover:text-rose-600">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const current = blog.suggestedCourseIds || [];
+                              const updated = e.target.checked
+                                ? [...current, c.slug]
+                                : current.filter((id) => id !== c.id && id !== c.slug);
+                              setBlog({ ...blog, suggestedCourseIds: updated });
+                            }}
+                            className="rounded text-rose-600"
+                          />
+                          <span className="truncate">{c.title}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Option 4: None */}
+                <label className="flex items-start gap-2 p-2.5 rounded-xl border border-slate-200 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="courseRecType"
+                    checked={blog.courseRecommendationType === 'none'}
+                    onChange={() => setBlog({ ...blog, courseRecommendationType: 'none' })}
+                    className="mt-0.5 text-rose-600 cursor-pointer"
+                  />
+                  <div>
+                    <span className="font-bold text-slate-900 block">কোনো কোর্স দেখাবেন না</span>
+                  </div>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Modal: Course Suggestion Picker */}
+      {/* Modal: Course & Carousel Inserter with 3 Tabs */}
       {showCoursePicker && (
-        <div className="fixed inset-0 z-60 bg-black/50 backdrop-blur-2xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 border border-rose-200 shadow-2xl space-y-4 max-h-[80vh] flex flex-col">
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-2xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-6 border border-rose-200 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <GraduationCap className="w-5 h-5 text-rose-600" />
                 <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                  লেখার মাঝখানে কোর্স কার্ড সাজেস্ট করুন
+                  লেখার মধ্যে কোর্স বা ক্যারোজাল যোগ করুন
                 </h3>
               </div>
               <button
@@ -977,38 +1126,202 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
               </button>
             </div>
 
-            <p className="text-xs text-slate-500">
-              নিচের যে কোর্সটি সিলেক্ট করবেন, সেটি রিডারদের পড়ার সুবিধার জন্য আর্টিকেলের ঠিক বর্তমান স্থানে সুন্দর কার্ড আকারে প্রদর্শিত হবে:
-            </p>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {courses.map((c) => (
-                <div
-                  key={c.id}
-                  onClick={() => handleInsertCourse(c)}
-                  className="p-3 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 rounded-2xl transition-all cursor-pointer flex items-center justify-between gap-3 group"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <img
-                      src={c.imageUrl}
-                      alt=""
-                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 group-hover:text-rose-600 truncate">
-                        {c.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 font-bold mt-0.5">
-                        ফি: ৳{c.offerPrice || c.regularPrice} {c.promoCode && `• কোড: ${c.promoCode}`}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs font-bold text-rose-600 bg-white px-2.5 py-1 rounded-xl border border-rose-200 shrink-0 group-hover:bg-rose-600 group-hover:text-white transition-colors">
-                    + যোগ করুন
-                  </span>
-                </div>
-              ))}
+            {/* Modal Tabs */}
+            <div className="flex items-center bg-slate-100 p-1 rounded-2xl gap-1">
+              <button
+                type="button"
+                onClick={() => setCoursePickerTab('latest')}
+                className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  coursePickerTab === 'latest' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                ১. লেটেস্ট কোর্স (১-৫টি)
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoursePickerTab('category')}
+                className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  coursePickerTab === 'category' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                ২. ক্যাটাগরি ভিত্তিক
+              </button>
+              <button
+                type="button"
+                onClick={() => setCoursePickerTab('specific')}
+                className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  coursePickerTab === 'specific' ? 'bg-white text-rose-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                ৩. নির্দিষ্ট কোর্স
+              </button>
             </div>
+
+            {/* TAB 1: LATEST COURSES (1-5) */}
+            {coursePickerTab === 'latest' && (
+              <div className="space-y-4 py-2 flex-1">
+                <div className="p-4 bg-rose-50/80 border border-rose-200 rounded-2xl space-y-2">
+                  <h4 className="font-bold text-xs sm:text-sm text-rose-900 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-rose-600" />
+                    <span>লেটেস্ট কোর্স শর্টকোড (অটো-আপডেট ও ক্যারোজাল)</span>
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    এই অপশনটি ব্যবহার করলে ব্লগে সবসময় <strong>সর্বশেষ প্রকাশিত ১-৫টি কোর্স</strong> দেখাবে। ১টির বেশি যুক্ত করলে ফেসবুক অ্যাডসের মতো <strong>বাম থেকে ডানে স্ক্রলেবল ক্যারোজাল</strong> আকারে দেখা যাবে।
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold text-slate-700">
+                    কয়টি লেটেস্ট কোর্স দেখাতে চান? (১ থেকে ৫টি)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((cnt) => (
+                      <button
+                        key={cnt}
+                        type="button"
+                        onClick={() => setEmbedLatestCount(cnt)}
+                        className={`flex-1 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all cursor-pointer border ${
+                          embedLatestCount === cnt
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-xs ring-2 ring-rose-200'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-rose-300'
+                        }`}
+                      >
+                        {cnt}টি {cnt > 1 ? '(ক্যারোজাল)' : ''}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <button
+                    type="button"
+                    onClick={() => handleInsertLatestCourses(embedLatestCount)}
+                    className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all cursor-pointer"
+                  >
+                    + আর্টিকেলের এই স্থানে {embedLatestCount}টি লেটেস্ট কোর্স যোগ করুন
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: CATEGORY / BATCH DYNAMIC COURSES */}
+            {coursePickerTab === 'category' && (
+              <div className="space-y-4 py-2 flex-1">
+                <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-2xl space-y-2">
+                  <h4 className="font-bold text-xs sm:text-sm text-amber-900 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-600" />
+                    <span>ক্যাটাগরি / ব্যাচ ভিত্তিক ডায়নামিক কোর্স</span>
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    নির্দিষ্ট কোনো ব্যাচ বা ক্যাটাগরি বেছে নিন। <strong>ভবিষ্যতে ওই ক্যাটাগরিতে নতুন কোর্স যুক্ত হলেও এখানে আর হাত দিতে হবে না</strong>, স্বয়ংক্রিয়ভাবে ব্লগে চলে আসবে!
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    কোর্স ক্যাটাগরি / ব্যাচ বেছে নিন:
+                  </label>
+                  <select
+                    value={embedCategory}
+                    onChange={(e) => setEmbedCategory(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    কয়টি কোর্স দেখাতে চান?
+                  </label>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    {[
+                      { val: 1, label: '১টি' },
+                      { val: 2, label: '২টি' },
+                      { val: 3, label: '৩টি' },
+                      { val: 4, label: '৪টি' },
+                      { val: 5, label: '৫টি' },
+                      { val: 'all', label: 'সকল কোর্স' },
+                    ].map((opt) => (
+                      <button
+                        key={String(opt.val)}
+                        type="button"
+                        onClick={() => setEmbedCategoryCount(opt.val as any)}
+                        className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          embedCategoryCount === opt.val
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-xs ring-2 ring-rose-200'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-rose-300'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleInsertCategoryCourses(embedCategory, embedCategoryCount)}
+                    className="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all cursor-pointer"
+                  >
+                    + এই ক্যাটাগরির কোর্স যোগ করুন ({embedCategoryCount === 'all' ? 'সবগুলো' : `${embedCategoryCount}টি`})
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: SPECIFIC MANUAL COURSE SELECTION */}
+            {coursePickerTab === 'specific' && (
+              <div className="flex-1 overflow-hidden flex flex-col space-y-2">
+                <input
+                  type="text"
+                  value={courseSearch}
+                  onChange={(e) => setCourseSearch(e.target.value)}
+                  placeholder="কোর্স বা কোড খুঁজুন..."
+                  className="w-full p-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl"
+                />
+                <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[45vh]">
+                  {courses
+                    .filter(
+                      (c) =>
+                        !courseSearch.trim() ||
+                        c.title.toLowerCase().includes(courseSearch.toLowerCase()) ||
+                        c.slug.toLowerCase().includes(courseSearch.toLowerCase())
+                    )
+                    .map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => handleInsertCourse(c)}
+                        className="p-3 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-300 rounded-2xl transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img
+                            src={c.imageUrl}
+                            alt=""
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <h4 className="font-bold text-xs sm:text-sm text-slate-900 group-hover:text-rose-600 truncate">
+                              {c.title}
+                            </h4>
+                            <p className="text-[11px] text-slate-500 font-bold mt-0.5">
+                              ফি: ৳{c.offerPrice || c.regularPrice} {c.promoCode && `• কোড: ${c.promoCode}`}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold text-rose-600 bg-white px-2.5 py-1 rounded-xl border border-rose-200 shrink-0 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                          + যোগ করুন
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
 
             <button
               type="button"
