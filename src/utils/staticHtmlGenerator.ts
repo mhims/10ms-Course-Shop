@@ -4,6 +4,7 @@ export interface PageConfig {
   route: string;
   title: string;
   description: string;
+  keywords?: string;
   canonicalUrl: string;
   ogImage?: string;
   schemaJson?: object;
@@ -82,6 +83,14 @@ export function generateStaticHtml(baseHtml: string, config: PageConfig): string
     );
   }
 
+  // 2.5 Replace Keywords
+  if (config.keywords && html.includes('name="keywords"')) {
+    html = html.replace(
+      /<meta\s+name="keywords"\s+content="[^"]*"\s*\/?>/i,
+      `<meta name="keywords" content="${escapeHtml(config.keywords)}" />`
+    );
+  }
+
   // 3. Replace Canonical Link
   if (html.includes('rel="canonical"')) {
     html = html.replace(
@@ -142,25 +151,133 @@ export function generateStaticHtml(baseHtml: string, config: PageConfig): string
 export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageConfig[] {
   const pages: PageConfig[] = [];
 
+  const allTargetKeywords =
+    '10ms, 10 minute school, 10ms course, 10 ms, 10ms course discount, 10ms course hsc, 10 ms course hsc, 10ms course ssc, 10 ms course ssc, ১০ মিনিট স্কুল, ১০ মিনিট স্কুল কোর্স, ১০ মিনিট স্কুল কোর্স ডিসকাউন্ট, ১০ মিনিট স্কুল কোর্স ডিস্কাউন্ট, ১০ মিনিট স্কুল এইচএসসি কোর্স, ১০ মিনিট স্কুল এসএসসি কোর্স, 10ms course offer, 10ms course promo, 10 minute school course discount, 10 minute school kors, 10ms kors, 10ms shop, 10ms course shop, ১০ মিনিট স্কুল ভর্তি লিংক, ten minute school, spoken english 10ms, মুনজেরিন শহীদ স্পোকেন ইংলিশ';
+
   // 0. Homepage (route: '') with Comprehensive Content for Search Engines
   pages.push({
     route: '',
-    title: '10MS Course Shop - ১০ মিনিট স্কুল কোর্স ও অফার',
-    description: '১০ মিনিট স্কুলের সকল একাডেমিক, এডমিশন ও স্কিল কোর্সের প্রোমো অফার, ডিসকাউন্ট ও ভর্তি লিংক এক প্ল্যাটফর্মে।',
+    title: '10MS Course Shop | ১০ মিনিট স্কুল কোর্স, অফার ও ডিসকাউন্ট প্রোমো কোড (10 Minute School)',
+    description: '১০ মিনিট স্কুল (10 Minute School)-এর সকল কোর্স, HSC, SSC, Spoken English ডিসকাউন্ট অফার, ভর্তি ও ভেরিফাইড প্রোমো কোড। 10ms course offer, promo & discount.',
+    keywords: allTargetKeywords,
     canonicalUrl: 'https://10mscourse.shop/',
     ogImage: 'https://10mscourse.shop/favicon-512x512.png',
+    schemaJson: {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': 'https://10mscourse.shop/#website',
+          'url': 'https://10mscourse.shop/',
+          'name': '10MS Course Shop',
+          'alternateName': [
+            '10ms',
+            '10 minute school',
+            '10ms course',
+            '10 ms',
+            '১০ মিনিট স্কুল',
+            '১০ মিনিট স্কুল কোর্স শপ',
+            '10ms kors',
+            '10 minute school kors',
+            '10ms course hsc',
+            '10 ms course hsc',
+            '10ms course ssc',
+            '10 ms course ssc',
+            '10ms course discount',
+            '10ms course offer',
+            '10ms course promo'
+          ],
+          'keywords': allTargetKeywords,
+          'description': '১০ মিনিট স্কুল (10 Minute School)-এর সকল কোর্স, ডিসকাউন্ট অফার, কুপন কোড ও সরাসরি ভর্তি লিংক।',
+          'publisher': {
+            '@id': 'https://10mscourse.shop/#organization'
+          },
+          'potentialAction': {
+            '@type': 'SearchAction',
+            'target': 'https://10mscourse.shop/courses?q={search_term_string}',
+            'query-input': 'required name=search_term_string'
+          }
+        },
+        {
+          '@type': 'EducationalOrganization',
+          '@id': 'https://10mscourse.shop/#organization',
+          'name': '10MS Course Shop',
+          'url': 'https://10mscourse.shop/',
+          'logo': {
+            '@type': 'ImageObject',
+            'url': 'https://10mscourse.shop/favicon-192x192.png',
+            'width': 192,
+            'height': 192
+          },
+          'description': '১০ মিনিট স্কুল (10 Minute School)-এর সকল অনলাইন কোর্সের অফিসিয়াল অ্যাফিলিয়েট প্ল্যাটফর্ম ও সর্বোচ্চ ডিসকাউন্ট পোর্টাল।'
+        },
+        {
+          '@type': 'FAQPage',
+          '@id': 'https://10mscourse.shop/#faq',
+          'mainEntity': [
+            {
+              '@type': 'Question',
+              'name': '১০ মিনিট স্কুল কোর্স ডিসকাউন্ট ও 10ms promo code কোথায় পাব?',
+              'acceptedAnswer': {
+                '@type': 'Answer',
+                'text': '10mscourse.shop ওয়েবসাইটে প্রতিটি কোর্সের সাথে ভেরিফাইড প্রোমো কোড ও সর্বোচ্চ ছাড়ের লিংক দেওয়া রয়েছে। যেকোনো কোর্সে ক্লিক করে সরাসরি ১০ মিনিট স্কুলের অফিসিয়াল পেমেন্ট গেটওয়েতে ডিসকাউন্টসহ ভর্তি হওয়া যায়।'
+              }
+            },
+            {
+              '@type': 'Question',
+              'name': '10ms course hsc ও ssc কোর্সে কীভাবে সর্বোচ্চ ডিসকাউন্ট পাওয়া যাবে?',
+              'acceptedAnswer': {
+                '@type': 'Answer',
+                'text': '10mscourse.shop-এ HSC (10ms course hsc) ও SSC (10ms course ssc) ব্যাচ অনুযায়ী আলাদা ক্যাটাগরি ও প্রোমো কোড রয়েছে। সেখানে গিয়ে সরাসরি কোর্স সিলেক্ট করে ডিসকাউন্ট মূল্যে ভর্তি হওয়া যায়।'
+              }
+            },
+            {
+              '@type': 'Question',
+              'name': '10 minute school kors বা ১০ মিনিট স্কুল কোর্সে ভর্তির সরাসরি লিংক কোনটি?',
+              'acceptedAnswer': {
+                '@type': 'Answer',
+                'text': '10mscourse.shop-এ সকল ১০ মিনিট স্কুল কোর্সের (10 minute school kors / 10ms kors) অফিসিয়াল ভর্তি লিংক ও প্রোমো কোড একত্রিত করা আছে।'
+              }
+            },
+            {
+              '@type': 'Question',
+              'name': 'ঘরে বসে Spoken English কোর্সের ভর্তি লিংক ও ডিসকাউন্ট কোড কী?',
+              'acceptedAnswer': {
+                '@type': 'Answer',
+                'text': 'মুনজেরিন শহীদের ঘরে বসে Spoken English কোর্সে ভর্তির লিংক https://10mscourse.shop/courses/ghore-boshe-spoken-english এবং ভেরিফাইড প্রোমো কোড affgbse1690।'
+              }
+            }
+          ]
+        }
+      ]
+    },
     seoBodyHtml: `
       <header style="background: linear-gradient(135deg, #fff1f2 0%, #ffffff 100%); padding: 36px 20px; border-bottom: 1px solid #ffe4e6; text-align: center;">
-        <h1 style="font-size: 28px; font-weight: 800; color: #e11d48; margin: 0 0 12px 0;">১০ মিনিট স্কুল কোর্স শপ - সকল অনলাইন কোর্স, ডিসকাউন্ট ও ভর্তি লিংক ২০২৬</h1>
+        <h1 style="font-size: 28px; font-weight: 800; color: #e11d48; margin: 0 0 12px 0;">১০ মিনিট স্কুল কোর্স শপ - 10MS Course Discount, Offer & Promo Code ২০২৬</h1>
         <p style="font-size: 15px; color: #475569; max-width: 850px; margin: 0 auto; line-height: 1.7;">
-          ১০ মিনিট স্কুল (10 Minute School)-এর অফিসিয়াল অ্যাফিলিয়েট প্ল্যাটফর্ম <strong>10mscourse.shop</strong>-এ আপনাকে স্বাগতম। এখানে ক্লাস ৬-১২ এর সম্পূর্ণ অনলাইন ব্যাচ, এসএসসি ও এইচএসসি ক্র্যাশ কোর্স, বিশ্ববিদ্যালয় ভর্তি পরীক্ষা, মুনজেরিন শহীদের ঘরে বসে স্পোকেন ইংলিশ এবং স্কিল কোর্সের সর্বোচ্চ ছাড়, ডিসকাউন্ট অফার, ভেরিফাইড প্রোমো কোড ও সরাসরি ভর্তি লিংক পাওয়া যাবে।
+          ১০ মিনিট স্কুল (10 Minute School)-এর অফিসিয়াল অ্যাফিলিয়েট প্ল্যাটফর্ম <strong>10mscourse.shop</strong>-এ আপনাকে স্বাগতম। এখানে 10ms course hsc, 10ms course ssc, ক্লাস ৬-১২ এর সম্পূর্ণ অনলাইন ব্যাচ, এসএসসি ও এইচএসসি ক্র্যাশ কোর্স, বিশ্ববিদ্যালয় ভর্তি পরীক্ষা, মুনজেরিন শহীদের ঘরে বসে স্পোকেন ইংলিশ এবং স্কিল কোর্সের সর্বোচ্চ ছাড়, ডিসকাউন্ট অফার, ভেরিফাইড প্রোমো কোড ও সরাসরি ভর্তি লিংক পাওয়া যাবে।
         </p>
       </header>
 
       <main style="max-width: 1200px; margin: 0 auto; padding: 32px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #334155;">
+        <!-- Popular Keywords Direct Directory -->
+        <section style="margin-bottom: 32px; background: #fff; padding: 20px; border-radius: 16px; border: 1px solid #ffe4e6;">
+          <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 12px;">
+            জনপ্রিয় সার্চ কোয়েরি ও কোর্স ডিরেক্টরি (10MS Search Topics):
+          </h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <a href="/hsc" style="background: #fff1f2; color: #e11d48; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: 600;">10ms course hsc (১০ মিনিট স্কুল এইচএসসি কোর্স)</a>
+            <a href="/class-9-10" style="background: #fff1f2; color: #e11d48; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: 600;">10ms course ssc (১০ মিনিট স্কুল এসএসসি কোর্স)</a>
+            <a href="/spoken-english" style="background: #fff1f2; color: #e11d48; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: 600;">10ms course offer - ঘরে বসে Spoken English</a>
+            <a href="/courses" style="background: #fff1f2; color: #e11d48; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: 600;">10 minute school course discount (কোর্স ডিসকাউন্ট ও কুপন)</a>
+            <a href="/admission" style="background: #fff1f2; color: #e11d48; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: 600;">10ms kors - ভার্সিটি ও মেডিকেল এডমিশন</a>
+            <a href="/courses" style="background: #fff1f2; color: #e11d48; padding: 6px 12px; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: 600;">10ms course promo - প্রোমো কোড ও ভর্তি</a>
+          </div>
+        </section>
+
         <section style="margin-bottom: 36px;">
           <h2 style="font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 16px; border-left: 4px solid #e11d48; padding-left: 12px;">
-            চলতি জনপ্রিয় কোর্স ও এক্সক্লুসিভ ডিসকাউন্ট অফার
+            চলতি জনপ্রিয় কোর্স ও এক্সক্লুসিভ ডিসকাউন্ট অফার (10 Minute School Courses)
           </h2>
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
             ${courses.map(c => `
@@ -222,6 +339,10 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
           <div style="margin-bottom: 16px;">
             <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">ঘরে বসে Spoken English কোর্সটি কার জন্য উপযুক্ত?</h3>
             <p style="font-size: 14px; color: #64748b; margin-top: 4px;">স্কুল, কলেজ, বিশ্ববিদ্যালয় শিক্ষার্থী কিংবা চাকরিপ্রার্থী—যেকোনো বয়সের মানুষের জন্য মুনজেরিন শহীদের এই কোর্সটি ঘরে বসে ফ্লুয়েন্টলি ইংরেজি বলার জন্য সম্পূর্ণ প্রস্তুত করা হয়েছে।</p>
+          </div>
+          <div style="margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">10ms course hsc ও ssc কোর্সে কীভাবে সর্বোচ্চ ডিসকাউন্ট পাওয়া যাবে?</h3>
+            <p style="font-size: 14px; color: #64748b; margin-top: 4px;">10mscourse.shop-এ HSC ও SSC ব্যাচ অনুযায়ী আলাদা ক্যাটাগরি ও বিশেষ কুপন কোড রয়েছে। সেখানে সরাসরি কোর্স সিলেক্ট করে ডিসকাউন্ট মূল্যে ভর্তি হওয়া যায়।</p>
           </div>
           <div>
             <h3 style="font-size: 16px; font-weight: 700; color: #0f172a;">HSC 2028 এবং SSC 2027 অনলাইন ব্যাচে কী কী সুবিধা পাওয়া যাবে?</h3>
