@@ -24,20 +24,42 @@ export const Header: React.FC<HeaderProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const getCategoryPath = (cat: { id: string; name: string }): string => {
+  const getCategoryPath = (cat: { id: string; name?: string }): string => {
+    const id = cat.id.toLowerCase().trim();
     const directRoutes: Record<string, string> = {
       'class-6': '/class-6',
       'class-7': '/class-7',
       'class-8': '/class-8',
       'class-6-8': '/class-6-8',
       'class-9-10': '/class-9-10',
+      'ssc': '/class-9-10',
       'hsc': '/hsc',
       'admission': '/admission',
       'skills': '/skills',
       'spoken-english': '/spoken-english',
       'job-prep': '/job-prep',
+      // Specific SSC & HSC batches
+      'ssc-2026': '/ssc-2026',
+      'ssc-26': '/ssc-26',
+      'ssc-2027': '/ssc-2027',
+      'ssc-27': '/ssc-27',
+      'ssc-2028': '/ssc-2028',
+      'ssc-28': '/ssc-28',
+      'hsc-2026': '/hsc-2026',
+      'hsc-26': '/hsc-26',
+      'hsc-2027': '/hsc-2027',
+      'hsc-27': '/hsc-27',
+      'hsc-2028': '/hsc-2028',
+      'hsc-28': '/hsc-28',
     };
-    if (directRoutes[cat.id]) return directRoutes[cat.id];
+    if (directRoutes[id]) return directRoutes[id];
+
+    // Generic match for any batch format (ssc|hsc)-\d{2,4}
+    if (/^(ssc|hsc)-\d{2,4}$/.test(id)) {
+      return `/${id}`;
+    }
+
+    if (id.startsWith('/')) return id;
     return `/courses`;
   };
 
@@ -45,6 +67,47 @@ export const Header: React.FC<HeaderProps> = ({
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [currentPath]);
+
+  // Touch swipe gesture support for mobile right drawer
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches && e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = endX - startX;
+      const diffY = endY - startY;
+
+      // Ensure horizontal swipe dominates vertical scrolling
+      if (Math.abs(diffX) > Math.abs(diffY) * 1.4 && Math.abs(diffX) > 50) {
+        // Swipe from right edge towards left opens drawer
+        if (diffX < -50 && startX > window.innerWidth - 75 && !isMobileMenuOpen) {
+          setIsMobileMenuOpen(true);
+        }
+        // Swipe from left to right when drawer is open closes drawer
+        if (diffX > 50 && isMobileMenuOpen) {
+          setIsMobileMenuOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isMobileMenuOpen]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {

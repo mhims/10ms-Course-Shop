@@ -79,6 +79,18 @@ export const AllCoursesPage: React.FC<AllCoursesPageProps> = ({ onNavigate }) =>
     }
   }, [categories, selectedCategory]);
 
+  // Set document title and meta description for SEO
+  useEffect(() => {
+    document.title = '১০ মিনিট স্কুলের সকল কোর্স ও অনলাইন ব্যাচ | 10MS Course Shop';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute(
+        'content',
+        '১০ মিনিট স্কুলের সকল অনলাইন কোর্স, অনলাইন ব্যাচ, ক্র্যাশ কোর্স ও ডিসকাউন্ট অফার এক প্ল্যাটফর্মে। ঘরে বসে স্পোকেন ইংলিশ, এইচএসসি, এসএসসি ও এডমিশন প্রস্তুতি।'
+      );
+    }
+  }, []);
+
   // Filtered courses when searching or a specific category is chosen
   const filteredCourses = useMemo(() => {
     return allActiveCourses.filter((course) => {
@@ -108,7 +120,7 @@ export const AllCoursesPage: React.FC<AllCoursesPageProps> = ({ onNavigate }) =>
         <div>
           <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block animate-pulse"></span>
-            <span>১০ মিনিট স্কুলের সকল কোর্স</span>
+            <span>১০ মিনিট স্কুলের সকল কোর্স ও অনলাইন ব্যাচ</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
             মোট লাইভ কোর্স: <strong>{allActiveCourses.length.toLocaleString('bn-BD')}টি</strong> • ক্যাটাগরিভিত্তিক তালিকা

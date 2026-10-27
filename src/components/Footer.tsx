@@ -20,19 +20,40 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   };
 
   const getCategoryPath = (cat: CustomCategory): string => {
+    const id = cat.id.toLowerCase().trim();
     const directRoutes: Record<string, string> = {
       'class-6': '/class-6',
       'class-7': '/class-7',
       'class-8': '/class-8',
       'class-6-8': '/class-6-8',
       'class-9-10': '/class-9-10',
+      'ssc': '/class-9-10',
       'hsc': '/hsc',
       'admission': '/admission',
       'skills': '/skills',
       'spoken-english': '/spoken-english',
       'job-prep': '/job-prep',
+      // Specific SSC & HSC batches
+      'ssc-2026': '/ssc-2026',
+      'ssc-26': '/ssc-26',
+      'ssc-2027': '/ssc-2027',
+      'ssc-27': '/ssc-27',
+      'ssc-2028': '/ssc-2028',
+      'ssc-28': '/ssc-28',
+      'hsc-2026': '/hsc-2026',
+      'hsc-26': '/hsc-26',
+      'hsc-2027': '/hsc-2027',
+      'hsc-27': '/hsc-27',
+      'hsc-2028': '/hsc-2028',
+      'hsc-28': '/hsc-28',
     };
-    if (directRoutes[cat.id]) return directRoutes[cat.id];
+    if (directRoutes[id]) return directRoutes[id];
+
+    if (/^(ssc|hsc)-\d{2,4}$/.test(id)) {
+      return `/${id}`;
+    }
+
+    if (id.startsWith('/')) return id;
     return `/courses`;
   };
 

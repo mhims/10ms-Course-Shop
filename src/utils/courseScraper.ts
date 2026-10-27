@@ -249,30 +249,128 @@ async function resolveShortUrl(rawLink: string): Promise<string> {
   return cleanLink;
 }
 
-// Helper to generate rich SEO Markdown full description template
-function generateCourseFullDescription(title: string, targetClass?: string, promoCode?: string, highlights: string[] = []): string {
-  const hlList = highlights.length > 0
-    ? highlights.map(h => `- ${h}`).join('\n')
-    : `- দেশের শীর্ষ শিক্ষকদের লাইভ ক্লাস\n- সম্পূর্ণ লেকচার শিট ও অ্যানোটেটেড নোট\n- বোর্ড স্ট্যান্ডার্ড মডেল টেস্ট ও ডাউট সলভিং`;
+// Helper to clean excessive bold tags from descriptions while keeping clean structure
+export function cleanMarkdownDescription(markdown: string): string {
+  if (!markdown) return '';
+  let text = markdown;
+
+  // 1. Remove bold tags from bullet point prefixes:
+  // "- **লাইভ ক্লাস:** বিবরণ" -> "- লাইভ ক্লাস: বিবরণ"
+  text = text.replace(/^(\s*[-*]\s*)\*\*([^*]+)\*\*(:|-|\s*)/gm, '$1$2$3');
+
+  // 2. Remove accidental bolding of entire bullet point:
+  // "- **পুরো বাক্যটি বোল্ড**" -> "- পুরো বাক্যটি বোল্ড"
+  text = text.replace(/^(\s*[-*]\s*)\*\*([^*]+)\*\*$/gm, '$1$2');
+
+  // 3. Remove accidental bolding of entire line/paragraph:
+  // "**১০ মিনিট স্কুলের এই কোর্সটির মাধ্যমে...**" -> "১০ মিনিট স্কুলের এই কোর্সটির মাধ্যমে..."
+  text = text.replace(/^\*\*([^*]+)\*\*$/gm, '$1');
+
+  // 4. Remove unneeded bolding around common words in descriptions
+  text = text.replace(/\*\*"([^"]+)"\*\*/g, '"$1"');
+
+  // 5. Clean up redundant empty lines
+  text = text.replace(/\n{3,}/g, '\n\n');
+
+  return text.trim();
+}
+
+/**
+ * Normalizes course link for robust duplicate detection
+ */
+export function normalizeCourseLink(url: string): string {
+  if (!url || typeof url !== 'string') return '';
+  let str = url.trim();
+
+  // Strip protocol and www
+  str = str.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+  // Strip trailing slashes
+  str = str.replace(/\/+$/, '');
+
+  // 10ms.io shortlinks: extract code e.g. 10ms.io/SL2sUT
+  const shortMatch = str.match(/^10ms\.io\/([a-zA-Z0-9_-]+)/i);
+  if (shortMatch && shortMatch[1]) {
+    return `10ms.io/${shortMatch[1].toLowerCase()}`;
+  }
+
+  // 10minuteschool.com product pages: extract slug e.g. /product/ssc-26-science
+  if (str.includes('10minuteschool.com/product/')) {
+    const slugMatch = str.match(/10minuteschool\.com\/product\/([a-zA-Z0-9_-]+)/i);
+    if (slugMatch && slugMatch[1]) {
+      return `10ms-product/${slugMatch[1].toLowerCase()}`;
+    }
+  }
+
+  // Fallback normalize: strip query parameters and hash
+  return str.toLowerCase().split('?')[0].split('#')[0];
+}
+
+/**
+ * Checks whether an affiliate link matches any existing course in the website
+ */
+export function findDuplicateCourse<
+  T extends { id: string; title: string; slug: string; affiliateLink?: string; offerPrice?: number; regularPrice?: number }
+>(
+  inputLink: string,
+  existingCourses: T[],
+  excludeCourseId?: string
+): T | undefined {
+  if (!inputLink || !inputLink.trim()) return undefined;
+  const rawInput = inputLink.trim().toLowerCase();
+  const normalizedInput = normalizeCourseLink(inputLink);
+  if (!normalizedInput || normalizedInput.length < 5) return undefined;
+
+  return existingCourses.find((c) => {
+    if (excludeCourseId && c.id === excludeCourseId) return false;
+    if (!c.affiliateLink) return false;
+
+    // Exact raw check (case-insensitive)
+    if (c.affiliateLink.trim().toLowerCase() === rawInput) {
+      return true;
+    }
+
+    // Normalized link check
+    const normalizedAff = normalizeCourseLink(c.affiliateLink);
+    if (normalizedAff && normalizedInput && normalizedAff === normalizedInput) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+// Helper to generate clean, beautiful, unbolded SEO Markdown full description template
+export function generateCourseFullDescription(title: string, targetClass?: string, promoCode?: string, highlights: string[] = []): string {
+  const cleanHighlights = highlights.length > 0
+    ? highlights.map(h => `- ${h.replace(/\*\*/g, '').trim()}`).join('\n')
+    : `- অভিজ্ঞ ও দেশের শীর্ষ মেন্টরদের পরিচালিত ক্লাস\n- সম্পূর্ণ অধ্যায়ভিত্তিক গোছানো লেকচার শিট ও পিডিএফ নোট\n- বোর্ড ও ভর্তি পরীক্ষার স্ট্যান্ডার্ড মডেল টেস্ট এবং ডাউট সলভিং\n- সার্বক্ষণিক পড়াশোনার গাইডলাইন ও বিশেষ সাপোর্ট`;
+
+  const cleanTarget = targetClass
+    ? `এই কোর্সটি মূলত ${targetClass.replace(/\*\*/g, '')}-এর শিক্ষার্থীদের জন্য বিশেষভাবে সাজানো হয়েছে, যেন খুব সহজে পূর্ণাঙ্গ সিলেবাস শেষ করে পরীক্ষায় সেরা ফলাফল অর্জন করা যায়।`
+    : 'অনলাইনে সেরা শিক্ষকদের সরাসরি গাইডলাইনে পরীক্ষায় চমৎকার ফলাফল ও দৃঢ় আত্মবিশ্বাস নিশ্চিত করতে আগ্রহী যেকোনো শিক্ষার্থীর জন্য এই কোর্সটি অত্যন্ত ফলপ্রসূ।';
+
+  const promoSection = promoCode
+    ? `\n\nঅতিরিক্ত স্পেশাল ডিসকাউন্ট পাওয়ার জন্য চেকআউটের সময় প্রোমো কোড বক্সে ${promoCode} ব্যবহার করতে পারেন।`
+    : '';
 
   return `# ${title}
 
-১০ মিনিট স্কুলের **${title}** কোর্সের মাধ্যমে শিক্ষার্থীরা ঘরে বসেই যেকোনো সময় যেকোনো ডিভাইস থেকে পূর্ণাঙ্গ ও সুশৃঙ্খল প্রস্তুতি সম্পন্ন করতে পারবে।
+১০ মিনিট স্কুলের এই কোর্সটির মাধ্যমে শিক্ষার্থীরা ঘরে বসেই যেকোনো সময় যেকোনো ডিভাইস থেকে পূর্ণাঙ্গ ও সুশৃঙ্খল প্রস্তুতি সম্পন্ন করতে পারবে।
 
-## এই কোর্সের মূল বৈশিষ্ট্যসমূহ:
-${hlList}
+## কোর্সের মূল সুবিধাসমূহ
+${cleanHighlights}
 
-## কোর্সটিতে যা যা অন্তর্ভুক্ত থাকছে:
-- **লাইভ ইন্টারঅ্যাক্টিভ ক্লাস:** প্রতিটি বিষয়ের বেসিক থেকে শুরু করে এডভান্স টপিক ধরে ধরে বোঝানো।
-- **লেকচার শিট ও রিভিশন নোট:** প্রতিটি ক্লাসের পরপরই গুরুত্বপূর্ণ প্রশ্নের সমাধানসহ পিডিএফ নোট।
-- **মডেল টেস্ট ও প্র্যাকটিস:** নিয়মিত কুইজ ও বোর্ড প্রশ্ন সমাধানের মাধ্যমে পরীক্ষার ভয় দূর করা।
-- **সার্বক্ষণিক সাপোর্ট:** পড়াশোনার যেকোনো ডাউট দূর করতে স্পেশাল সাপোর্ট প্ল্যাটফর্ম সুবিধা।
+## যা যা থাকছে এই কোর্সে
+- প্রতিটি বিষয়ের বেসিক কনসেপ্ট ক্লিয়ার করার জন্য ধারাবাহিক লাইভ ও রেকর্ডেড ক্লাস
+- প্রতিটি অধ্যায়ের সাথে লেকচার শিট, রিভিশন নোট ও ডিজিটাল প্র্যাকটিস ম্যাটেরিয়াল
+- নিয়মিত কুইজ ও বোর্ড প্রশ্নের সমাধানের মাধ্যমে পূর্ণাঙ্গ মডেল টেস্ট অনুশীলন
+- পড়াশোনায় যেকোনো সমস্যা বা প্রশ্নের দ্রুত সমাধান পেতে বিশেষ সাপোর্ট সুবিধা
 
 ## কাদের জন্য এই কোর্স?
-${targetClass ? `এই কোর্সটি মূলত **${targetClass}**-এর শিক্ষার্থীদের জন্য অত্যন্ত কার্যকর ও সময়োপযোগীভাবে তৈরি করা হয়েছে।` : 'অনলাইনে সেরা শিক্ষকদের গাইডলাইনে পরীক্ষায় চমৎকার ফলাফল নিশ্চিত করতে আগ্রহী যেকোনো শিক্ষার্থীর জন্য।'}
+${cleanTarget}
 
-## কীভাবে ভর্তি হবেন ও ডিসকাউন্ট পাবেন?
-উপরে দেওয়া **"কিনুন"** বাটনে ক্লিক করে সরাসরি অফিসিয়াল পেজে গিয়ে ভর্তি হতে পারবেন। ${promoCode ? `অতিরিক্ত ছাড়ের জন্য চেকআউটের সময় প্রোমো কোড বক্সে **${promoCode}** ব্যবহার করুন।` : ''}`;
+## কীভাবে ভর্তি হবেন?
+উপরে থাকা "অফারে ভর্তি হোন" বা "কিনুন" বাটনে ক্লিক করে সরাসরি অফিসিয়াল পেজ থেকে আপনার ব্যাচ বেছে নিয়ে ভর্তি সম্পন্ন করতে পারবেন।${promoSection}`;
 }
 
 /**

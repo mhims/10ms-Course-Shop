@@ -12,6 +12,7 @@ export const initialDefaultCategories: CustomCategory[] = [
   { id: 'class-9-10', name: 'এসএসসি' },
   { id: 'ssc-2026', name: 'SSC 2026' },
   { id: 'ssc-2027', name: 'SSC 2027' },
+  { id: 'ssc-2028', name: 'SSC 2028' },
   { id: 'hsc', name: 'এইচএসসি' },
   { id: 'hsc-2026', name: 'HSC 2026' },
   { id: 'hsc-2027', name: 'HSC 2027' },

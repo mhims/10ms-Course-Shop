@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Course } from '../types';
 import { convertHtmlToFormattedMarkdown } from '../utils/formatConverter';
+import { cleanMarkdownDescription } from '../utils/courseScraper';
 
 interface CourseDescriptionEditorProps {
   value: string;
@@ -129,34 +130,34 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
     setShowCoursePicker(false);
   };
 
-  // SEO Pre-made Section Templates
+  // SEO Pre-made Section Templates (clean, unbolded, readable typography)
   const handleInsertTemplate = (type: 'features' | 'target' | 'faq' | 'enroll') => {
     if (type === 'features') {
       insertAtCursor(
-        `\n\n## 📌 এই কোর্সের প্রধান প্রধান বৈশিষ্ট্যসমূহ\n` +
-        `- **অভিজ্ঞ শিক্ষক প্যানেল:** বুয়েট, ঢাবি ও মেডিকেল শিক্ষার্থী মেন্টরদের দিকনির্দেশনা।\n` +
-        `- **লাইভ ক্লাস ও রেকর্ডিং:** প্রতিটি লাইভ ক্লাসের ফুল এইচডি রেকর্ডেড ক্লাস আজীবন দেখার সুযোগ।\n` +
-        `- **লেকচার শিট ও নোট:** অধ্যায়ভিত্তিক গোছানো পিডিএফ নোটস ও ফর্মুলা শিট।\n` +
-        `- **অধ্যায়ভিত্তিক মডেল টেস্ট:** বোর্ড স্ট্যান্ডার্ড প্রশ্ন সমাধান ও দুর্বলতা চিহ্নিতকরণ।\n` +
-        `- **ডাউট সলভিং সাপোর্ট:** যেকোনো প্রশ্নের দ্রুত সমাধান সেবা।\n\n`
+        `\n\n## কোর্সের মূল বৈশিষ্ট্য ও সুবিধাসমূহ\n` +
+        `- অভিজ্ঞ শিক্ষক প্যানেল: বুয়েট, ঢাবি ও মেডিকেল শিক্ষার্থী মেন্টরদের দিকনির্দেশনা\n` +
+        `- লাইভ ক্লাস ও রেকর্ডিং: প্রতিটি লাইভ ক্লাসের ফুল এইচডি রেকর্ডেড ক্লাস দেখার সুযোগ\n` +
+        `- লেকচার শিট ও নোট: অধ্যায়ভিত্তিক গোছানো পিডিএফ নোটস ও ফর্মুলা শিট\n` +
+        `- অধ্যায়ভিত্তিক মডেল টেস্ট: বোর্ড স্ট্যান্ডার্ড প্রশ্ন সমাধান ও দুর্বলতা চিহ্নিতকরণ\n` +
+        `- ডাউট সলভিং সাপোর্ট: যেকোনো প্রশ্নের দ্রুত ও নির্ভরযোগ্য সমাধান সেবা\n\n`
       );
     } else if (type === 'target') {
       insertAtCursor(
-        `\n\n## 🎯 কাদের জন্য এই কোর্সটি উপযুক্ত?\n` +
-        `- যারা বেসিক থেকে অ্যাডভান্স লেভেলের সম্পূর্ণ প্রস্তুতি গোছাতে চান।\n` +
-        `- পরীক্ষায় সর্বোচ্চ এ-প্লাস (GPA 5) নিশ্চিত করার লক্ষ্য নিয়ে যারা পড়ছেন।\n` +
-        `- সময়মতো রিভিশন শেষ করে মডেল টেস্ট দিয়ে আত্মবিশ্বাস বাড়াতে ইচ্ছুক।\n\n`
+        `\n\n## কাদের জন্য এই কোর্সটি উপযুক্ত?\n` +
+        `- যারা বেসিক থেকে অ্যাডভান্স লেভেলের সম্পূর্ণ প্রস্তুতি গোছাতে চান\n` +
+        `- পরীক্ষায় সর্বোচ্চ এ-প্লাস (GPA 5) নিশ্চিত করার লক্ষ্য নিয়ে যারা পড়ছেন\n` +
+        `- সময়মতো রিভিশন শেষ করে মডেল টেস্ট দিয়ে আত্মবিশ্বাস বাড়াতে ইচ্ছুক শিক্ষার্থী\n\n`
       );
     } else if (type === 'enroll') {
       insertAtCursor(
-        `\n\n## 💡 কীভাবে ভর্তি হবেন এবং ডিসকাউন্ট পাবেন?\n` +
-        `১. উপরের **"১০ মিনিট স্কুলে কোর্সটি কিনুন"** বাটনে ক্লিক করুন।\n` +
-        `২. অফিসিয়াল ওয়েবসাইটে গিয়ে প্রোমো কোড ব্যবহার করুন।\n` +
+        `\n\n## কীভাবে ভর্তি হবেন?\n` +
+        `১. উপরের "অফারে ভর্তি হোন" বা "কোর্সটি কিনুন" বাটনে ক্লিক করুন।\n` +
+        `২. অফিসিয়াল ওয়েবসাইটে গিয়ে পছন্দের ব্যাচ সিলেক্ট করুন।\n` +
         `৩. বিকাশ, নগদ বা কার্ডের মাধ্যমে পেমেন্ট সম্পন্ন করে সাথে সাথে ক্লাস শুরু করুন!\n\n`
       );
     } else if (type === 'faq') {
       insertAtCursor(
-        `\n\n## ❓ সাধারণ জিজ্ঞাসা ও উত্তর (FAQ)\n` +
+        `\n\n## সাধারণ জিজ্ঞাসা ও উত্তর (FAQ)\n` +
         `### প্রশ্ন: ক্লাসগুলো কি লাইভ হবে নাকি রেকর্ডেড?\n` +
         `উত্তর: রুটিন অনুযায়ী লাইভ ক্লাস অনুষ্ঠিত হবে এবং প্রতিটি ক্লাসের রেকর্ডিং সংরক্ষিত থাকবে।\n\n` +
         `### প্রশ্ন: ক্লাস চলাকালীন কোনো প্রশ্ন করা যাবে কি?\n` +
@@ -165,6 +166,14 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
         `উত্তর: অফিশিয়াল সেশন বা পরীক্ষা সম্পন্ন না হওয়া পর্যন্ত সকল ম্যাটেরিয়াল অ্যাক্সেস থাকবে।\n\n`
       );
     }
+  };
+
+  const handleCleanFormat = () => {
+    if (!value.trim()) return;
+    const cleaned = cleanMarkdownDescription(value);
+    onChange(cleaned);
+    setPasteNotice('✨ অতিরিক্ত বোল্ড রিমুভ করে ডেসক্রিপশন সুন্দর ও ক্লিন ফরম্যাটে সাজানো হয়েছে!');
+    setTimeout(() => setPasteNotice(null), 4000);
   };
 
   // SEO Score Calculations
@@ -406,11 +415,22 @@ export const CourseDescriptionEditor: React.FC<CourseDescriptionEditorProps> = (
               </button>
             )}
 
+            {/* Clean Markdown / Unbold Button */}
+            <button
+              type="button"
+              onClick={handleCleanFormat}
+              className="px-2.5 py-1 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded flex items-center gap-1 cursor-pointer transition-colors shadow-2xs ml-auto"
+              title="পুরো লেখা থেকে অতিরিক্ত বোল্ড ট্যাগ রিমুভ করে সুন্দর ও ক্লিন ফরম্যাটে সাজান"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>✨ ক্লিন ফরম্যাট (বোল্ড কমান)</span>
+            </button>
+
             {/* Smart Paste with Formatting Button */}
             <button
               type="button"
               onClick={() => setShowPasteModal(true)}
-              className="px-2.5 py-1 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded flex items-center gap-1 cursor-pointer transition-colors shadow-2xs ml-auto"
+              className="px-2.5 py-1 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
               title="গুগল ডক, ওয়ার্ড বা ওয়েবসাইট থেকে হেডার ১,২ ফরম্যাটসহ পেস্ট করুন"
             >
               <Clipboard className="w-3.5 h-3.5 text-amber-700" />

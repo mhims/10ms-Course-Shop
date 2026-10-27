@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2, ArrowUp, ArrowDown, Flame, Sliders } from 'lucide-react';
+import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, AlertTriangle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2, ArrowUp, ArrowDown, Flame, Sliders } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
@@ -7,7 +7,7 @@ import { WordPressBlogEditor } from '../components/WordPressBlogEditor';
 import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
 import { GithubPushModal } from '../components/GithubPushModal';
 import { pushDataToGithub } from '../utils/githubSync';
-import { scrapeCourseFromUrl, getRandomReviewCount } from '../utils/courseScraper';
+import { scrapeCourseFromUrl, getRandomReviewCount, findDuplicateCourse, normalizeCourseLink, cleanMarkdownDescription } from '../utils/courseScraper';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -118,6 +118,18 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [isAutoFetching, setIsAutoFetching] = useState(false);
   const [autoFetchStatus, setAutoFetchStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string } | null>(null);
 
+  // Live duplicate course check for autoFetchUrl
+  const autoFetchDuplicate = useMemo(() => {
+    if (!autoFetchUrl.trim()) return undefined;
+    return findDuplicateCourse(autoFetchUrl, courses, editingCourse?.id);
+  }, [autoFetchUrl, courses, editingCourse?.id]);
+
+  // Live duplicate course check for editingCourse.affiliateLink
+  const affiliateLinkDuplicate = useMemo(() => {
+    if (!editingCourse?.affiliateLink?.trim()) return undefined;
+    return findDuplicateCourse(editingCourse.affiliateLink, courses, editingCourse.id);
+  }, [editingCourse?.affiliateLink, courses, editingCourse?.id]);
+
   // Authentication handler
   // Required credentials: accepts both mdadilah and mdadilahnaffahim
   const handleLogin = (e: React.FormEvent) => {
@@ -165,7 +177,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       status: 'active',
       imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80',
       imageAlt: '',
-      affiliateLink: 'https://10minuteschool.com/?aff=10mscourse_shop',
+      affiliateLink: '',
       promoCode: '',
       instructor: '',
       instructorRole: '',
@@ -346,11 +358,20 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
       const kwStr = data.seoKeywords ? data.seoKeywords.join(', ') : `১০ মিনিট স্কুল, ${data.title}, অনলাইন কোর্স, ${data.category || ''}`;
       setSeoKeywordsRaw(kwStr);
 
-      setAutoFetchStatus({
-        type: 'success',
-        message: `আলহামদুলিল্লাহ! "${data.title}" কোর্সের কভার ছবি, নাম, স্লাগ ও তথ্য স্বয়ংক্রিয়ভাবে নিচে ফর্মে বসে গেছে। নিচে দাম ও অফার চেক করে নিন।`,
-      });
-      showToast('কোর্সের তথ্য স্বয়ংক্রিয়ভাবে ফর্মে বসে গেছে!');
+      // Check if a course with this affiliate link already exists
+      const dupCourse = findDuplicateCourse(autoFetchUrl, courses, editingCourse?.id);
+      if (dupCourse) {
+        setAutoFetchStatus({
+          type: 'error',
+          message: `⚠️ সতর্কতা: এই এফিলিয়েট লিংকের কোর্সটি ("${dupCourse.title}") ইতিমধ্যে আপনার ওয়েবসাইটে রয়েছে! ভুলবশত ডুপ্লিকেট এন্ট্রি প্রতিরোধ করতে নিচে চেক করুন।`,
+        });
+      } else {
+        setAutoFetchStatus({
+          type: 'success',
+          message: `আলহামদুলিল্লাহ! "${data.title}" কোর্সের কভার ছবি, নাম, স্লাগ ও তথ্য স্বয়ংক্রিয়ভাবে নিচে ফর্মে বসে গেছে। নিচে দাম ও অফার চেক করে নিন।`,
+        });
+      }
+      showToast(dupCourse ? '⚠️ একই লিংকের কোর্স বিদ্যমান রয়েছে!' : 'কোর্সের তথ্য স্বয়ংক্রিয়ভাবে ফর্মে বসে গেছে!');
     } catch (err: any) {
       console.error('Auto-fetch course error:', err);
       setAutoFetchStatus({
@@ -375,6 +396,21 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     if (!editingCourse.category || !editingCourse.category.trim()) {
       alert('দয়া করে কোর্সের ক্যাটাগরি লিখুন বা নির্বাচন করুন!');
       return;
+    }
+
+    // Check duplicate course by affiliate link when adding a new course
+    if (isNewCourse && editingCourse.affiliateLink) {
+      const dup = findDuplicateCourse(editingCourse.affiliateLink, courses, editingCourse.id);
+      if (dup) {
+        const proceed = window.confirm(
+          `⚠️ সতর্কতা: এই একই এফিলিয়েট লিংকের কোর্স ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!\n\n` +
+          `বিদ্যমান কোর্স: "${dup.title}" (স্লাগ: /${dup.slug})\n\n` +
+          `আপনি কি নিশ্চিত যে একই লিংকে আরেকটি নতুন কোর্স হিসেবে যুক্ত করতে চান নাকি বাতিল করবেন?`
+        );
+        if (!proceed) {
+          return;
+        }
+      }
     }
 
     // Clean slug
@@ -1854,6 +1890,48 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                     <span className="leading-relaxed flex-1">{autoFetchStatus.message}</span>
                   </div>
                 )}
+
+                {/* Real-time Duplicate Link Warning in Auto-Fetch */}
+                {autoFetchDuplicate && (
+                  <div className="p-3.5 bg-amber-50 border-2 border-amber-400 rounded-xl text-amber-950 space-y-2 animate-in fade-in">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 text-xs">
+                        <div className="font-extrabold text-amber-900 text-xs sm:text-sm flex items-center gap-1.5">
+                          <span>⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!</span>
+                        </div>
+                        <p className="text-amber-800 mt-0.5">
+                          এই এফিলিয়েট লিংকটির সাথে ওয়েবসাইটের বিদ্যমান একটি কোর্সের হুবহু মিল রয়েছে। ভুলবশত একই কোর্স দুইবার এন্ট্রি রোধ করতে সতর্ক করা হচ্ছে:
+                        </p>
+                        <div className="mt-2 p-2.5 bg-white/95 rounded-lg border border-amber-200 space-y-1 text-[11px]">
+                          <div><span className="font-bold text-slate-700">বিদ্যমান কোর্স:</span> <strong className="text-rose-700">{autoFetchDuplicate.title}</strong></div>
+                          <div><span className="font-bold text-slate-700">লিংক স্লাগ:</span> <code className="text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-mono">/{autoFetchDuplicate.slug}</code></div>
+                          <div><span className="font-bold text-slate-700">বর্তমান মূল্য:</span> ৳{autoFetchDuplicate.offerPrice}</div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditCourse(autoFetchDuplicate)}
+                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs cursor-pointer flex items-center gap-1 transition-colors"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>বিদ্যমান কোর্সটি এডিট করুন</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAutoFetchUrl('');
+                              setAutoFetchStatus(null);
+                            }}
+                            className="px-2.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-semibold rounded-lg text-xs cursor-pointer transition-colors"
+                          >
+                            মুছে ফেলুন
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Title & Slug (Requirement 2: Custom URL slug) */}
@@ -2266,6 +2344,36 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                   placeholder="https://10minuteschool.com/product/xyz/?aff=yourcode"
                   className="w-full p-2.5 border border-slate-300 rounded-xl font-mono text-xs"
                 />
+
+                {/* Real-time Affiliate Link Duplicate Alert */}
+                {affiliateLinkDuplicate && (
+                  <div className="mt-2 p-3 bg-amber-50 border-2 border-amber-400 rounded-xl text-amber-950 space-y-1.5 animate-in fade-in">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 text-xs">
+                        <div className="font-bold text-amber-900">
+                          ⚠️ সতর্কতা: এই একই লিংকের কোর্স ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!
+                        </div>
+                        <p className="text-[11px] text-amber-800 mt-0.5">
+                          কোর্স: <strong className="text-rose-700">{affiliateLinkDuplicate.title}</strong> (স্লাগ: /{affiliateLinkDuplicate.slug})
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditCourse(affiliateLinkDuplicate)}
+                            className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-[11px] cursor-pointer flex items-center gap-1 transition-colors"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>বিদ্যমান কোর্সটি এডিট করুন</span>
+                          </button>
+                          <span className="text-[10px] text-amber-700">
+                            (ভুলবশত একই কোর্স দুইবার এন্ট্রি রোধ করতে সতর্কবার্তা)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Requirement 11: Image URL & Alt text */}
