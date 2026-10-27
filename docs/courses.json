@@ -12,7 +12,7 @@
     ],
     "targetClass": "৬ষ্ঠ শ্রেণী",
     "regularPrice": 1000,
-    "offerPrice": 1500,
+    "offerPrice": 0,
     "offerEndDate": "2026-10-07",
     "isLifetime": true,
     "status": "active",
@@ -51,7 +51,7 @@
       "কোর্স ফি ও ভর্তি"
     ],
     "inHeroSlider": false,
-    "excludeFromHotDeals": true,
+    "excludeFromHotDeals": false,
     "badgeText": ""
   },
   {
