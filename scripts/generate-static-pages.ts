@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { generateStaticHtml, getAllStaticPages } from '../src/utils/staticHtmlGenerator';
 import { Course, BlogPost } from '../src/types';
+import { writeLlmsFiles } from './generate-llms';
 
 export function runStaticGeneration(projectRoot: string = process.cwd()) {
   const docsDir = path.resolve(projectRoot, 'docs');
@@ -51,6 +52,13 @@ export function runStaticGeneration(projectRoot: string = process.cwd()) {
   }
 
   console.log(`Successfully created ${count} static HTML index files in both docs/ and root!`);
+
+  // Dynamically update llms.txt and llms-full.txt
+  try {
+    writeLlmsFiles(projectRoot);
+  } catch (err) {
+    console.error('Error writing llms files:', err);
+  }
 }
 
 // Execute when invoked directly

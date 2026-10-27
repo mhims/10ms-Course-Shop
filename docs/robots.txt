@@ -48,3 +48,8 @@ Allow: /
 
 # Sitemap Location
 Sitemap: https://10mscourse.shop/sitemap.xml
+
+# LLM & AI Knowledge Base
+# See: https://llmstxt.org
+# LLMs-Txt: https://10mscourse.shop/llms.txt
+# LLMs-Full-Txt: https://10mscourse.shop/llms-full.txt
