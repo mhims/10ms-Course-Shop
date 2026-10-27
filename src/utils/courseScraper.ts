@@ -333,6 +333,7 @@ export function findDuplicateCourse<
 ): T | undefined {
   if (!inputLink || !inputLink.trim()) return undefined;
   const rawInput = inputLink.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  const cleanInputWithoutQuery = rawInput.split('?')[0].split('#')[0].replace(/\/+$/, '');
   const inputCode = extract10msCode(inputLink);
   const inputProductSlug = extractProductSlug(inputLink);
   const normalizedInput = normalizeCourseLink(inputLink);
@@ -343,19 +344,25 @@ export function findDuplicateCourse<
     // A. Check against c.affiliateLink if present
     if (c.affiliateLink) {
       const cRaw = c.affiliateLink.trim().toLowerCase().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+      const cCleanWithoutQuery = cRaw.split('?')[0].split('#')[0].replace(/\/+$/, '');
+
+      // 1. Raw exact match
       if (cRaw === rawInput) return true;
 
-      // 1. 10ms.io shortcode match
+      // 2. Clean URL match without query parameters
+      if (cCleanWithoutQuery === cleanInputWithoutQuery) return true;
+
+      // 3. 10ms.io shortcode match
       if (inputCode) {
         const cCode = extract10msCode(c.affiliateLink);
         if (cCode && cCode === inputCode) return true;
       }
 
-      // 2. Normalized match
+      // 4. Normalized match
       const normalizedAff = normalizeCourseLink(c.affiliateLink);
       if (normalizedAff && normalizedInput && normalizedAff === normalizedInput) return true;
 
-      // 3. Extracted product slug match from c.affiliateLink
+      // 5. Extracted product slug match from c.affiliateLink
       const cProductSlug = extractProductSlug(c.affiliateLink);
       if (inputProductSlug && cProductSlug && inputProductSlug === cProductSlug) return true;
     }
@@ -364,7 +371,14 @@ export function findDuplicateCourse<
     if (c.slug) {
       const cleanSlug = c.slug.toLowerCase().trim();
       if (inputProductSlug && inputProductSlug === cleanSlug) return true;
-      if (cleanSlug.length >= 5 && rawInput.includes(cleanSlug)) return true;
+      if (cleanSlug.length >= 4 && (rawInput === cleanSlug || cleanInputWithoutQuery === cleanSlug || rawInput.includes(cleanSlug))) return true;
+    }
+
+    // C. Check against c.title
+    if (c.title) {
+      const cleanTitle = c.title.toLowerCase().trim();
+      const inputLower = inputLink.toLowerCase().trim();
+      if (cleanTitle === inputLower || rawInput === cleanTitle) return true;
     }
 
     return false;

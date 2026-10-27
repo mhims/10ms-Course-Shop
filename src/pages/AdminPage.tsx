@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, AlertTriangle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2, ArrowUp, ArrowDown, Flame, Sliders } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
@@ -343,18 +344,19 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     try {
       const data = await scrapeCourseFromUrl(rawUrl);
 
-      // 2. CHECK AFTER RESOLVING LINK/SLUG: Ensure resolved link or product slug isn't already in courses
-      const resolvedDuplicate = findDuplicateCourse(
-        data.affiliateLink || data.slug || rawUrl,
-        courses,
-        isNewCourse ? undefined : editingCourse?.id
-      );
+      // 2. CHECK AFTER RESOLVING LINK/SLUG: Ensure resolved slug, title, or affiliateLink isn't already in courses
+      const resolvedDuplicate =
+        (data.slug ? findDuplicateCourse(data.slug, courses, isNewCourse ? undefined : editingCourse?.id) : undefined) ||
+        (data.title ? findDuplicateCourse(data.title, courses, isNewCourse ? undefined : editingCourse?.id) : undefined) ||
+        (data.affiliateLink ? findDuplicateCourse(data.affiliateLink, courses, isNewCourse ? undefined : editingCourse?.id) : undefined) ||
+        findDuplicateCourse(rawUrl, courses, isNewCourse ? undefined : editingCourse?.id);
+
       if (resolvedDuplicate) {
         setIsAutoFetching(false);
         setDuplicateWarningCourse(resolvedDuplicate);
         setAutoFetchStatus({
           type: 'error',
-          message: `⚠️ সতর্কতা: এই কোর্সটি ("${resolvedDuplicate.title}") ইতিমধ্যে আপনার ওয়েবসাইটে যুক্ত রয়েছে!`,
+          message: `⚠️ সতর্কতা: এই কোর্সটি ("${resolvedDuplicate.title}") ইতিমধ্যে আপনার ওয়েবসাইটে যুক্ত রয়েছে! ডুপ্লিকেট এন্ট্রি প্রতিরোধ করতে অটো-ফেচ বাতিল করা হয়েছে।`,
         });
         showToast('⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!');
         return; // STOP! Do not overwrite form!
@@ -425,14 +427,9 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
     if (isNewCourse && editingCourse.affiliateLink) {
       const dup = findDuplicateCourse(editingCourse.affiliateLink, courses, editingCourse.id);
       if (dup) {
-        const proceed = window.confirm(
-          `⚠️ সতর্কতা: এই একই এফিলিয়েট লিংকের কোর্স ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!\n\n` +
-          `বিদ্যমান কোর্স: "${dup.title}" (স্লাগ: /${dup.slug})\n\n` +
-          `আপনি কি নিশ্চিত যে একই লিংকে আরেকটি নতুন কোর্স হিসেবে যুক্ত করতে চান নাকি বাতিল করবেন?`
-        );
-        if (!proceed) {
-          return;
-        }
+        setDuplicateWarningCourse(dup);
+        showToast(`⚠️ সতর্কতা: এই একই লিংকের কোর্স ("${dup.title}") ইতিমধ্যে রয়েছে!`);
+        return;
       }
     }
 
@@ -1869,23 +1866,56 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
+                          if (autoFetchDuplicate) {
+                            setDuplicateWarningCourse(autoFetchDuplicate);
+                            setAutoFetchStatus({
+                              type: 'error',
+                              message: `⚠️ সতর্কতা: এই কোর্সটি ("${autoFetchDuplicate.title}") ইতিমধ্যে আপনার ওয়েবসাইটে যুক্ত রয়েছে! ভুলবশত ডুপ্লিকেট এন্ট্রি প্রতিরোধ করতে অটো-ফেচ বন্ধ রাখা হয়েছে।`,
+                            });
+                            showToast(`⚠️ এই কোর্সটি ("${autoFetchDuplicate.title}") ইতিমধ্যে ওয়েবসাইটে রয়েছে!`);
+                            return;
+                          }
                           handleAutoFetchCourse();
                         }
                       }}
                       placeholder="যেমন: https://10ms.io/XL0IZc বা কোর্স লিংক"
-                      className="w-full pl-9 pr-3 py-2.5 bg-white border border-rose-200 rounded-xl text-xs sm:text-sm font-mono text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500 shadow-2xs"
+                      className={`w-full pl-9 pr-3 py-2.5 rounded-xl text-xs sm:text-sm font-mono placeholder-slate-400 focus:outline-none shadow-2xs transition-all ${
+                        autoFetchDuplicate
+                          ? 'bg-red-50 border-2 border-red-500 text-red-950 font-bold focus:ring-2 focus:ring-red-500'
+                          : 'bg-white border border-rose-200 text-slate-800 focus:ring-2 focus:ring-rose-500'
+                      }`}
                     />
                   </div>
                   <button
                     type="button"
                     disabled={isAutoFetching || !autoFetchUrl.trim()}
-                    onClick={handleAutoFetchCourse}
-                    className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0 active:scale-95"
+                    onClick={() => {
+                      if (autoFetchDuplicate) {
+                        setDuplicateWarningCourse(autoFetchDuplicate);
+                        setAutoFetchStatus({
+                          type: 'error',
+                          message: `⚠️ সতর্কতা: এই কোর্সটি ("${autoFetchDuplicate.title}") ইতিমধ্যে আপনার ওয়েবসাইটে যুক্ত রয়েছে! ভুলবশত ডুপ্লিকেট এন্ট্রি প্রতিরোধ করতে অটো-ফেচ বন্ধ রাখা হয়েছে।`,
+                        });
+                        showToast(`⚠️ এই কোর্সটি ("${autoFetchDuplicate.title}") ইতিমধ্যে ওয়েবসাইটে রয়েছে!`);
+                        return;
+                      }
+                      handleAutoFetchCourse();
+                    }}
+                    className={`px-5 py-2.5 font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shrink-0 active:scale-95 text-white ${
+                      autoFetchDuplicate
+                        ? 'bg-red-600 hover:bg-red-700 ring-2 ring-red-400'
+                        : 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700'
+                    }`}
                   >
                     {isAutoFetching ? (
                       <>
                         <RefreshCw className="w-4 h-4 animate-spin" />
                         <span>তথ্য আনা হচ্ছে...</span>
+                      </>
+                    ) : autoFetchDuplicate ? (
+                      <>
+                        <AlertTriangle className="w-4 h-4" />
+                        <span>তথ্য অটো-আনুন (কোর্সটি ইতিমধ্যে আছে ⚠️)</span>
                       </>
                     ) : (
                       <>
@@ -1916,17 +1946,18 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
 
                 {/* Real-time Duplicate Link Warning in Auto-Fetch */}
                 {autoFetchDuplicate && (
-                  <div className="p-3.5 bg-amber-50 border-2 border-amber-400 rounded-xl text-amber-950 space-y-2 animate-in fade-in">
+                  <div className="p-4 bg-red-50 border-2 border-red-500 rounded-xl text-red-950 space-y-2.5 animate-in fade-in shadow-md">
                     <div className="flex items-start gap-2.5">
-                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                       <div className="flex-1 text-xs">
-                        <div className="font-extrabold text-amber-900 text-xs sm:text-sm flex items-center gap-1.5">
+                        <div className="font-extrabold text-red-900 text-xs sm:text-sm flex items-center justify-between">
                           <span>⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!</span>
+                          <span className="text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-bold">ডুপ্লিকেট কোর্স</span>
                         </div>
-                        <p className="text-amber-800 mt-0.5">
-                          এই এফিলিয়েট লিংকটির সাথে ওয়েবসাইটের বিদ্যমান একটি কোর্সের হুবহু মিল রয়েছে। ভুলবশত একই কোর্স দুইবার এন্ট্রি রোধ করতে সতর্ক করা হচ্ছে:
+                        <p className="text-red-800 mt-1">
+                          আপনার পেস্ট করা লিংকের সাথে ওয়েবসাইটে আগে থেকেই থাকা কোর্সের মিল রয়েছে। সময় বাঁচাতে আপনি সরাসরি বিদ্যমান কোর্সটি এডিট করতে পারেন:
                         </p>
-                        <div className="mt-2 p-2.5 bg-white/95 rounded-lg border border-amber-200 space-y-1 text-[11px]">
+                        <div className="mt-2 p-2.5 bg-white/95 rounded-lg border border-red-200 space-y-1 text-[11px]">
                           <div><span className="font-bold text-slate-700">বিদ্যমান কোর্স:</span> <strong className="text-rose-700">{autoFetchDuplicate.title}</strong></div>
                           <div><span className="font-bold text-slate-700">লিংক স্লাগ:</span> <code className="text-rose-600 bg-rose-50 px-1 py-0.5 rounded font-mono">/{autoFetchDuplicate.slug}</code></div>
                           <div><span className="font-bold text-slate-700">বর্তমান মূল্য:</span> ৳{autoFetchDuplicate.offerPrice}</div>
@@ -1935,7 +1966,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                           <button
                             type="button"
                             onClick={() => handleStartEditCourse(autoFetchDuplicate)}
-                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs cursor-pointer flex items-center gap-1 transition-colors"
+                            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs cursor-pointer flex items-center gap-1.5 transition-colors shadow-xs"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                             <span>বিদ্যমান কোর্সটি এডিট করুন</span>
@@ -1946,9 +1977,9 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                               setAutoFetchUrl('');
                               setAutoFetchStatus(null);
                             }}
-                            className="px-2.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 font-semibold rounded-lg text-xs cursor-pointer transition-colors"
+                            className="px-2.5 py-1.5 bg-white border border-red-300 hover:bg-red-100 text-red-900 font-semibold rounded-lg text-xs cursor-pointer transition-colors"
                           >
-                            মুছে ফেলুন
+                            লিংক মুছে ফেলুন
                           </button>
                         </div>
                       </div>
@@ -2649,25 +2680,25 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
         </div>
       )}
 
-      {/* Real-time Immediate Duplicate Course Warning Modal */}
-      {duplicateWarningCourse && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-2 border-amber-500 space-y-5 animate-in zoom-in-95">
+      {/* Real-time Immediate Duplicate Course Warning Modal (Mounted via Portal to document.body) */}
+      {duplicateWarningCourse && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border-2 border-red-500 space-y-5 animate-in zoom-in-95">
             <div className="flex items-start gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200">
-                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center shrink-0 border border-red-200">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
                   ⚠️ এই কোর্সটি ইতিমধ্যে ওয়েবসাইটে যুক্ত রয়েছে!
                 </h3>
-                <p className="text-xs text-amber-800">
+                <p className="text-xs text-red-800">
                   ভুলবশত একই কোর্স দুইবার এন্ট্রি রোধ করতে অটো-ফেচ বন্ধ রাখা হয়েছে। আপনার সময় বাঁচাতে সরাসরি বিদ্যমান কোর্সটি এডিট করার সুযোগ রয়েছে:
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2 text-xs">
+            <div className="p-4 bg-red-50/90 rounded-2xl border border-red-200 space-y-2 text-xs">
               <div>
                 <span className="font-bold text-slate-600">বিদ্যমান কোর্স:</span>{' '}
                 <strong className="text-rose-700 text-sm">{duplicateWarningCourse.title}</strong>
@@ -2697,7 +2728,7 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
                   setDuplicateWarningCourse(null);
                   handleStartEditCourse(courseToEdit);
                 }}
-                className="w-full sm:flex-1 py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                className="w-full sm:flex-1 py-2.5 px-4 bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               >
                 <Edit3 className="w-4 h-4" />
                 <span>বিদ্যমান কোর্সটি এডিট করুন</span>
@@ -2715,7 +2746,8 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* WordPress-Like Rich Blog Editor Modal */}
