@@ -1,5 +1,54 @@
 [
   {
+    "id": "c-custom-1793102236880",
+    "slug": "spoken-and-grammar-bundle-course",
+    "title": "Spoken+Grammar Bundle",
+    "englishTitle": "",
+    "category": "spoken-english",
+    "displayTargets": [
+      "home",
+      "spoken-english"
+    ],
+    "targetClass": "স্পোকেন ইংলিশ",
+    "regularPrice": 3000,
+    "offerPrice": 0,
+    "offerEndDate": "2026-10-01",
+    "isLifetime": true,
+    "status": "active",
+    "imageUrl": "https://cdn.10minuteschool.com/images/thumbnails/spoken-and-grammar-online-course-bundle-sqr-thumbnail-new.jpg",
+    "imageAlt": "Spoken+Grammar Bundle কভার ছবি ১০ মিনিট স্কুল",
+    "affiliateLink": "https://10ms.io/6L7ruo",
+    "promoCode": "spokenbundle",
+    "instructor": "Munzereen Shahid",
+    "instructorRole": "কোর্স ইন্সট্রাক্টর",
+    "rating": 4.8,
+    "reviewCount": 1133,
+    "enrolledCount": 11330,
+    "shortDescription": "Spoken+Grammar Bundle - ১০ মিনিট স্কুলের সম্পূর্ণ অনলাইন প্রস্তুতি কোর্স।",
+    "fullDescription": "# Spoken+Grammar Bundle\n\n১০ মিনিট স্কুলের এই কোর্সটির মাধ্যমে শিক্ষার্থীরা ঘরে বসেই যেকোনো সময় যেকোনো ডিভাইস থেকে পূর্ণাঙ্গ ও সুশৃঙ্খল প্রস্তুতি সম্পন্ন করতে পারবে।\n\n## কোর্সের মূল সুবিধাসমূহ\n- লাইভ ক্লাস\n- লেকচার শিট ও নোট\n- মডেল টেস্ট\n\n যা যা থাকছে এই কোর্সে\n- প্রতিটি বিষয়ের বেসিক কনসেপ্ট ক্লিয়ার করার জন্য ধারাবাহিক লাইভ ও রেকর্ডেড ক্লাস\n- প্রতিটি অধ্যায়ের সাথে লেকচার শিট, রিভিশন নোট ও ডিজিটাল প্র্যাকটিস ম্যাটেরিয়াল\n- নিয়মিত কুইজ ও বোর্ড প্রশ্নের সমাধানের মাধ্যমে পূর্ণাঙ্গ মডেল টেস্ট অনুশীলন\n- পড়াশোনায় যেকোনো সমস্যা বা প্রশ্নের দ্রুত সমাধান পেতে বিশেষ সাপোর্ট সুবিধা\n\nকাদের জন্য এই কোর্স?\nএই কোর্সটি মূলত স্পোকেন ইংলিশ-এর শিক্ষার্থীদের জন্য বিশেষভাবে সাজানো হয়েছে, যেন খুব সহজে পূর্ণাঙ্গ সিলেবাস শেষ করে পরীক্ষায় সেরা ফলাফল অর্জন করা যায়।\n\nকীভাবে ভর্তি হবেন?\nউপরে থাকা \"অফারে ভর্তি হোন\" বা \"কিনুন\" বাটনে ক্লিক করে সরাসরি অফিসিয়াল পেজ থেকে আপনার ব্যাচ বেছে নিয়ে ভর্তি সম্পন্ন করতে পারবেন।\n\nঅতিরিক্ত স্পেশাল ডিসকাউন্ট পাওয়ার জন্য চেকআউটের সময় প্রোমো কোড বক্সে spokenbundle ব্যবহার করতে পারেন।",
+    "highlights": [
+      "লাইভ ক্লাস",
+      "লেকচার শিট ও নোট",
+      "মডেল টেস্ট"
+    ],
+    "syllabus": [],
+    "seoTitle": "Spoken+Grammar Bundle | 10 Minute School Discount & Admission - 10mscourse.shop",
+    "seoDescription": "১০ মিনিট স্কুলের Spoken+Grammar Bundle কোর্সের সম্পূর্ণ সিলেবাস, ক্লাস ও স্পেশাল ডিসকাউন্ট অফার। ঘরে বসেই সম্পূর্ণ অনলাইন প্রস্তুতি নিন।",
+    "seoKeywords": [
+      "১০ মিনিট স্কুল",
+      "Spoken+Grammar Bundle",
+      "Spoken+Grammar Bundle কোর্স",
+      "অনলাইন কোর্স",
+      "spoken-english",
+      "স্পোকেন ইংলিশ",
+      "10 Minute School",
+      "কোর্স ফি ও ভর্তি"
+    ],
+    "inHeroSlider": false,
+    "excludeFromHotDeals": true,
+    "badgeText": ""
+  },
+  {
     "id": "c-custom-1793101723559",
     "slug": "easy-quran-reading",
     "title": "২৪ ঘণ্টায় কোরআন শিখি",
