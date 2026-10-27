@@ -19,6 +19,55 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
+export function getInstantShellHtml(route: string): string {
+  return `
+      <!-- Instant App Header -->
+      <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
+            <div class="flex items-center select-none shrink-0 py-1" style="max-height: 40px; max-width: 180px;">
+              <img
+                src="https://res.cloudinary.com/drvyjj7td/image/upload/v1790516284/10msshop_knpcl3.png"
+                alt="10MS Course Shop"
+                class="h-8 sm:h-9 md:h-10 w-auto object-contain shrink-0"
+                style="height: 34px; max-height: 38px; width: auto; max-width: 170px;"
+              />
+            </div>
+            <div class="flex-1 max-w-xs sm:max-w-md relative">
+              <div class="w-full pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-full text-slate-400">
+                কোর্স বা বিষয় খুঁজুন...
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <a href="https://wa.me/8801917711466" target="_blank" rel="noopener noreferrer" class="p-2 sm:px-3 sm:py-1.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
+                <span>হোয়াটসঅ্যাপ</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Instant Hero Section -->
+      <main class="space-y-6 pb-20">
+        <section class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 pt-2.5 sm:pt-5">
+          <div class="bg-gradient-to-b from-rose-50/90 via-white to-orange-50/30 rounded-2xl sm:rounded-3xl border border-rose-100 p-4 sm:p-6 shadow-xs mb-3 sm:mb-4 text-center">
+            <div class="max-w-2xl mx-auto flex flex-col items-center justify-center text-center">
+              <div class="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-white text-rose-700 border border-rose-200/90 shadow-2xs mb-2">
+                <span>১০ মিনিট স্কুল অফিসিয়াল অ্যাফিলিয়েট প্ল্যাটফর্ম</span>
+              </div>
+              <h1 class="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight text-center">
+                ১০ মিনিট স্কুল কোর্স শপ
+              </h1>
+              <p class="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-xl mx-auto leading-relaxed text-center">
+                ১০ মিনিট স্কুলের সকল একাডেমিক (৬ষ্ঠ-১২শ), এডমিশন টেস্ট ও স্কিল কোর্সের ভেরিফাইড ডিসকাউন্ট, প্রোমো কোড ও সরাসরি ভর্তি ডিরেক্টরি।
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+  `;
+}
+
 export function generateStaticHtml(baseHtml: string, config: PageConfig): string {
   let html = baseHtml;
 
@@ -79,10 +128,11 @@ export function generateStaticHtml(baseHtml: string, config: PageConfig): string
     html = html.replace('</head>', schemaScript);
   }
 
-  // 7. Inject Crawler-friendly SEO HTML into #root if provided
+  // 7. Inject Instant Visual Shell for users + Noscript SEO HTML for search crawlers
   if (config.seoBodyHtml) {
     const rootPlaceholder = '<div id="root"></div>';
-    const rootWithContent = `<div id="root">${config.seoBodyHtml}</div>`;
+    const instantShell = getInstantShellHtml(config.route);
+    const rootWithContent = `<div id="root">${instantShell}</div>\n    <noscript id="seo-crawler-content">\n      ${config.seoBodyHtml}\n    </noscript>`;
     html = html.replace(rootPlaceholder, rootWithContent);
   }
 
