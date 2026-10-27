@@ -285,8 +285,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, searchQuery }) =
         <div className="bg-gradient-to-b from-rose-50/90 via-white to-orange-50/30 rounded-2xl sm:rounded-3xl border border-rose-100 p-4 sm:p-6 shadow-xs mb-3 sm:mb-4 text-center">
           <div className="max-w-2xl mx-auto flex flex-col items-center justify-center text-center">
             {/* Affiliate Disclosure Badge (Center Aligned) */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-white text-rose-700 border border-rose-200/90 shadow-2xs mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <div className="inline-flex items-center px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-white text-rose-700 border border-rose-200/90 shadow-2xs mb-2">
               <span>১০ মিনিট স্কুল অফিসিয়াল অ্যাফিলিয়েট প্ল্যাটফর্ম</span>
             </div>
 
