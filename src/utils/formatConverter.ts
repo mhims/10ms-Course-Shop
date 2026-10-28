@@ -64,14 +64,18 @@ export function convertHtmlToFormattedMarkdown(htmlString: string, fallbackPlain
         return `\n\n### ${childrenText.trim()}\n\n`;
       }
 
-      // 2. Bold
+      // 2. Bold (protect against entire paragraphs being bolded by Google Docs/Word)
       if (
         tag === 'b' ||
         tag === 'strong' ||
         /font-weight:\s*(bold|700|800|900)/i.test(style)
       ) {
         const trimmed = childrenText.trim();
-        return trimmed ? `**${trimmed}**` : '';
+        // If text is too long or contains linebreaks, do NOT wrap the whole block in bold
+        if (!trimmed || trimmed.length > 120 || trimmed.includes('\n')) {
+          return trimmed;
+        }
+        return `**${trimmed}**`;
       }
 
       // 3. Italic

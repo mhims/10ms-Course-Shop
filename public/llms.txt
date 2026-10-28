@@ -5,7 +5,7 @@
 - **Canonical URL**: https://10mscourse.shop
 - **Publisher**: 10MS Course Shop (১০ মিনিট স্কুল কোর্স শপ)
 - **Official Affiliate Partner**: 10 Minute School (১০ মিনিট স্কুল)
-- **Last Updated**: 2026-10-27
+- **Last Updated**: 2026-10-28
 - **Primary Languages**: Bengali (বাংলা), English
 - **Primary Regions**: Bangladesh & worldwide Bengali learners
 - **Full In-Depth Catalog**: https://10mscourse.shop/llms-full.txt

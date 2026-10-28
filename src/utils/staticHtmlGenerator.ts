@@ -1,4 +1,5 @@
 import { Course, BlogPost } from '../types';
+import { formatBlogContentToHtml } from './blogFormatter';
 
 export interface PageConfig {
   route: string;
@@ -582,6 +583,12 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
       }
     };
 
+    // Format body content removing raw course shortcodes for static crawler view
+    const cleanContent = (b.content || '')
+      .replace(/\[(?:course-card|courses-latest|course-embed|courses-category)[^\]]*\]/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+    const formattedArticleHtml = formatBlogContentToHtml(cleanContent);
+
     pages.push({
       route: `blog/${b.slug}`,
       title: blogTitle,
@@ -593,9 +600,11 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
         <article style="max-width: 800px; margin: 0 auto; padding: 24px;">
           <p><a href="/blog">← সকল ব্লগে ফিরে যান</a></p>
           <h1>${escapeHtml(b.title)}</h1>
-          <p><em>তারিখ: ${escapeHtml(b.date || '')} | লেখক: ${escapeHtml(b.author || '10MS টিম')}</em></p>
+          <p><em>তারিখ: ${escapeHtml(b.date || '')} | লেখক: ${escapeHtml(b.author || '10MS টিম')} | ক্যাটাগরি: ${escapeHtml(b.category || '')}</em></p>
           ${b.coverImage ? `<img src="${escapeHtml(b.coverImage)}" alt="${escapeHtml(b.title)}" style="max-width: 100%; border-radius: 12px; margin: 16px 0;" />` : ''}
-          <p>${escapeHtml(b.excerpt)}</p>
+          <div class="blog-article-content">
+            ${formattedArticleHtml || `<p>${escapeHtml(b.excerpt)}</p>`}
+          </div>
         </article>
       `
     });

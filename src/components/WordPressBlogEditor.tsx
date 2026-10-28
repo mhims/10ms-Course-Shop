@@ -27,11 +27,13 @@ import {
   HelpCircle,
   FolderPlus,
   Clipboard,
+  Wand2,
 } from 'lucide-react';
 import { BlogPost, Course, CustomCategory } from '../types';
 import { convertHtmlToFormattedMarkdown } from '../utils/formatConverter';
 import { BlogCourseCarousel } from './BlogCourseCarousel';
 import { parseRichBlogContent, resolveBlogRecommendedCourses } from '../utils/blogEmbedHelper';
+import { formatBlogContentToHtml, beautifyBlogEditorContent } from '../utils/blogFormatter';
 
 interface WordPressBlogEditorProps {
   initialBlog: BlogPost;
@@ -303,17 +305,27 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
     onSave(blogToSave, pushDirectly);
   };
 
+  // 1-Click Beautifier for raw text in editor
+  const handleBeautifyContent = () => {
+    if (!blog.content.trim()) return;
+    const beautified = beautifyBlogEditorContent(blog.content);
+    setBlog((prev) => ({ ...prev, content: beautified }));
+    setPasteNotice('✨ লেখার প্যারাগ্রাফ ও লাইনগুলো সুন্দরভাবে গোছানো হয়েছে!');
+    setTimeout(() => setPasteNotice(null), 4000);
+  };
+
   // Render course preview embed card & carousel inside editor preview
   const renderPreviewContent = (rawContent: string) => {
     const parts = parseRichBlogContent(rawContent, courses, categories);
 
     return parts.map((part, index) => {
       if (part.type === 'html') {
+        const formatted = formatBlogContentToHtml(part.content || '');
         return (
           <div
             key={index}
-            className="prose prose-slate max-w-none text-slate-800 leading-relaxed space-y-4"
-            dangerouslySetInnerHTML={{ __html: part.content || '' }}
+            className="blog-article-content pt-1"
+            dangerouslySetInnerHTML={{ __html: formatted }}
           />
         );
       }
@@ -482,7 +494,7 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                   <div className="flex items-center bg-white rounded-lg p-0.5 border border-slate-200">
                     <button
                       type="button"
-                      onClick={() => insertAtCursor('<h2>', '</h2>', 'এখানে মূল শিরোনাম লিখুন')}
+                      onClick={() => insertAtCursor('\n\n<h2>', '</h2>\n\n', 'এখানে মূল শিরোনাম লিখুন')}
                       className="px-2 py-1 text-xs font-black text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
                       title="Heading 2"
                     >
@@ -490,7 +502,7 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertAtCursor('<h3>', '</h3>', 'উপ-শিরোনাম')}
+                      onClick={() => insertAtCursor('\n\n<h3>', '</h3>\n\n', 'উপ-শিরোনাম')}
                       className="px-2 py-1 text-xs font-bold text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
                       title="Heading 3"
                     >
@@ -498,7 +510,7 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertAtCursor('<h4>', '</h4>', 'ছোট শিরোনাম')}
+                      onClick={() => insertAtCursor('\n\n<h4>', '</h4>\n\n', 'ছোট শিরোনাম')}
                       className="px-2 py-1 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
                       title="Heading 4"
                     >
@@ -506,13 +518,13 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                     </button>
                   </div>
 
-                  {/* Formatting: Bold, Italic, Strikethrough */}
+                  {/* Formatting: Bold, Italic */}
                   <div className="flex items-center bg-white rounded-lg p-0.5 border border-slate-200">
                     <button
                       type="button"
                       onClick={() => insertAtCursor('<strong>', '</strong>', 'বোল্ড টেক্সট')}
                       className="p-1.5 text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
-                      title="বোল্ড (Bold)"
+                      title="নির্দিষ্ট কিছু শব্দ বোল্ড করুন"
                     >
                       <Bold className="w-3.5 h-3.5" />
                     </button>
@@ -532,8 +544,8 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                       type="button"
                       onClick={() =>
                         insertAtCursor(
-                          '<ul>\n  <li>',
-                          '</li>\n  <li>২য় পয়েন্ট</li>\n  <li>৩য় পয়েন্ট</li>\n</ul>',
+                          '\n\n<ul>\n  <li>',
+                          '</li>\n  <li>২য় পয়েন্ট</li>\n  <li>৩য় পয়েন্ট</li>\n</ul>\n\n',
                           '১ম পয়েন্ট'
                         )
                       }
@@ -546,8 +558,8 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                       type="button"
                       onClick={() =>
                         insertAtCursor(
-                          '<ol>\n  <li>',
-                          '</li>\n  <li>২য় ধাপ</li>\n  <li>৩য় ধাপ</li>\n</ol>',
+                          '\n\n<ol>\n  <li>',
+                          '</li>\n  <li>২য় ধাপ</li>\n  <li>৩য় ধাপ</li>\n</ol>\n\n',
                           '১ম ধাপ'
                         )
                       }
@@ -564,8 +576,8 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                       type="button"
                       onClick={() =>
                         insertAtCursor(
-                          '<blockquote class="border-l-4 border-rose-500 pl-4 py-1 italic text-slate-700 bg-rose-50/50 rounded-r-xl">\n  ',
-                          '\n</blockquote>',
+                          '\n\n<blockquote class="border-l-4 border-rose-500 pl-4 py-2 italic text-slate-700 bg-rose-50/50 rounded-r-xl">\n  <p>',
+                          '</p>\n</blockquote>\n\n',
                           'গুরুত্বপূর্ণ উক্তি বা পরামর্শ এখানে লিখুন'
                         )
                       }
@@ -576,7 +588,7 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => insertAtCursor('\n<hr class="my-6 border-slate-200" />\n')}
+                      onClick={() => insertAtCursor('\n\n<hr class="my-6 border-slate-200" />\n\n')}
                       className="p-1.5 text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
                       title="ডিভাইডার দাগ"
                     >
@@ -601,7 +613,7 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                     title="টেক্সটে লিঙ্ক যুক্ত করুন"
                   >
                     <Link2 className="w-3.5 h-3.5 text-rose-500" />
-                    <span>লিঙ্ক যুক্ত করুন</span>
+                    <span>লিঙ্ক</span>
                   </button>
 
                   {/* Course Suggestion Card Embedder */}
@@ -620,16 +632,27 @@ export const WordPressBlogEditor: React.FC<WordPressBlogEditorProps> = ({
                     type="button"
                     onClick={() =>
                       insertAtCursor(
-                        '<div class="p-4 bg-rose-50 rounded-2xl border border-rose-200 text-slate-800 text-sm font-medium">\n  <strong class="text-rose-600">বিশেষ টিপস:</strong> ',
-                        '\n</div>',
+                        '\n\n<div class="p-4 bg-rose-50 rounded-2xl border border-rose-200 text-slate-800 text-sm font-medium my-4">\n  <strong class="text-rose-600">বিশেষ টিপস:</strong> ',
+                        '\n</div>\n\n',
                         'এখানে আপনার বিশেষ কোনো উপদেশ বা ঘোষণা লিখুন...'
                       )
                     }
                     className="px-2 py-1 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 rounded-lg border border-slate-200 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                    title="হাইলাইট বক্স"
+                    title="টিপস বক্স"
                   >
                     <Sparkles className="w-3 h-3 text-amber-500" />
                     <span>টিপস বক্স</span>
+                  </button>
+
+                  {/* 1-Click Auto Format & Beautify */}
+                  <button
+                    type="button"
+                    onClick={handleBeautifyContent}
+                    className="px-2.5 py-1 bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shadow-xs ml-auto"
+                    title="প্যারাগ্রাফ ও লাইনগুলো সুন্দরভাবে সাজান (Anti-Clutter)"
+                  >
+                    <Wand2 className="w-3.5 h-3.5" />
+                    <span>লেখা গোছান (Beautify)</span>
                   </button>
                 </div>
 

@@ -22,6 +22,7 @@ import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import { getWhatsAppUrl } from '../utils/whatsapp';
 import { BlogCourseCarousel } from '../components/BlogCourseCarousel';
 import { parseRichBlogContent, resolveBlogRecommendedCourses } from '../utils/blogEmbedHelper';
+import { formatBlogContentToHtml } from '../utils/blogFormatter';
 
 interface BlogPageProps {
   slug?: string;
@@ -119,11 +120,12 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
 
     return parts.map((part, index) => {
       if (part.type === 'html') {
+        const formattedHtml = formatBlogContentToHtml(part.content || '');
         return (
           <div
             key={index}
-            className="prose prose-slate max-w-none text-slate-800 leading-relaxed text-sm sm:text-base space-y-4 pt-1"
-            dangerouslySetInnerHTML={{ __html: part.content || '' }}
+            className="blog-article-content pt-1"
+            dangerouslySetInnerHTML={{ __html: formattedHtml }}
           />
         );
       }
