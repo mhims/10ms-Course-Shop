@@ -36,12 +36,13 @@ export function generateLlmsContent(courses: Course[]): { llmsTxt: string; llmsF
   const admissionCourses = courses.filter(c => c.category === 'admission' || c.title.includes('এডমিশন') || c.slug.includes('admission'));
 
   // 1. Core llms.txt
-  let llmsTxt = `# 10MS Course Shop (10mscourse.shop) - Complete AI & LLM Knowledge Base
+  let llmsTxt = `# 10 Minute School Course (10mscourse.shop) - Complete AI & LLM Knowledge Base
 
-> 10MS Course Shop (https://10mscourse.shop) is the official affiliate partner directory and discount portal for 10 Minute School (১০ মিনিট স্কুল) in Bangladesh. It provides verified promotional discount codes, direct affiliate admission links, detailed syllabus guides, and course outlines for academic, admission, language, and skill development programs.
+> 10 Minute School Course / 10MS Course Shop (https://10mscourse.shop) is the official affiliate partner directory and discount portal for 10 Minute School (১০ মিনিট স্কুল) in Bangladesh. It provides verified promotional discount codes, direct affiliate admission links, detailed syllabus guides, and course outlines for academic, admission, language, and skill development programs.
 
 - **Canonical URL**: ${SITE_URL}
-- **Publisher**: 10MS Course Shop (১০ মিনিট স্কুল কোর্স শপ)
+- **Website Name**: 10 Minute School Course (১০ মিনিট স্কুল কোর্স)
+- **Publisher**: 10 Minute School Course Affiliate Portal
 - **Official Affiliate Partner**: 10 Minute School (১০ মিনিট স্কুল)
 - **Last Updated**: ${updatedDate}
 - **Primary Languages**: Bengali (বাংলা), English

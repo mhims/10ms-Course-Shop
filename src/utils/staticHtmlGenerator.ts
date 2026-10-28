@@ -153,12 +153,12 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
   const pages: PageConfig[] = [];
 
   const allTargetKeywords =
-    '10ms, 10 minute school, 10ms course, 10 ms, 10ms course discount, 10ms course hsc, 10 ms course hsc, 10ms course ssc, 10 ms course ssc, ১০ মিনিট স্কুল, ১০ মিনিট স্কুল কোর্স, ১০ মিনিট স্কুল কোর্স ডিসকাউন্ট, ১০ মিনিট স্কুল কোর্স ডিস্কাউন্ট, ১০ মিনিট স্কুল এইচএসসি কোর্স, ১০ মিনিট স্কুল এসএসসি কোর্স, 10ms course offer, 10ms course promo, 10 minute school course discount, 10 minute school kors, 10ms kors, 10ms shop, 10ms course shop, ১০ মিনিট স্কুল ভর্তি লিংক, ten minute school, spoken english 10ms, মুনজেরিন শহীদ স্পোকেন ইংলিশ';
+    '10 minute school course, 10ms, 10 minute school, 10ms course, 10 ms, 10ms course discount, 10ms course hsc, 10 ms course hsc, 10ms course ssc, 10 ms course ssc, ১০ মিনিট স্কুল, ১০ মিনিট স্কুল কোর্স, ১০ মিনিট স্কুল কোর্স ডিসকাউন্ট, ১০ মিনিট স্কুল কোর্স ডিস্কাউন্ট, ১০ মিনিট স্কুল এইচএসসি কোর্স, ১০ মিনিট স্কুল এসএসসি কোর্স, 10ms course offer, 10ms course promo, 10 minute school course discount, 10 minute school kors, 10ms kors, 10ms shop, 10ms course shop, ১০ মিনিট স্কুল ভর্তি লিংক, ten minute school, spoken english 10ms, মুনজেরিন শহীদ স্পোকেন ইংলিশ';
 
   // 0. Homepage (route: '') with Comprehensive Content for Search Engines
   pages.push({
     route: '',
-    title: '10MS Course Shop | ১০ মিনিট স্কুল কোর্স, অফার ও ডিসকাউন্ট প্রোমো কোড (10 Minute School)',
+    title: '10 Minute School Course | ১০ মিনিট স্কুল কোর্স, অফার ও ডিসকাউন্ট প্রোমো কোড (10MS)',
     description: '১০ মিনিট স্কুল (10 Minute School)-এর সকল কোর্স, HSC, SSC, Spoken English ডিসকাউন্ট অফার, ভর্তি ও ভেরিফাইড প্রোমো কোড। 10ms course offer, promo & discount.',
     keywords: allTargetKeywords,
     canonicalUrl: 'https://10mscourse.shop/',
@@ -170,12 +170,14 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
           '@type': 'WebSite',
           '@id': 'https://10mscourse.shop/#website',
           'url': 'https://10mscourse.shop/',
-          'name': '10MS Course Shop',
+          'name': '10 Minute School Course',
           'alternateName': [
+            '10 Minute School Course',
+            '10MS Course',
+            '10MS Course Shop',
+            '১০ মিনিট স্কুল কোর্স',
             '10ms',
             '10 minute school',
-            '10ms course',
-            '10 ms',
             '১০ মিনিট স্কুল',
             '১০ মিনিট স্কুল কোর্স শপ',
             '10ms kors',
@@ -202,7 +204,8 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
         {
           '@type': 'EducationalOrganization',
           '@id': 'https://10mscourse.shop/#organization',
-          'name': '10MS Course Shop',
+          'name': '10 Minute School Course',
+          'alternateName': '10MS Course Shop',
           'url': 'https://10mscourse.shop/',
           'logo': {
             '@type': 'ImageObject',
