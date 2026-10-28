@@ -13,11 +13,33 @@ export function runStaticGeneration(projectRoot: string = process.cwd()) {
     return;
   }
 
-  const baseHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+  const rawBaseHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+  // Strip any previous ld+json scripts or root contents from template to keep pages clean and prevent duplicate schemas
+  const baseHtml = rawBaseHtml
+    .replace(/<!-- Page Specific Schema\.org Structured Data -->\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '')
+    .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '')
+    .replace(/<noscript id="seo-crawler-content">[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<div id="root">[\s\S]*?<\/div>/i, '<div id="root"></div>');
 
   // Load datasets
   const coursesPath = path.resolve(projectRoot, 'courses.json');
   const blogsPath = path.resolve(projectRoot, 'blogs.json');
+
+  // Keep blogs.json and courses.json synced in docs/ and public/
+  if (fs.existsSync(blogsPath)) {
+    fs.copyFileSync(blogsPath, path.resolve(docsDir, 'blogs.json'));
+    const pubBlogs = path.resolve(projectRoot, 'public/blogs.json');
+    if (fs.existsSync(path.dirname(pubBlogs))) {
+      fs.copyFileSync(blogsPath, pubBlogs);
+    }
+  }
+  if (fs.existsSync(coursesPath)) {
+    fs.copyFileSync(coursesPath, path.resolve(docsDir, 'courses.json'));
+    const pubCourses = path.resolve(projectRoot, 'public/courses.json');
+    if (fs.existsSync(path.dirname(pubCourses))) {
+      fs.copyFileSync(coursesPath, pubCourses);
+    }
+  }
 
   const courses: Course[] = fs.existsSync(coursesPath)
     ? JSON.parse(fs.readFileSync(coursesPath, 'utf-8'))

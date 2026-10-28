@@ -23,6 +23,7 @@ import { getWhatsAppUrl } from '../utils/whatsapp';
 import { BlogCourseCarousel } from '../components/BlogCourseCarousel';
 import { parseRichBlogContent, resolveBlogRecommendedCourses } from '../utils/blogEmbedHelper';
 import { formatBlogContentToHtml } from '../utils/blogFormatter';
+import { extractFaqs } from '../utils/staticHtmlGenerator';
 
 interface BlogPageProps {
   slug?: string;
@@ -40,7 +41,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
     ? blogPosts.find((p) => p.slug === slug || p.id === slug)
     : null;
 
-  // Sync SEO Title, Meta tags, and Schema.org BlogPosting for search engine ranking
+  // Sync SEO Title, Meta tags, and Schema.org BreadcrumbList, BlogPosting, FAQPage for search engine ranking
   useEffect(() => {
     if (activePost) {
       const pageTitle = activePost.seoTitle || `${activePost.title} | 10MS Blog`;
@@ -58,7 +59,7 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
         canonicalLink.setAttribute('href', `https://10mscourse.shop/blog/${activePost.slug}`);
       }
 
-      // Schema.org BlogPosting Structured Data
+      // Schema.org Structured Data
       const schemaScriptId = 'blog-post-schema-jsonld';
       let existingSchema = document.getElementById(schemaScriptId);
       if (!existingSchema) {
@@ -68,32 +69,86 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
         document.head.appendChild(existingSchema);
       }
 
+      const faqs = extractFaqs(activePost.content || '');
+
       const schemaData = {
         '@context': 'https://schema.org',
-        '@type': 'BlogPosting',
-        'headline': activePost.title,
-        'description': activePost.seoDescription || activePost.excerpt,
-        'image': [activePost.coverImage],
-        'datePublished': activePost.date,
-        'dateModified': activePost.date,
-        'author': {
-          '@type': 'Person',
-          'name': activePost.author,
-        },
-        'publisher': {
-          '@type': 'Organization',
-          'name': '10MS Course Shop',
-          'url': 'https://10mscourse.shop',
-          'logo': {
-            '@type': 'ImageObject',
-            'url': siteSettings.logoUrl,
+        '@graph': [
+          {
+            '@type': 'BreadcrumbList',
+            '@id': `https://10mscourse.shop/blog/${activePost.slug}#breadcrumb`,
+            'itemListElement': [
+              {
+                '@type': 'ListItem',
+                'position': 1,
+                'name': 'হোম',
+                'item': 'https://10mscourse.shop/'
+              },
+              {
+                '@type': 'ListItem',
+                'position': 2,
+                'name': 'ব্লগ',
+                'item': 'https://10mscourse.shop/blog'
+              },
+              {
+                '@type': 'ListItem',
+                'position': 3,
+                'name': activePost.title,
+                'item': `https://10mscourse.shop/blog/${activePost.slug}`
+              }
+            ]
           },
-        },
-        'mainEntityOfPage': {
-          '@type': 'WebPage',
-          '@id': `https://10mscourse.shop/blog/${activePost.slug}`,
-        },
-        'keywords': (activePost.seoKeywords || activePost.tags || []).join(', '),
+          {
+            '@type': 'BlogPosting',
+            '@id': `https://10mscourse.shop/blog/${activePost.slug}#article`,
+            'isPartOf': {
+              '@type': 'WebSite',
+              '@id': 'https://10mscourse.shop/#website',
+              'name': '10 Minute School Course',
+              'url': 'https://10mscourse.shop/'
+            },
+            'headline': activePost.title,
+            'description': activePost.seoDescription || activePost.excerpt,
+            'image': [activePost.coverImage],
+            'datePublished': activePost.date ? `${activePost.date}T00:00:00+06:00` : new Date().toISOString(),
+            'dateModified': activePost.date ? `${activePost.date}T00:00:00+06:00` : new Date().toISOString(),
+            'author': {
+              '@type': 'Person',
+              'name': activePost.author || '১০ মিনিট স্কুল টিম',
+              'url': 'https://10mscourse.shop/blog'
+            },
+            'publisher': {
+              '@type': 'Organization',
+              '@id': 'https://10mscourse.shop/#organization',
+              'name': '10 Minute School Course',
+              'url': 'https://10mscourse.shop/',
+              'logo': {
+                '@type': 'ImageObject',
+                'url': siteSettings.logoUrl || 'https://10mscourse.shop/favicon-192x192.png',
+                'width': 192,
+                'height': 192
+              }
+            },
+            'mainEntityOfPage': {
+              '@type': 'WebPage',
+              '@id': `https://10mscourse.shop/blog/${activePost.slug}`
+            },
+            'inLanguage': 'bn',
+            'keywords': (activePost.seoKeywords || activePost.tags || []).join(', ')
+          },
+          ...(faqs.length > 0 ? [{
+            '@type': 'FAQPage',
+            '@id': `https://10mscourse.shop/blog/${activePost.slug}#faq`,
+            'mainEntity': faqs.map((f) => ({
+              '@type': 'Question',
+              'name': f.question,
+              'acceptedAnswer': {
+                '@type': 'Answer',
+                'text': f.answer
+              }
+            }))
+          }] : [])
+        ]
       };
 
       existingSchema.textContent = JSON.stringify(schemaData);
@@ -268,6 +323,40 @@ export const BlogPage: React.FC<BlogPageProps> = ({ slug, onNavigate }) => {
             />
           )}
         </article>
+      </div>
+    );
+  }
+
+  // Handle case when slug was provided in URL but post is not matched
+  if (slug && !activePost) {
+    if (blogPosts.length === 0) {
+      return (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-24">
+          <div className="animate-pulse space-y-6">
+            <div className="h-4 bg-slate-200 rounded w-24"></div>
+            <div className="h-8 bg-slate-200 rounded w-3/4"></div>
+            <div className="h-64 bg-slate-200 rounded-3xl w-full"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-slate-200 rounded w-full"></div>
+              <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+              <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
+        <h2 className="text-2xl font-black text-slate-900">পোস্টটি খুঁজে পাওয়া যায়নি</h2>
+        <p className="text-sm text-slate-600">আপনি যে আর্টিকেলটি খুঁজছেন সেটি সরানো হয়েছে অথবা লিংকটি ভুল।</p>
+        <button
+          onClick={() => onNavigate('/blog')}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-full font-bold text-xs hover:bg-rose-700 transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>সকল ব্লগে ফিরে যান</span>
+        </button>
       </div>
     );
   }

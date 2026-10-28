@@ -10,6 +10,7 @@ export interface PageConfig {
   ogImage?: string;
   schemaJson?: object;
   seoBodyHtml?: string;
+  instantShellHtml?: string;
 }
 
 export function escapeHtml(str: string): string {
@@ -19,6 +20,114 @@ export function escapeHtml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+export function extractFaqs(content: string): Array<{ question: string; answer: string }> {
+  const faqs: Array<{ question: string; answer: string }> = [];
+  if (!content) return faqs;
+
+  // 1. If an explicit FAQ section exists, isolate it
+  let searchContent = content;
+  const faqSectionMatch = content.match(/##\s*[^\n]*(?:FAQ|সচরাচর জিজ্ঞাসিত প্রশ্ন)[^\n]*\n+([\s\S]*?)(?=\n##\s+[^\n]+|$)/i);
+  if (faqSectionMatch) {
+    searchContent = faqSectionMatch[1];
+  }
+
+  // Match ### (number.) Question \n\n Answer paragraphs until next heading or end
+  const regex = /###\s*(?:[০-৯0-9]+\.\s*)?([^\n]+)\n+([\s\S]*?)(?=(?:###|##|$))/g;
+  let match;
+  while ((match = regex.exec(searchContent)) !== null) {
+    let q = match[1].trim();
+    let a = match[2].trim();
+    // Clean course shortcodes, markdown links, asterisks, and HTML
+    a = a
+      .replace(/\[(?:course-card|courses-latest|course-embed|courses-category)[^\]]*\]/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_#`]/g, '')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+
+    // Clean leading numbers like "১. " from question title
+    q = q.replace(/^[০-৯0-9]+\.\s*/, '').trim();
+
+    if (q && a && (faqSectionMatch || q.includes('?') || q.includes('কী') || q.includes('কেন') || q.includes('কীভাবে'))) {
+      faqs.push({ question: q, answer: a });
+    }
+  }
+  return faqs;
+}
+
+export function getInstantBlogShell(b: BlogPost): string {
+  const cleanContent = (b.content || '')
+    .replace(/\[(?:course-card|courses-latest|course-embed|courses-category)[^\]]*\]/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '');
+  const formattedHtml = formatBlogContentToHtml(cleanContent);
+
+  return `
+    <!-- Instant App Header -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
+          <a href="/" class="flex items-center select-none shrink-0 py-1" style="max-height: 40px; max-width: 180px;">
+            <img
+              src="https://res.cloudinary.com/drvyjj7td/image/upload/v1790516284/10msshop_knpcl3.png"
+              alt="10MS Course Shop"
+              class="h-8 sm:h-9 md:h-10 w-auto object-contain shrink-0"
+              style="height: 34px; max-height: 38px; width: auto; max-width: 170px;"
+            />
+          </a>
+          <div class="flex items-center gap-2">
+            <a href="/blog" class="px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
+              ← সকল ব্লগ
+            </a>
+            <a href="https://wa.me/8801917711466" target="_blank" rel="noopener noreferrer" class="p-2 sm:px-3 sm:py-1.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
+              <span>হোয়াটসঅ্যাপ</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Instant Blog Article Content for 0ms load -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-24">
+      <nav class="flex items-center gap-2 text-xs text-slate-600 font-semibold flex-wrap">
+        <a href="/" class="hover:text-rose-600 transition-colors">হোম</a>
+        <span>/</span>
+        <a href="/blog" class="hover:text-rose-600 transition-colors">ব্লগ</a>
+        <span>/</span>
+        <span class="text-slate-900 font-bold truncate max-w-xs sm:max-w-sm">${escapeHtml(b.title)}</span>
+      </nav>
+
+      <article class="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-xs space-y-6">
+        <div class="space-y-4">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span class="inline-flex items-center text-xs font-bold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80">
+              ${escapeHtml(b.category || '১০ মিনিট স্কুল')}
+            </span>
+            <span class="text-xs text-slate-600 font-medium">⏱️ ${escapeHtml(b.readTime || '১০ মিনিট')}</span>
+            <span class="text-xs text-slate-600 font-medium">📅 ${escapeHtml(b.date || '')}</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-snug">
+            ${escapeHtml(b.title)}
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-600 font-medium">
+            লেখক: <strong class="text-slate-900">${escapeHtml(b.author || '১০ মিনিট স্কুল টিম')}</strong>
+          </p>
+        </div>
+
+        ${b.coverImage ? `
+          <div class="relative w-full rounded-2xl overflow-hidden shadow-xs border border-slate-100 max-h-96">
+            <img src="${escapeHtml(b.coverImage)}" alt="${escapeHtml(b.coverImageAlt || b.title)}" class="w-full h-auto object-cover max-h-96" />
+          </div>
+        ` : ''}
+
+        <div class="blog-article-content pt-2">
+          ${formattedHtml || `<p>${escapeHtml(b.excerpt)}</p>`}
+        </div>
+      </article>
+    </main>
+  `;
 }
 
 export function getInstantShellHtml(route: string): string {
@@ -132,18 +241,21 @@ export function generateStaticHtml(baseHtml: string, config: PageConfig): string
     );
   }
 
-  // 6. Inject Schema.org JSON-LD if provided
+  // 6. Clean previous schemas and inject page-specific Schema.org JSON-LD if provided
+  html = html.replace(/<!-- Page Specific Schema\.org Structured Data -->\s*<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
+  html = html.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
   if (config.schemaJson) {
     const schemaScript = `\n    <!-- Page Specific Schema.org Structured Data -->\n    <script type="application/ld+json">\n${JSON.stringify(config.schemaJson, null, 2)}\n    </script>\n  </head>`;
     html = html.replace('</head>', schemaScript);
   }
 
   // 7. Inject Instant Visual Shell for users + Noscript SEO HTML for search crawlers
+  const shellContent = config.instantShellHtml || getInstantShellHtml(config.route);
+  html = html.replace(/<div id="root">[\s\S]*?<\/div>/i, `<div id="root">${shellContent}</div>`);
+
   if (config.seoBodyHtml) {
-    const rootPlaceholder = '<div id="root"></div>';
-    const instantShell = getInstantShellHtml(config.route);
-    const rootWithContent = `<div id="root">${instantShell}</div>\n    <noscript id="seo-crawler-content">\n      ${config.seoBodyHtml}\n    </noscript>`;
-    html = html.replace(rootPlaceholder, rootWithContent);
+    html = html.replace(/<noscript id="seo-crawler-content">[\s\S]*?<\/noscript>/gi, '');
+    html = html.replace('</div>', `</div>\n    <noscript id="seo-crawler-content">\n      ${config.seoBodyHtml}\n    </noscript>`);
   }
 
   return html;
@@ -561,30 +673,9 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
   for (const b of blogs) {
     if (!b.slug) continue;
 
-    const blogTitle = `${b.title} | 10MS Course Shop ব্লগ`;
-    const blogDesc = b.excerpt || b.title;
+    const blogTitle = b.seoTitle || `${b.title} | 10MS Course Shop ব্লগ`;
+    const blogDesc = b.seoDescription || b.excerpt || b.title;
     const blogImage = b.coverImage || 'https://10mscourse.shop/favicon-512x512.png';
-
-    const blogSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'BlogPosting',
-      'headline': b.title,
-      'description': b.excerpt,
-      'image': blogImage,
-      'datePublished': b.date || new Date().toISOString().split('T')[0],
-      'author': {
-        '@type': 'Person',
-        'name': b.author || '10MS Course Shop টিম'
-      },
-      'publisher': {
-        '@type': 'Organization',
-        'name': '10MS Course Shop',
-        'logo': {
-          '@type': 'ImageObject',
-          'url': 'https://10mscourse.shop/favicon-192x192.png'
-        }
-      }
-    };
 
     // Format body content removing raw course shortcodes for static crawler view
     const cleanContent = (b.content || '')
@@ -592,13 +683,112 @@ export function getAllStaticPages(courses: Course[], blogs: BlogPost[]): PageCon
       .replace(/<!--[\s\S]*?-->/g, '');
     const formattedArticleHtml = formatBlogContentToHtml(cleanContent);
 
+    // Extract FAQs from content for Google Search Console FAQ Enhancement
+    const faqs = extractFaqs(b.content || '');
+
+    // 1. BreadcrumbList Schema (Enables "Breadcrumbs" tab in Google Search Console)
+    const breadcrumbSchema = {
+      '@type': 'BreadcrumbList',
+      '@id': `https://10mscourse.shop/blog/${b.slug}#breadcrumb`,
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'হোম',
+          'item': 'https://10mscourse.shop/'
+        },
+        {
+          '@type': 'ListItem',
+          'position': 2,
+          'name': 'ব্লগ',
+          'item': 'https://10mscourse.shop/blog'
+        },
+        {
+          '@type': 'ListItem',
+          'position': 3,
+          'name': b.title,
+          'item': `https://10mscourse.shop/blog/${b.slug}`
+        }
+      ]
+    };
+
+    // 2. Comprehensive BlogPosting Schema
+    const blogPostingSchema = {
+      '@type': 'BlogPosting',
+      '@id': `https://10mscourse.shop/blog/${b.slug}#article`,
+      'isPartOf': {
+        '@type': 'WebSite',
+        '@id': 'https://10mscourse.shop/#website',
+        'name': '10 Minute School Course',
+        'url': 'https://10mscourse.shop/'
+      },
+      'headline': b.title,
+      'description': blogDesc,
+      'image': [blogImage],
+      'datePublished': b.date ? `${b.date}T00:00:00+06:00` : new Date().toISOString(),
+      'dateModified': b.date ? `${b.date}T00:00:00+06:00` : new Date().toISOString(),
+      'mainEntityOfPage': {
+        '@type': 'WebPage',
+        '@id': `https://10mscourse.shop/blog/${b.slug}`
+      },
+      'inLanguage': 'bn',
+      'wordCount': (cleanContent || '').split(/\s+/).length,
+      'keywords': (b.seoKeywords || b.tags || []).join(', '),
+      'articleSection': b.category || '১০ মিনিট স্কুল গাইডলাইন',
+      'author': {
+        '@type': 'Person',
+        'name': b.author || '১০ মিনিট স্কুল টিম',
+        'url': 'https://10mscourse.shop/blog'
+      },
+      'publisher': {
+        '@type': 'Organization',
+        '@id': 'https://10mscourse.shop/#organization',
+        'name': '10 Minute School Course',
+        'url': 'https://10mscourse.shop/',
+        'logo': {
+          '@type': 'ImageObject',
+          'url': 'https://10mscourse.shop/favicon-192x192.png',
+          'width': 192,
+          'height': 192
+        }
+      }
+    };
+
+    // Build Schema.org @graph
+    const graphItems: any[] = [breadcrumbSchema, blogPostingSchema];
+
+    // 3. FAQPage Schema (Enables "FAQ" tab in Google Search Console)
+    if (faqs.length > 0) {
+      graphItems.push({
+        '@type': 'FAQPage',
+        '@id': `https://10mscourse.shop/blog/${b.slug}#faq`,
+        'mainEntity': faqs.map((f) => ({
+          '@type': 'Question',
+          'name': f.question,
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': f.answer
+          }
+        }))
+      });
+    }
+
+    const fullSchema = {
+      '@context': 'https://schema.org',
+      '@graph': graphItems
+    };
+
+    const instantShell = getInstantBlogShell(b);
+
     pages.push({
       route: `blog/${b.slug}`,
       title: blogTitle,
       description: blogDesc,
+      keywords: (b.seoKeywords || b.tags || []).join(', '),
       canonicalUrl: `https://10mscourse.shop/blog/${b.slug}`,
       ogImage: blogImage,
-      schemaJson: blogSchema,
+      schemaJson: fullSchema,
+      instantShellHtml: instantShell,
       seoBodyHtml: `
         <article style="max-width: 800px; margin: 0 auto; padding: 24px;">
           <p><a href="/blog">← সকল ব্লগে ফিরে যান</a></p>
