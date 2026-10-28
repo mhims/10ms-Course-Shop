@@ -18,9 +18,10 @@ import { ReviewPage } from './pages/ReviewPage';
 import { AdminPage } from './pages/AdminPage';
 import { AllCoursesPage } from './pages/AllCoursesPage';
 import { CourseCategory } from './types';
+import { trackVisitorPageView } from './utils/visitorTracker';
 
 function AppContent() {
-  const { courses } = useCourseContext();
+  const { courses, siteSettings } = useCourseContext();
   const [currentPath, setCurrentPath] = useState<string>(() => {
     // 1. Check for query redirect like /?/adminpanelofficial or /?p=/adminpanelofficial
     const search = window.location.search;
@@ -80,6 +81,37 @@ function AppContent() {
       window.location.hash = path;
     }
   };
+
+  // Real-Time Visitor Telemetry for Google Sheet
+  useEffect(() => {
+    let pageLabel = 'হোমপেজ (Home)';
+    if (currentPath === '/courses' || currentPath === '/all-courses') pageLabel = 'সকল কোর্স পেজ';
+    else if (currentPath.startsWith('/course/')) {
+      const slug = currentPath.replace('/course/', '');
+      const found = courses.find((c) => c.slug === slug || c.id === slug);
+      pageLabel = found ? `কোর্স: ${found.title}` : `কোর্স: ${slug}`;
+    } else if (currentPath.startsWith('/blog/')) {
+      pageLabel = `ব্লগ: ${currentPath.replace('/blog/', '')}`;
+    } else if (currentPath === '/blog') pageLabel = 'ব্লগ ও গাইডলাইন পেজ';
+    else if (currentPath === '/review') pageLabel = 'রিভিউ পেজ';
+    else if (currentPath === '/hsc') pageLabel = 'HSC কোর্স পেজ';
+    else if (currentPath === '/class-9-10' || currentPath === '/ssc') pageLabel = 'SSC কোর্স পেজ';
+    else if (currentPath.startsWith('/class-')) pageLabel = `${currentPath.replace('/', '')} পেজ`;
+    else if (currentPath === '/spoken-english') pageLabel = 'স্পোকেন ইংলিশ পেজ';
+    else if (currentPath === '/admission') pageLabel = 'এডমিশন পেজ';
+    else if (currentPath !== '/') pageLabel = currentPath;
+
+    trackVisitorPageView(pageLabel, siteSettings?.googleSheetScriptUrl);
+
+    // Track SPA route change in Google Analytics (GA4)
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'page_view', {
+        page_title: pageLabel,
+        page_location: window.location.href,
+        page_path: currentPath,
+      });
+    }
+  }, [currentPath, siteSettings?.googleSheetScriptUrl, courses]);
 
   // Determine which page to render based on path
   const renderCurrentView = () => {

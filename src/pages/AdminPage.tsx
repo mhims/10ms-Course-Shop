@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, AlertTriangle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2, ArrowUp, ArrowDown, Flame, Sliders } from 'lucide-react';
+import { Shield, KeyRound, Plus, Edit3, Trash2, Download, Upload, RefreshCw, Save, X, ExternalLink, Check, AlertCircle, AlertTriangle, FileText, Phone, Settings, Search, BookOpen, GraduationCap, FolderPlus, Tag, Newspaper, Link2, GitBranch, Github, Image as ImageIcon, Sparkles, Zap, CheckCircle2, ArrowUp, ArrowDown, Flame, Sliders, Copy } from 'lucide-react';
 import { useCourseContext } from '../context/CourseContext';
 import { Course, CourseCategory, BlogPost, SiteResource } from '../types';
 import { getCourseClassLabel, normalizeImageUrl } from '../utils/courseHelper';
@@ -9,6 +9,7 @@ import { CourseDescriptionEditor } from '../components/CourseDescriptionEditor';
 import { GithubPushModal } from '../components/GithubPushModal';
 import { pushDataToGithub } from '../utils/githubSync';
 import { scrapeCourseFromUrl, getRandomReviewCount, findDuplicateCourse, normalizeCourseLink, cleanMarkdownDescription } from '../utils/courseScraper';
+import { GOOGLE_APPS_SCRIPT_CODE } from '../utils/visitorTracker';
 
 export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   // Disallow indexing by Google or search engines for the admin panel
@@ -103,7 +104,12 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   }, [categories, courses]);
 
   // Site settings state
-  const [settingsForm, setSettingsForm] = useState(siteSettings);
+  const [settingsForm, setSettingsForm] = useState(() => ({
+    ...siteSettings,
+    googleSheetScriptUrl:
+      siteSettings.googleSheetScriptUrl ||
+      'https://script.google.com/macros/s/AKfycbxzH4EobS7UwuDn22TJnHy4-oZYiD_xCiatW5LW8rALUL4DkLyPbpJn9wqqwhn8IsBL/exec',
+  }));
 
   // GitHub Access Token Sync State
   const [githubToken, setGithubToken] = useState(() => localStorage.getItem('10ms_gh_pat') || '');
@@ -113,6 +119,8 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
   const [showGithubPushModal, setShowGithubPushModal] = useState(false);
   const [lastModifiedAction, setLastModifiedAction] = useState<string | null>(null);
   const [imagePreviewError, setImagePreviewError] = useState(false);
+  const [showAppsScriptModal, setShowAppsScriptModal] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
 
   // Auto-fetch Course Metadata from Affiliate Link State
   const [autoFetchUrl, setAutoFetchUrl] = useState('');
@@ -1651,6 +1659,34 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
               />
             </div>
 
+            {/* Google Sheets Visitor Telemetry Tracking */}
+            <div className="pt-4 border-t border-slate-200 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="block font-bold text-slate-800 text-sm">
+                  📊 গুগল শিট ভিজিটর ট্র্যাকিং (Google Sheet Visitor Tracking)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowAppsScriptModal(true)}
+                  className="px-2.5 py-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold rounded-lg flex items-center gap-1 cursor-pointer transition-colors self-start sm:self-auto"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Apps Script কোড দেখুন ও কপি করুন</span>
+                </button>
+              </div>
+
+              <input
+                type="url"
+                value={settingsForm.googleSheetScriptUrl || ''}
+                onChange={(e) => setSettingsForm({ ...settingsForm, googleSheetScriptUrl: e.target.value })}
+                placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                className="w-full p-2.5 border border-slate-300 rounded-xl text-xs font-mono"
+              />
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                আপনার গুগল শিটের Apps Script ওয়েব অ্যাপ URL এখানে পেস্ট করে নিচে "সেটিংস সংরক্ষণ করুন" বাটনে ক্লিক করুন। এরপর সাইটে যেকোনো ভিজিটর আসলে সময়, পেজ, আইপি, লোকেশন, ডিভাইস, অপারেটিং সিস্টেম, ব্রাউজার, সাইটে থাকার সময় ও রেফারার স্বয়ংক্রিয়ভাবে আপনার গুগল শিটে রেকর্ড হতে থাকবে।
+              </p>
+            </div>
+
             <button
               type="submit"
               className="px-5 py-2.5 bg-rose-600 text-white font-bold text-xs rounded-xl hover:bg-rose-700 shadow-md cursor-pointer flex items-center gap-1.5"
@@ -2760,6 +2796,110 @@ export const AdminPage: React.FC<{ onNavigate: (path: string) => void }> = ({ on
           onSave={handleSaveBlogFromEditor}
           onClose={() => setEditingBlog(null)}
         />
+      )}
+
+      {/* Google Sheet Apps Script Code & Setup Instructions Modal */}
+      {showAppsScriptModal && createPortal(
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-3xl w-full border border-slate-200 shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg border border-emerald-100">
+                  📊
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">গুগল শিট ভিজিটর ট্র্যাকিং সেটআপ কোড</h3>
+                  <p className="text-xs text-slate-500">আপনার ওয়েবসাইটে ভিজিটরদের সমস্ত তথ্য স্বয়ংক্রিয়ভাবে গুগল শিটে জমা হবে</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAppsScriptModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Step-by-Step Guide */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs text-slate-700">
+              <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5 text-emerald-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>মাত্র ২ মিনিটে সেটআপ করার নিয়ম:</span>
+              </div>
+              <ol className="list-decimal list-inside space-y-1.5 pl-1 leading-relaxed">
+                <li>গুগল ড্রাইভে গিয়ে একটি নতুন <strong>Google Sheet</strong> তৈরি করুন (শিটে কোনো হেডার লিখতে হবে না, স্ক্রিপ্ট নিজে থেকেই সুন্দর ডার্ক হেডার বানাবে)।</li>
+                <li>শিটের উপরে মেনু থেকে <strong>Extensions &gt; Apps Script</strong>-এ ক্লিক করুন।</li>
+                <li>সেখানে আগের যা লেখা আছে সব মুছে নিচের কোডটি হুবহু পেস্ট করুন।</li>
+                <li>উপরে ডানপাশে <strong>Deploy &gt; New deployment</strong> বাটনে ক্লিক করুন।</li>
+                <li>গিয়ার আইকন থেকে <strong>Web app</strong> বেছে নিন।</li>
+                <li><strong>"Who has access"</strong> অপশনে অবশ্যই <strong>"Anyone" (যেকেউ)</strong> সিলেক্ট করুন।</li>
+                <li><strong>Deploy</strong> ক্লিক করে যে <strong>Web app URL</strong> পাবেন, তা কপি করে অ্যাডমিন প্যানেলের সেটিংসে বসিয়ে সেভ করুন।</li>
+              </ol>
+            </div>
+
+            {/* Generated Spreadsheet Columns Preview */}
+            <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-200/70 space-y-2 text-xs">
+              <span className="font-bold text-emerald-950 block">যেসব কলামে তথ্য জমা হবে:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'তারিখ ও সময় (Time)',
+                  'পেজ (Page)',
+                  'আইপি (IP)',
+                  'লোকেশন (Location)',
+                  'ডিভাইস (Device)',
+                  'অপারেটিং সিস্টেম (OS)',
+                  'ব্রাউজার (Browser)',
+                  'সাইটে থাকার সময় (Time Spent)',
+                  'কোথা থেকে এসেছে (Referrer)',
+                  'স্ক্রিন রেজুলেশন (Resolution)'
+                ].map((col, idx) => (
+                  <span key={idx} className="bg-white border border-emerald-200 px-2.5 py-1 rounded-lg font-medium text-emerald-900 shadow-2xs">
+                    {col}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Code Box with Copy Button */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700">Apps Script কোড (Code.gs):</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE);
+                    setCopiedScript(true);
+                    setTimeout(() => setCopiedScript(false), 3000);
+                  }}
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                >
+                  {copiedScript ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedScript ? 'কোড কপি হয়েছে!' : 'সম্পূর্ণ কোড কপি করুন'}</span>
+                </button>
+              </div>
+
+              <div className="relative">
+                <pre className="bg-slate-900 text-slate-100 p-4 rounded-2xl text-[11px] font-mono leading-relaxed max-h-72 overflow-y-auto select-all border border-slate-800">
+                  {GOOGLE_APPS_SCRIPT_CODE}
+                </pre>
+              </div>
+            </div>
+
+            {/* Close Button */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAppsScriptModal(false)}
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+              >
+                বন্ধ করুন
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Direct GitHub Push Modal */}

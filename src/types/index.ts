@@ -101,6 +101,7 @@ export interface SiteSettings {
   defaultAffiliateCode: string;
   heroSliderCourseIds?: string[];
   categoryOrder?: string[];
+  googleSheetScriptUrl?: string;
   lastUpdated?: number;
 }
 

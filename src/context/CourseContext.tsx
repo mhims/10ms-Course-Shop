@@ -84,7 +84,8 @@ const defaultSettings: SiteSettings = {
   logoUrl: 'https://res.cloudinary.com/drvyjj7td/image/upload/v1789563770/10ms_logo_f_sxbaio.png',
   whatsappNumber: '@md.me',
   announcementText: '🎉 ১০ মিনিট স্কুলের সকল কোর্সে স্পেশাল ডিসকাউন্ট ও ভর্তি অফার চলছে!',
-  defaultAffiliateCode: '10mscourse_shop'
+  defaultAffiliateCode: '10mscourse_shop',
+  googleSheetScriptUrl: 'https://script.google.com/macros/s/AKfycbxzH4EobS7UwuDn22TJnHy4-oZYiD_xCiatW5LW8rALUL4DkLyPbpJn9wqqwhn8IsBL/exec'
 };
 
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/mhims/10ms-Course-Shop/main';
